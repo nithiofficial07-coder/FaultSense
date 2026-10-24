@@ -1,0 +1,28 @@
+[
+  {
+    "case_id": "CASE-DUP-001",
+    "source_title": "Original Case Record",
+    "source_reference": "REF-DUP-A",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "door_system",
+    "fault_code": "E-DR-01",
+    "symptoms": ["Door bounce"],
+    "telemetry_summary": {"cycles": 100},
+    "confirmed_root_cause": "Roller friction",
+    "corrective_action": "Lubricated track"
+  },
+  {
+    "case_id": "CASE-DUP-001",
+    "source_title": "Duplicate Case Record with Identical ID",
+    "source_reference": "REF-DUP-B",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "door_system",
+    "fault_code": "E-DR-01",
+    "symptoms": ["Door bounce recurring"],
+    "telemetry_summary": {"cycles": 120},
+    "confirmed_root_cause": "Roller wear",
+    "corrective_action": "Replaced roller"
+  }
+]

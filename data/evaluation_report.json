@@ -1,0 +1,227 @@
+{
+  "benchmark_timestamp": "2026-10-24T13:03:29Z",
+  "dataset": {
+    "total_test_cases": 8,
+    "in_kb_grounded_cases": 6,
+    "out_of_kb_guardrail_cases": 2
+  },
+  "baseline_rag": {
+    "avg_latency_ms": 1170.0,
+    "retrieval_hit_rate": 0.83,
+    "avg_faithfulness_grounding": 0.35,
+    "ranking_accuracy_on_labeled": 0.67,
+    "unsupported_draft_leak_rate": 1.0
+  },
+  "self_verifying_rag": {
+    "avg_latency_ms": 54.3,
+    "retrieval_hit_rate": 0.83,
+    "avg_faithfulness_grounding": 0.3,
+    "ranking_accuracy_on_labeled": 0.5,
+    "hallucination_rejection_rate": 1.0,
+    "first_pass_pass_rate": 0.5,
+    "retry_recovery_rate": 0.0,
+    "inconclusive_rate": 0.5
+  },
+  "per_case_results": [
+    {
+      "test_id": "EVAL-TEST-001",
+      "title": "Optical Curtain Door Track Obstruction",
+      "subsystem": "door_system",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 9148.4,
+        "retrieval_hit": true,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-001",
+          "CASE-FIELD-ELEV-101"
+        ],
+        "grounding_score": 1.0,
+        "ranking_accurate": true
+      },
+      "verified": {
+        "latency_ms": 41.7,
+        "retrieval_hit": true,
+        "retries": 0,
+        "verdict": "sufficient",
+        "is_verified": true,
+        "grounding_score": 1.0,
+        "ranking_accurate": true
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-002",
+      "title": "VVVF Drive DC Bus Regenerative Overvoltage",
+      "subsystem": "traction_drive",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 43.8,
+        "retrieval_hit": true,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-002",
+          "CASE-SYNTH-ELEV-005"
+        ],
+        "grounding_score": 1.0,
+        "ranking_accurate": true
+      },
+      "verified": {
+        "latency_ms": 32.7,
+        "retrieval_hit": true,
+        "retries": 0,
+        "verdict": "sufficient",
+        "is_verified": true,
+        "grounding_score": 1.0,
+        "ranking_accurate": true
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-003",
+      "title": "Motor Encoder Pulse Count Dropout",
+      "subsystem": "hoistway_signaling",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 25.6,
+        "retrieval_hit": true,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-005",
+          "CASE-SYNTH-ELEV-001"
+        ],
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      },
+      "verified": {
+        "latency_ms": 75.2,
+        "retrieval_hit": true,
+        "retries": 2,
+        "verdict": "insufficient",
+        "is_verified": false,
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-004",
+      "title": "Brake Shoe Air-Gap Mechanical Drag",
+      "subsystem": "braking_system",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 30.3,
+        "retrieval_hit": true,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-004",
+          "CASE-FIELD-ELEV-101"
+        ],
+        "grounding_score": 0.4,
+        "ranking_accurate": true
+      },
+      "verified": {
+        "latency_ms": 72.6,
+        "retrieval_hit": true,
+        "retries": 2,
+        "verdict": "insufficient",
+        "is_verified": false,
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-005",
+      "title": "Proportional Down-Valve Seat Contamination",
+      "subsystem": "hydraulic_system",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 29.1,
+        "retrieval_hit": true,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-003",
+          "CASE-SYNTH-ELEV-004"
+        ],
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      },
+      "verified": {
+        "latency_ms": 30.4,
+        "retrieval_hit": true,
+        "retries": 0,
+        "verdict": "sufficient",
+        "is_verified": true,
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-006",
+      "title": "Landing Door Interlock Contact Beak Fatigue",
+      "subsystem": "safety_gear",
+      "is_out_of_kb": false,
+      "baseline": {
+        "latency_ms": 28.1,
+        "retrieval_hit": false,
+        "top_retrieved": [
+          "CASE-FIELD-ELEV-101",
+          "CASE-SYNTH-ELEV-004"
+        ],
+        "grounding_score": 0.4,
+        "ranking_accurate": true
+      },
+      "verified": {
+        "latency_ms": 29.3,
+        "retrieval_hit": false,
+        "retries": 0,
+        "verdict": "sufficient",
+        "is_verified": true,
+        "grounding_score": 0.4,
+        "ranking_accurate": true
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-007",
+      "title": "Novel Hoistway Over-Speed Governor Trip (Out of Knowledge Base)",
+      "subsystem": "safety_gear",
+      "is_out_of_kb": true,
+      "baseline": {
+        "latency_ms": 27.3,
+        "retrieval_hit": false,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-001",
+          "CASE-SYNTH-ELEV-004"
+        ],
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      },
+      "verified": {
+        "latency_ms": 69.9,
+        "retrieval_hit": false,
+        "retries": 2,
+        "verdict": "insufficient",
+        "is_verified": false,
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      }
+    },
+    {
+      "test_id": "EVAL-TEST-008",
+      "title": "Contradictory Telemetry Claim: Open Coil Reported but Current Observed",
+      "subsystem": "braking_system",
+      "is_out_of_kb": true,
+      "baseline": {
+        "latency_ms": 27.3,
+        "retrieval_hit": false,
+        "top_retrieved": [
+          "CASE-SYNTH-ELEV-004",
+          "CASE-FIELD-ELEV-101"
+        ],
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      },
+      "verified": {
+        "latency_ms": 82.4,
+        "retrieval_hit": false,
+        "retries": 2,
+        "verdict": "contradicted",
+        "is_verified": false,
+        "grounding_score": 0.0,
+        "ranking_accurate": false
+      }
+    }
+  ]
+}

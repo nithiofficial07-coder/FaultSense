@@ -1,0 +1,15 @@
+[
+  {
+    "case_id": 12345,
+    "source_title": "Invalid Type Test",
+    "source_reference": "REF-TYPE-01",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "door_system",
+    "fault_code": "E-01",
+    "symptoms": "Not a list",
+    "telemetry_summary": "Not a dict",
+    "confirmed_root_cause": "Test cause",
+    "corrective_action": "Test action"
+  }
+]

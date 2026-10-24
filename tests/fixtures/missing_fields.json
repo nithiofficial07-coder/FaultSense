@@ -1,0 +1,40 @@
+[
+  {
+    "case_id": "ERR-MISSING-01",
+    "source_title": "Missing Required Fields Case 1",
+    "source_reference": "REF-MISS-01",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "fault_code": "E-999",
+    "symptoms": ["Intermittent door bounce"],
+    "telemetry_summary": {"cycles": 10},
+    "confirmed_root_cause": "",
+    "corrective_action": "Tightened bolt"
+  },
+  {
+    "case_id": "",
+    "source_title": "Missing Case ID Case 2",
+    "source_reference": "REF-MISS-02",
+    "source_type": "field_service_log",
+    "verification_status": "verified",
+    "subsystem": "traction_drive",
+    "fault_code": "E-TR-100",
+    "symptoms": ["Motor overheating"],
+    "telemetry_summary": {"temp": 95},
+    "confirmed_root_cause": "Bearing failure",
+    "corrective_action": "Replaced bearing"
+  },
+  {
+    "case_id": "ERR-MISSING-03",
+    "source_title": "Empty Symptoms List Case 3",
+    "source_reference": "REF-MISS-03",
+    "source_type": "field_service_log",
+    "verification_status": "verified",
+    "subsystem": "braking_system",
+    "fault_code": "E-BR-01",
+    "symptoms": [],
+    "telemetry_summary": {},
+    "confirmed_root_cause": "Worn pad",
+    "corrective_action": "Replaced pad"
+  }
+]

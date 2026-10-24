@@ -1,0 +1,182 @@
+[
+  {
+    "case_id": "CASE-SYNTH-ELEV-001",
+    "source_title": "Illustrative Engineering Benchmark: Optical Curtain Obstruction",
+    "source_reference": "FAULT-SENSE-SYNTH-BENCH-2024-01",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "door_system",
+    "fault_code": "E-DR-201",
+    "symptoms": [
+      "Car door reopens repeatedly without passenger obstruction",
+      "Door dwell timer expires causing nudging buzzer activation",
+      "Intermittent safety light curtain status flicker in car console"
+    ],
+    "telemetry_summary": {
+      "door_open_close_cycles": 142500,
+      "curtain_optical_attenuation_db": 6.8,
+      "motor_current_peak_a": 3.8,
+      "sill_obstruction_sensor_state": 1
+    },
+    "confirmed_root_cause": "Accumulated fine grit and particulate debris in the car bottom sill guide track causing optical curtain transmitter misalignment.",
+    "corrective_action": "Thoroughly vacuumed and cleaned bottom door sill grooves, adjusted transmitter bracket alignment, and verified 20 consecutive test cycles.",
+    "timestamp": "2024-10-10T08:15:00Z",
+    "metadata": {
+      "is_synthetic": true,
+      "building_type": "commercial_office",
+      "elevator_type": "overhead_gearless_traction",
+      "severity": "medium",
+      "curation_note": "Synthetic benchmark record generated for automated ingestion testing; not an official manufacturer document or verified field accident."
+    }
+  },
+  {
+    "case_id": "CASE-SYNTH-ELEV-002",
+    "source_title": "Illustrative Engineering Benchmark: VVVF DC Bus Overvoltage",
+    "source_reference": "FAULT-SENSE-SYNTH-BENCH-2024-02",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "traction_drive",
+    "fault_code": "E-VFD-404",
+    "symptoms": [
+      "Elevator initiates emergency deceleration during loaded down trip",
+      "Drive inverter trips with regenerative overvoltage error",
+      "Car parked safely at nearest landing with passenger release"
+    ],
+    "telemetry_summary": {
+      "dc_bus_voltage_v": 785.4,
+      "brake_resistor_temp_c": 118.2,
+      "rated_dc_bus_limit_v": 750.0,
+      "motor_rpm": 1450,
+      "car_payload_percent": 92
+    },
+    "confirmed_root_cause": "Degraded dynamic braking transistor trigger circuit causing failure to dump regenerative energy into brake resistor bank during full-load down descent.",
+    "corrective_action": "Replaced regenerative chopper braking module, tested brake resistor bank impedance (within nominal 15 ohms +/- 5%), and conducted 10 full-load descent cycles.",
+    "timestamp": "2024-10-11T14:40:00Z",
+    "metadata": {
+      "is_synthetic": true,
+      "building_type": "residential_highrise",
+      "elevator_type": "traction_regenerative",
+      "severity": "high",
+      "curation_note": "Synthetic benchmark record generated for automated ingestion testing; not an official manufacturer document or verified field accident."
+    }
+  },
+  {
+    "case_id": "CASE-SYNTH-ELEV-003",
+    "source_title": "Illustrative Engineering Benchmark: Hydraulic Releveling Creep",
+    "source_reference": "FAULT-SENSE-SYNTH-BENCH-2024-03",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "hydraulic_system",
+    "fault_code": "E-HYD-108",
+    "symptoms": [
+      "Car sinks 35mm below landing floor during extended 15-minute passenger loading",
+      "Releveling pump motor cycles on every 4 minutes while idle",
+      "Minor hydraulic fluid smell noted in elevator pit machine room"
+    ],
+    "telemetry_summary": {
+      "releveling_frequency_per_hour": 14,
+      "manifold_pressure_psi": 420.0,
+      "oil_temperature_c": 52.4,
+      "jack_seal_leakage_rate_ml_hr": 28.0
+    },
+    "confirmed_root_cause": "Thermal degradation and extrusion of check valve bypass O-ring seal inside main valve manifold, permitting internal pressure bypass back to oil reservoir.",
+    "corrective_action": "Isolated hydraulic system, depressurized accumulator, replaced bypass check valve elastomer O-rings, and verified pressure holding for 60 minutes.",
+    "timestamp": "2024-10-12T11:20:00Z",
+    "metadata": {
+      "is_synthetic": true,
+      "building_type": "lowrise_commercial",
+      "elevator_type": "direct_acting_hydraulic",
+      "severity": "medium",
+      "curation_note": "Synthetic benchmark record generated for automated ingestion testing; not an official manufacturer document or verified field accident."
+    }
+  },
+  {
+    "case_id": "CASE-SYNTH-ELEV-004",
+    "source_title": "Illustrative Engineering Benchmark: Brake Switch Contact Discrepancy",
+    "source_reference": "FAULT-SENSE-SYNTH-BENCH-2024-04",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "braking_system",
+    "fault_code": "E-BRK-302",
+    "symptoms": [
+      "Controller locks out elevator on start command",
+      "Fault indicator displays dual-channel brake monitor discrepancy",
+      "Mechanical brake lift confirmed audibly on one side only"
+    ],
+    "telemetry_summary": {
+      "left_brake_switch_state": 1,
+      "right_brake_switch_state": 0,
+      "brake_lift_current_a": 12.1,
+      "brake_coil_resistance_ohms": 24.3
+    },
+    "confirmed_root_cause": "Oxidized microswitch contacts on right brake shoe actuator lever failing to close circuit despite physical mechanical shoe retraction.",
+    "corrective_action": "Replaced both left and right sealed brake monitoring microswitches, calibrated air gap to 0.40mm per specifications, and performed manual emergency stop drop test.",
+    "timestamp": "2024-10-13T09:05:00Z",
+    "metadata": {
+      "is_synthetic": true,
+      "building_type": "hospital",
+      "elevator_type": "traction_passenger",
+      "severity": "high",
+      "curation_note": "Synthetic benchmark record generated for automated ingestion testing; not an official manufacturer document or verified field accident."
+    }
+  },
+  {
+    "case_id": "CASE-SYNTH-ELEV-005",
+    "source_title": "Illustrative Engineering Benchmark: CAN Bus Hall Call Node Timeout",
+    "source_reference": "FAULT-SENSE-SYNTH-BENCH-2024-05",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "unverified",
+    "subsystem": "controller_electronics",
+    "fault_code": "E-CAN-512",
+    "symptoms": [
+      "Floors 4, 5, and 6 landing call buttons do not illuminate when pressed",
+      "Main controller event log registers recurring node heartbeat timeout",
+      "Car bypasses landing calls on intermediate floors while answering car calls"
+    ],
+    "telemetry_summary": {
+      "can_bus_error_passive_count": 342,
+      "bus_voltage_diff_v": 1.2,
+      "packet_drop_rate_pct": 28.5,
+      "terminal_resistor_measured_ohms": 185.0
+    },
+    "confirmed_root_cause": "Loose screw terminal on 120-ohm CAN bus terminating resistor board at floor 6 landing riser, causing high line impedance and reflective signal distortion.",
+    "corrective_action": "Re-terminated CAN bus riser wiring, torqued screw terminals to 0.6 Nm, verified 60-ohm parallel termination resistance across bus, and confirmed error-free packet telemetry.",
+    "timestamp": "2024-10-14T16:30:00Z",
+    "metadata": {
+      "is_synthetic": true,
+      "building_type": "corporate_hq",
+      "elevator_type": "machine_room_less_traction",
+      "severity": "medium",
+      "curation_note": "Synthetic benchmark record generated for automated ingestion testing; not an official manufacturer document or verified field accident."
+    }
+  },
+  {
+    "case_id": "CASE-FIELD-ELEV-101",
+    "source_title": "Anonymized Field Service Log: Landing Lock Interlock Retiring Cam Binding",
+    "source_reference": "FSR-2024-ANON-7782",
+    "source_type": "field_service_log",
+    "verification_status": "verified",
+    "subsystem": "door_system",
+    "fault_code": "FLT-LCK-12",
+    "symptoms": [
+      "Elevator stops at 3rd floor landing but will not depart",
+      "Interlock circuit open indicator illuminated on diagnostic board",
+      "Retiring cam solenoid hums continuously"
+    ],
+    "telemetry_summary": {
+      "interlock_circuit_voltage_v": 0.0,
+      "retiring_cam_solenoid_temp_c": 64.0,
+      "attempted_departures": 5
+    },
+    "confirmed_root_cause": "Pivot bearing on retiring cam assembly seized due to dry grease contamination, preventing cam arm from releasing hoistway door interlock latch.",
+    "corrective_action": "Disassembled retiring cam pivot, purged old grease, lubricated with low-temperature synthetic machine grease, adjusted drop clearance to 6mm, and verified departure interlock closure.",
+    "timestamp": "2024-09-28T13:45:00Z",
+    "metadata": {
+      "is_synthetic": false,
+      "building_type": "hotel",
+      "elevator_type": "geared_traction",
+      "severity": "medium",
+      "curation_note": "Anonymized verified maintenance service record with real operational provenance."
+    }
+  }
+]

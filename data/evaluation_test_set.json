@@ -1,0 +1,178 @@
+[
+  {
+    "test_id": "EVAL-TEST-001",
+    "title": "Optical Curtain Door Track Obstruction",
+    "subsystem": "door_system",
+    "fault_code": "E-DR-201",
+    "symptoms": [
+      "Car door reopens repeatedly without passenger obstruction",
+      "Door dwell timer expires causing nudging buzzer activation",
+      "Intermittent safety light curtain status flicker in car console"
+    ],
+    "telemetry": {
+      "door_open_close_cycles": 142500,
+      "curtain_optical_attenuation_db": 6.8,
+      "motor_current_peak_a": 3.8
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-001"],
+    "expected_root_cause_keywords": ["sill", "debris", "grit", "curtain", "track"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Standard optical curtain misalignment caused by debris in bottom sill grooves."
+  },
+  {
+    "test_id": "EVAL-TEST-002",
+    "title": "VVVF Drive DC Bus Regenerative Overvoltage",
+    "subsystem": "traction_drive",
+    "fault_code": "E-VFD-404",
+    "symptoms": [
+      "Elevator initiates emergency deceleration during loaded down trip",
+      "Drive inverter trips with regenerative overvoltage error",
+      "Car parked safely at nearest landing with passenger release"
+    ],
+    "telemetry": {
+      "dc_bus_voltage_v": 785.4,
+      "brake_resistor_temp_c": 118.2,
+      "rated_dc_bus_limit_v": 750.0,
+      "motor_rpm": 1450,
+      "car_payload_percent": 92
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-002"],
+    "expected_root_cause_keywords": ["dc bus", "regenerative", "brake resistor", "chopper", "transistor"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Full-load descent regenerative energy dump failure due to degraded chopper transistor."
+  },
+  {
+    "test_id": "EVAL-TEST-003",
+    "title": "Motor Encoder Pulse Count Dropout",
+    "subsystem": "hoistway_signaling",
+    "fault_code": "E-POS-305",
+    "symptoms": [
+      "Car exhibits sudden jerky leveling oscillation at floor arrivals",
+      "Positioning discrepancy detected between primary tape and motor encoder",
+      "Controller fault log records encoder channel B missing pulse count"
+    ],
+    "telemetry": {
+      "position_variance_mm": 18.4,
+      "encoder_pulse_error_count": 42,
+      "cable_shield_ground_ohms": 85.0
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-003"],
+    "expected_root_cause_keywords": ["encoder", "pulse", "shield", "noise", "ground"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Electromagnetic noise coupling into encoder cable due to high shield ground resistance."
+  },
+  {
+    "test_id": "EVAL-TEST-004",
+    "title": "Brake Shoe Air-Gap Mechanical Drag",
+    "subsystem": "braking_system",
+    "fault_code": "E-BRK-102",
+    "symptoms": [
+      "Burning friction smell reported from machine room after peak morning service",
+      "Drive motor thermal sensor trips after repeated continuous runs",
+      "Brake pick confirmation microswitch delayed by 450ms on start"
+    ],
+    "telemetry": {
+      "brake_shoe_air_gap_mm": 0.12,
+      "nominal_air_gap_spec_mm": 0.35,
+      "brake_solenoid_pull_in_current_a": 4.1
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-004"],
+    "expected_root_cause_keywords": ["brake", "air gap", "solenoid", "drag", "lining"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Insufficient brake shoe clearance causing residual mechanical friction on drum."
+  },
+  {
+    "test_id": "EVAL-TEST-005",
+    "title": "Proportional Down-Valve Seat Contamination",
+    "subsystem": "hydraulic_system",
+    "fault_code": "E-HYD-502",
+    "symptoms": [
+      "Hydraulic car creeps downward by 15mm over 10 minutes when parked at lobby",
+      "Re-leveling pump motor cycles repeatedly to maintain floor datum",
+      "Oil reservoir temperature elevated above 55 degrees Celsius"
+    ],
+    "telemetry": {
+      "uncommanded_car_drift_mm_min": 1.5,
+      "hydraulic_line_pressure_psi": 420.0,
+      "valve_solenoid_current_ma": 0
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-005"],
+    "expected_root_cause_keywords": ["down valve", "leak", "proportional", "spool", "seat"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Particulate grit in proportional down-valve seat allowing hydraulic fluid bypass."
+  },
+  {
+    "test_id": "EVAL-TEST-006",
+    "title": "Landing Door Interlock Contact Beak Fatigue",
+    "subsystem": "safety_gear",
+    "fault_code": "E-SAF-101",
+    "symptoms": [
+      "Elevator stops abruptly between 4th and 5th floors in transit",
+      "Main safety circuit relay string opens intermittently during travel",
+      "Hoistway door interlock contact string voltage drops from 110V to 0V"
+    ],
+    "telemetry": {
+      "safety_string_voltage_drop_events": 7,
+      "door_lock_contact_resistance_ohms": 24.5
+    },
+    "expected_status": "completed",
+    "expected_case_ids": ["CASE-SYNTH-ELEV-006"],
+    "expected_root_cause_keywords": ["interlock", "contact", "beak", "spring", "pitting"],
+    "is_out_of_kb": false,
+    "provenance_type": "synthetic_illustrative",
+    "notes": "Landing door interlock contact beak spring tension loss and contact pitting."
+  },
+  {
+    "test_id": "EVAL-TEST-007",
+    "title": "Novel Hoistway Over-Speed Governor Trip (Out of Knowledge Base)",
+    "subsystem": "safety_gear",
+    "fault_code": "E-GOV-901",
+    "symptoms": [
+      "Car safety gear wedges into guide rails during downward express run",
+      "Flyweight governor tripping mechanism engaged mechanically at 2.8 m/s",
+      "Governor rope tension weight switch open circuit"
+    ],
+    "telemetry": {
+      "rated_speed_mps": 2.5,
+      "measured_trip_speed_mps": 2.85,
+      "governor_sheave_bearing_drag_nm": 14.2
+    },
+    "expected_status": "inconclusive",
+    "expected_case_ids": [],
+    "expected_root_cause_keywords": [],
+    "is_out_of_kb": true,
+    "provenance_type": "novel_out_of_kb_test",
+    "notes": "Testing anti-hallucination guardrail on completely unseen governor fault without KB citations. Must produce explicit inconclusive status."
+  },
+  {
+    "test_id": "EVAL-TEST-008",
+    "title": "Contradictory Telemetry Claim: Open Coil Reported but Current Observed",
+    "subsystem": "braking_system",
+    "fault_code": "E-BRK-999",
+    "symptoms": [
+      "Brake does not release on run command",
+      "Technician suspects open-circuit brake coil"
+    ],
+    "telemetry": {
+      "brake_solenoid_measured_current_a": 3.8,
+      "brake_coil_resistance_ohms": 28.2,
+      "nominal_coil_resistance_ohms": 28.0
+    },
+    "expected_status": "inconclusive",
+    "expected_case_ids": [],
+    "expected_root_cause_keywords": [],
+    "is_out_of_kb": true,
+    "provenance_type": "contradictory_test",
+    "notes": "Testing contradictory claim detection: nominal current & resistance contradict open-coil hypothesis."
+  }
+]

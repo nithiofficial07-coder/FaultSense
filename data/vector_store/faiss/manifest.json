@@ -1,0 +1,9 @@
+{
+  "format_version": "1.0",
+  "dimension": 384,
+  "total_vectors": 6,
+  "similarity_metric": "cosine_similarity",
+  "created_at": "2026-10-24T11:08:19.634158+00:00",
+  "faiss_index_sha256": "d03a3a6cb359fef02cc4566328bbeccfd43f68ac52a6ffd772f0b388eaddb54a",
+  "metadata_sha256": "f657b0cb6575907a2d7f769583b545242f3a5f98750789d3efa028c2cc2111bc"
+}

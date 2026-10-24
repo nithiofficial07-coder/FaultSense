@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ElevatorFaultCase",
+  "description": "Validated schema for elevator fault diagnostics and predictive maintenance knowledge base records.",
+  "type": "object",
+  "required": [
+    "case_id",
+    "source_title",
+    "source_reference",
+    "source_type",
+    "verification_status",
+    "subsystem",
+    "fault_code",
+    "symptoms",
+    "telemetry_summary",
+    "confirmed_root_cause",
+    "corrective_action"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "description": "Unique record identifier (e.g., 'CASE-SYNTH-ELEV-001').",
+      "minLength": 1
+    },
+    "source_title": {
+      "type": "string",
+      "description": "Human-readable title of the original document, ticket, or log.",
+      "minLength": 1
+    },
+    "source_reference": {
+      "type": "string",
+      "description": "Unique reference ID, URL, service request number, or technical bulletin identifier.",
+      "minLength": 1
+    },
+    "source_type": {
+      "type": "string",
+      "description": "Origin category of the fault case record.",
+      "enum": [
+        "synthetic_illustrative",
+        "field_service_log",
+        "incident_investigation",
+        "maintenance_record",
+        "oem_technical_bulletin",
+        "telemetry_alarm_log",
+        "other"
+      ]
+    },
+    "verification_status": {
+      "type": "string",
+      "description": "Verification state of the diagnostic findings.",
+      "enum": [
+        "verified",
+        "unverified",
+        "in_review"
+      ]
+    },
+    "subsystem": {
+      "type": "string",
+      "description": "Functional elevator subsystem where the fault occurred.",
+      "enum": [
+        "door_system",
+        "traction_drive",
+        "hydraulic_system",
+        "braking_system",
+        "safety_gear",
+        "controller_electronics",
+        "hoistway_signaling",
+        "car_interior_fixtures",
+        "other"
+      ]
+    },
+    "fault_code": {
+      "type": "string",
+      "description": "Standard or manufacturer-specific fault diagnostic code (e.g., 'E-DR-201').",
+      "minLength": 1
+    },
+    "symptoms": {
+      "type": "array",
+      "description": "List of observed physical, operational, or sensory symptoms.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "telemetry_summary": {
+      "type": "object",
+      "description": "Key-value dictionary summarizing sensor readings, statistics, or state flags.",
+      "additionalProperties": true
+    },
+    "confirmed_root_cause": {
+      "type": "string",
+      "description": "Diagnosed physical, electrical, or firmware root cause.",
+      "minLength": 1
+    },
+    "corrective_action": {
+      "type": "string",
+      "description": "Detailed repair, calibration, or maintenance steps executed.",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Optional ISO 8601 timestamp string of the incident or record creation."
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary metadata dictionary. Enforces 'is_synthetic: true' if source_type is synthetic_illustrative.",
+      "properties": {
+        "is_synthetic": {
+          "type": "boolean",
+          "description": "Explicit provenance flag distinguishing synthetic benchmark examples from verified historical records."
+        }
+      },
+      "additionalProperties": true
+    },
+    "is_indexed": {
+      "type": "boolean",
+      "description": "Flag indicating whether this record has been indexed into vector storage.",
+      "default": false
+    },
+    "indexed_at": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Timestamp when vector indexing completed."
+    }
+  }
+}

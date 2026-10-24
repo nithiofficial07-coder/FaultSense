@@ -1,0 +1,15 @@
+[
+  {
+    "case_id": "CASE-SYNTH-VIOLATION-01",
+    "source_title": "Synthetic Claiming Verified",
+    "source_reference": "REF-SYNTH-VIOLATION",
+    "source_type": "synthetic_illustrative",
+    "verification_status": "verified",
+    "subsystem": "safety_gear",
+    "fault_code": "E-SAF-01",
+    "symptoms": ["Safety jaw tripped without cause"],
+    "telemetry_summary": {"speed_mps": 1.2},
+    "confirmed_root_cause": "Trip switch faulty",
+    "corrective_action": "Replaced switch"
+  }
+]
