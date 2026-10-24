@@ -14,18 +14,11 @@ def render_metric_card(
         else ""
     )
     st.markdown(
-        f"""
-        <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 3px solid #06B6D4;
-                    border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">
-            <div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: #38BDF8; letter-spacing: 0.6px;">
-                {label}
-            </div>
-            <div style="font-size: 1.85rem; font-weight: 700; color: #F8FAFC; margin-top: 4px; line-height: 1.2;">
-                {value}
-            </div>
-            {subtext_html}
-        </div>
-        """,
+        f'<div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 3px solid #06B6D4; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;">'
+        f'<div style="font-size: 0.78rem; font-weight: 600; text-transform: uppercase; color: #38BDF8; letter-spacing: 0.6px;">{label}</div>'
+        f'<div style="font-size: 1.85rem; font-weight: 700; color: #F8FAFC; margin-top: 4px; line-height: 1.2;">{value}</div>'
+        f'{subtext_html}'
+        f'</div>',
         unsafe_allow_html=True,
     )
 

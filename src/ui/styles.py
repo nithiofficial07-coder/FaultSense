@@ -63,7 +63,6 @@ def apply_custom_styles() -> None:
             section[data-testid="stSidebar"] {
                 background-color: #0E1726 !important;
                 border-right: 1px solid #1E293B !important;
-                width: 320px !important;
             }
             section[data-testid="stSidebar"] > div {
                 padding-top: 1.2rem;

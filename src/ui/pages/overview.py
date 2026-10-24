@@ -61,17 +61,10 @@ def render_overview_page() -> None:
     col_act1, col_act2 = st.columns([3, 1])
     with col_act1:
         st.markdown(
-            """
-            <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3);
-                        border-radius: 8px; padding: 14px 18px; margin: 8px 0 16px 0;">
-                <div style="font-weight: 700; color: #38BDF8; font-size: 1.05rem;">
-                    Ready to troubleshoot an elevator anomaly?
-                </div>
-                <div style="color: #94A3B8; font-size: 0.88rem; margin-top: 4px;">
-                    Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.
-                </div>
-            </div>
-            """,
+            '<div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 8px; padding: 14px 18px; margin: 8px 0 16px 0;">'
+            '<div style="font-weight: 700; color: #38BDF8; font-size: 1.05rem;">Ready to troubleshoot an elevator anomaly?</div>'
+            '<div style="color: #94A3B8; font-size: 0.88rem; margin-top: 4px;">Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.</div>'
+            '</div>',
             unsafe_allow_html=True,
         )
     with col_act2:

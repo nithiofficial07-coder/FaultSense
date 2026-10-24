@@ -44,11 +44,7 @@ def render_sidebar() -> str:
     with st.sidebar:
         # 1. Custom SVG Branding
         st.markdown(
-            f"""
-            <div style="padding: 6px 0 14px 0; border-bottom: 1px solid #1E293B; margin-bottom: 16px; text-align: center;">
-                {get_logo_html(width=190, height=46, show_text=True, dark_mode=True)}
-            </div>
-            """,
+            f'<div style="padding: 6px 0 14px 0; border-bottom: 1px solid #1E293B; margin-bottom: 16px; text-align: center;">{get_logo_html(width=190, height=46, show_text=True, dark_mode=True)}</div>',
             unsafe_allow_html=True,
         )
 
@@ -79,13 +75,10 @@ def render_sidebar() -> str:
         active_inv = st.session_state.get("current_investigation_id")
         if active_inv:
             st.markdown(
-                f"""
-                <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3);
-                            border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
-                    <div style="font-size: 0.68rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Active Investigation</div>
-                    <div style="font-size: 0.88rem; color: #F8FAFC; font-weight: 700; margin-top: 2px;">{active_inv}</div>
-                </div>
-                """,
+                f'<div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">'
+                f'<div style="font-size: 0.68rem; color: #38BDF8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Active Investigation</div>'
+                f'<div style="font-size: 0.88rem; color: #F8FAFC; font-weight: 700; margin-top: 2px;">{active_inv}</div>'
+                f'</div>',
                 unsafe_allow_html=True,
             )
             c_res, c_chat = st.columns(2)

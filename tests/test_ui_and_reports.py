@@ -205,6 +205,29 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         self.assertIn("return_to_service_checks", parsed)
         self.assertIn("downtime_estimate", parsed)
 
+    # -------------------------------------------------------------------------
+    # Logo and Branding Rendering Tests
+    # -------------------------------------------------------------------------
+
+    def test_logo_data_uri_and_html_generation(self):
+        """Verifies logo generates a base64 Data URI image tag without multiline code triggers."""
+        from src.ui.assets.logo import get_faultsense_svg, get_logo_data_uri, get_logo_html
+
+        svg = get_faultsense_svg(width=180, height=44, show_text=True)
+        self.assertTrue(svg.startswith("<svg"))
+        self.assertTrue(svg.endswith("</svg>"))
+        # Must be single-line to avoid CommonMark code block indents
+        self.assertNotIn("\n", svg)
+
+        data_uri = get_logo_data_uri(width=180, height=44)
+        self.assertTrue(data_uri.startswith("data:image/svg+xml;base64,"))
+
+        img_html = get_logo_html(width=48, height=44, show_text=False)
+        self.assertTrue(img_html.startswith("<img src=\"data:image/svg+xml;base64,"))
+        self.assertIn("width=\"48\"", img_html)
+        self.assertIn("height=\"44\"", img_html)
+        self.assertNotIn("\n", img_html)
+
 
 if __name__ == "__main__":
     unittest.main()
