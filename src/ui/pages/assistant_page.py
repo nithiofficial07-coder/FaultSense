@@ -20,8 +20,8 @@ def render_assistant_page() -> None:
     if not all_invs:
         st.info("No investigations logged yet. Please execute an investigation from **New Investigation** first.", icon="ℹ️")
         if st.button("🚀 Launch Investigation", type="primary"):
-            st.session_state["nav_page"] = "new_investigation"
-            st.rerun()
+            from src.ui.components.sidebar import navigate_to
+            navigate_to("new_investigation")
         return
 
     # Select investigation to scope the assistant

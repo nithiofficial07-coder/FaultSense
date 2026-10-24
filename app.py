@@ -16,6 +16,7 @@ from src.ui.pages.knowledge_base import render_knowledge_base_page
 from src.ui.pages.new_investigation import render_new_investigation_page
 from src.ui.pages.overview import render_overview_page
 from src.ui.pages.settings_page import render_settings_page
+from src.ui.styles import apply_custom_styles
 from src.utils.logger import get_logger, setup_logging
 
 # Initialize logging infrastructure at application boot
@@ -31,61 +32,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Custom Industrial Dark Navy & Cyan Styling
-st.markdown(
-    """
-    <style>
-        /* Base layout & typography */
-        .block-container {
-            padding-top: 1.5rem;
-            padding-bottom: 2.5rem;
-            max-width: 1400px;
-        }
-        div[data-testid="stSidebarNav"] {
-            display: none;
-        }
-
-        /* Clean industrial buttons */
-        .stButton>button {
-            border-radius: 6px;
-            font-weight: 600;
-            letter-spacing: 0.3px;
-            transition: all 0.15s ease-in-out;
-        }
-        .stButton>button:hover {
-            border-color: #06B6D4;
-            color: #38BDF8;
-        }
-
-        /* Streamlit expander styling */
-        .streamlit-expanderHeader {
-            background-color: #131F37 !important;
-            border-radius: 6px !important;
-            font-weight: 600 !important;
-            color: #F1F5F9 !important;
-        }
-
-        /* Code and Pre blocks */
-        code {
-            color: #38BDF8 !important;
-            background-color: #0F172A !important;
-            border-radius: 4px;
-            padding: 2px 6px;
-        }
-
-        /* Inputs & textareas */
-        div[data-baseweb="input"] {
-            border-radius: 6px;
-        }
-
-        /* Tab navigation active states */
-        button[data-baseweb="tab"] {
-            font-weight: 600;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Apply Centralized Industrial Dark Navy & Cyan Design System
+apply_custom_styles()
 
 
 def main() -> None:

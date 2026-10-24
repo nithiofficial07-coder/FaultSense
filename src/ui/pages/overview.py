@@ -7,13 +7,13 @@ from src.knowledge_base.manager import KnowledgeBaseManager
 from src.retrieval.index_manager import IndexManager
 from src.storage.repository import InvestigationRepository
 from src.ui.components.cards import render_metric_card
+from src.ui.components.sidebar import navigate_to
 
 
 def render_overview_page() -> None:
     """Renders the executive summary, real system metrics, verification summaries, and recent activity."""
-    st.markdown("## 📊 Technician Operational Dashboard")
     st.markdown(
-        "FaultSense assists elevator service technicians by synthesizing historical maintenance cases, "
+        "FaultSense assists certified vertical transportation technicians by synthesizing historical maintenance cases, "
         "OEM safety bulletins, and physical sensor telemetry into verified root-cause hypotheses."
     )
 
@@ -36,7 +36,7 @@ def render_overview_page() -> None:
     retries_total = 0
     for inv in all_invs:
         verif = inv.get("verification_record")
-        if verif and verif.get("final_status") == "verified":
+        if verif and verif.get("final_status") in ("verified", "verified_and_finalized"):
             verified_count += 1
         elif inv.get("status") == "completed":
             verified_count += 1
@@ -76,9 +76,8 @@ def render_overview_page() -> None:
         )
     with col_act2:
         st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
-        if st.button("🚀 Start Investigation", type="primary", use_container_width=True):
-            st.session_state["nav_page"] = "new_investigation"
-            st.rerun()
+        if st.button("🚀 Start Investigation", type="primary", use_container_width=True, key="overview_start_btn"):
+            navigate_to("new_investigation")
 
     # Mid section: Subsystem distribution & Verification summary
     col_dist, col_verif = st.columns([1, 1])
@@ -122,16 +121,14 @@ def render_overview_page() -> None:
 
             badge_color = "#34D399" if status == "completed" else "#F59E0B"
             with st.expander(f"**{inv_id}** — Unit: `{elv_id}` [{sub}] | Confidence: {conf}% | {ts}"):
-                c_info1, c_info2 = st.columns([3, 1])
+                c_info1, c_info2 = st.columns([3, 1.2])
                 with c_info1:
                     st.markdown(f"**Root Cause**: {inv.get('root_cause_hypothesis', 'N/A')}")
                     st.markdown(f"**Actions**: {inv.get('recommended_actions', 'N/A')}")
                 with c_info2:
                     st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● Status: {status.upper()}</span>", unsafe_allow_html=True)
                     st.caption(f"Retries: {inv.get('retry_count', 0)}")
-                    if st.button(f"Inspect Results", key=f"btn_open_{inv_id}", type="secondary"):
-                        st.session_state["current_investigation_id"] = inv_id
-                        st.session_state["nav_page"] = "results"
-                        st.rerun()
+                    if st.button("Inspect Full Report", key=f"btn_open_{inv_id}", type="primary", use_container_width=True):
+                        navigate_to("results", inv_id)
     else:
         st.info("No investigation history found. Launch a diagnostic session to populate this audit log.")

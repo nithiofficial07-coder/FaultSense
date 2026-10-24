@@ -1,161 +1,538 @@
-"""New Investigation workflow page for elevator technician decision support."""
+"""New Investigation workflow page for elevator technician decision support.
+
+Features structured incident intake, reliable CSV/JSON upload validation,
+interactive JSON telemetry editor with live preview, and connection to the
+FaultSense agentic diagnostic pipeline.
+"""
+
+from __future__ import annotations
 
 import csv
 import io
 import json
+import time
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Tuple
+import pandas as pd
 import streamlit as st
 
 from fault_sense.schema import SubsystemType
+from src.diagnosis.diagnostic_enricher import DiagnosticEnricher
 from src.diagnosis.engine import DiagnosisEngine
 from src.diagnosis.session import DiagnosisRequest
+from src.ui.components.sidebar import navigate_to
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
+# Max upload limit (10 MB is appropriate for sensor telemetry)
+MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024
+
+DEFAULT_JSON_EXAMPLE = """{
+  "door_open_close_cycles": 142500,
+  "curtain_optical_attenuation_db": 6.8,
+  "motor_current_peak_a": 3.8
+}"""
+
+SYMPTOM_PRESETS = {
+    "Door System — Reopening": (
+        "door_system",
+        "E-DR-201",
+        "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer buzzer sounding\nIntermittent reopening at intermediate floors",
+        "Initial visual check performed on landing sills. No large physical obstruction visible."
+    ),
+    "Traction Drive — Overvoltage": (
+        "traction_drive",
+        "E-VFD-404",
+        "Drive trips on regenerative overvoltage during downward deceleration under heavy load\nMotor hunting sensation during braking",
+        "Machine room ambient temperature 34°C. Dynamic braking resistor cage warm to touch."
+    ),
+    "Braking System — Air-Gap Drag": (
+        "braking_system",
+        "E-BRK-102",
+        "Burning friction smell reported in machine room after express runs\nBrake shoe fails to lift cleanly on run command",
+        "Brake arm visual check reveals friction material residue around brake drum."
+    ),
+    "Hoistway Signaling — Pulse Drop": (
+        "hoistway_signaling",
+        "E-POS-305",
+        "Car exhibits sudden jerky leveling oscillation at floor arrivals\nPositioning discrepancy detected between primary tape and motor encoder",
+        "Encoder cable shielded harness grounded at controller chassis."
+    ),
+    "Hydraulic System — Valve Contamination": (
+        "hydraulic_system",
+        "E-HYD-501",
+        "Car exhibits downward crawl creep when parked at top terminal landing\nOil temperature alarm logged in controller",
+        "Hydraulic fluid last replaced 3 years ago; filter restriction indicator in amber zone."
+    ),
+}
+
 
 def parse_telemetry_file(uploaded_file: Any) -> Dict[str, Any]:
-    """Parses an uploaded CSV or JSON file into a telemetry dictionary."""
-    content = uploaded_file.getvalue()
-    filename = uploaded_file.name.lower()
+    """Backward-compatible telemetry file parser used by test suite and UI."""
+    is_valid, data, _, _ = validate_and_parse_telemetry_upload(uploaded_file)
+    return data if is_valid else {}
 
+
+def validate_and_parse_telemetry_upload(
+    uploaded_file: Any,
+) -> Tuple[bool, Dict[str, Any], Optional[str], Dict[str, Any]]:
+    """Strictly validates and parses uploaded CSV or JSON telemetry files."""
+    if uploaded_file is None:
+        return False, {}, "No file provided.", {}
+
+    filename = getattr(uploaded_file, "name", "upload.dat").lower()
+
+    # Get file content safely
+    try:
+        if hasattr(uploaded_file, "getvalue"):
+            content = uploaded_file.getvalue()
+        elif hasattr(uploaded_file, "read"):
+            content = uploaded_file.read()
+        else:
+            return False, {}, "Unsupported file object format.", {}
+    except Exception as exc:
+        return False, {}, f"Unable to read file content: {exc}", {}
+
+    size_bytes = len(content)
+    if size_bytes == 0:
+        return False, {}, "File is completely empty (0 bytes).", {}
+
+    if size_bytes > MAX_UPLOAD_SIZE_BYTES:
+        return (
+            False,
+            {},
+            f"File size ({size_bytes / (1024*1024):.1f} MB) exceeds maximum allowed limit (10 MB).",
+            {},
+        )
+
+    # Decode UTF-8 safely
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        try:
+            text = content.decode("latin-1")
+        except Exception as exc:
+            return False, {}, f"File encoding error. Please ensure file is UTF-8 encoded: {exc}", {}
+
+    meta = {
+        "filename": getattr(uploaded_file, "name", "upload"),
+        "size_bytes": size_bytes,
+        "format": "JSON" if filename.endswith(".json") else ("CSV" if filename.endswith(".csv") else "Unknown"),
+    }
+
+    # 1. JSON Parsing
     if filename.endswith(".json"):
         try:
-            data = json.loads(content.decode("utf-8"))
-            if isinstance(data, dict):
-                return data
-            elif isinstance(data, list) and data and isinstance(data[0], dict):
-                return data[0]
-            else:
-                st.warning("JSON file did not contain a key-value telemetry object.")
-                return {}
-        except Exception as exc:
-            st.warning(f"Error parsing telemetry JSON: {exc}. Using empty telemetry.")
-            return {}
+            raw = json.loads(text)
+        except json.JSONDecodeError as exc:
+            return False, {}, f"Malformed JSON: {exc.msg} (line {exc.lineno}, column {exc.colno})", meta
 
+        if isinstance(raw, list):
+            if not raw:
+                return False, {}, "JSON list is empty.", meta
+            if not isinstance(raw[0], dict):
+                return False, {}, "JSON array items must be key-value dictionaries of telemetry readings.", meta
+            raw = raw[0]
+
+        if not isinstance(raw, dict):
+            return False, {}, "Root JSON structure must be a dictionary of sensor key-value pairs.", meta
+
+        if not raw:
+            return False, {}, "JSON object contains no telemetry keys.", meta
+
+        # Validate numeric conversions
+        validated: Dict[str, Any] = {}
+        invalid_fields = []
+        for k, v in raw.items():
+            k_clean = str(k).strip()
+            if not k_clean:
+                continue
+            if isinstance(v, (int, float)):
+                validated[k_clean] = v
+            else:
+                try:
+                    num_val = float(str(v).strip())
+                    validated[k_clean] = int(num_val) if num_val.is_integer() else num_val
+                except (ValueError, TypeError):
+                    invalid_fields.append(f"'{k_clean}': '{v}' (expected number)")
+
+        if invalid_fields and len(invalid_fields) == len(raw):
+            return False, {}, f"No numeric sensor values could be parsed. Invalid entries: {', '.join(invalid_fields[:3])}", meta
+
+        meta["parsed_count"] = len(validated)
+        meta["invalid_fields"] = invalid_fields
+        return True, validated, None, meta
+
+    # 2. CSV Parsing
     elif filename.endswith(".csv"):
         try:
-            text = content.decode("utf-8")
             reader = csv.reader(io.StringIO(text))
             rows = [r for r in reader if r and any(cell.strip() for cell in r)]
             if not rows:
-                return {}
+                return False, {}, "CSV file contains no readable data rows.", meta
 
-            def is_num(val_str: str) -> bool:
+            def try_num(val_str: str) -> Optional[float]:
                 try:
-                    float(val_str.strip())
-                    return True
+                    return float(val_str.strip())
                 except (ValueError, TypeError):
-                    return False
+                    return None
 
-            # Check for key-value pair format
-            # Case 1: 2 columns, row 0 column 1 is numeric (e.g. "voltage,680")
-            is_kv_direct = len(rows[0]) == 2 and is_num(rows[0][1])
-            # Case 2: 2 columns with header like "parameter,value" or "metric,reading"
-            is_kv_header = len(rows[0]) == 2 and rows[0][0].lower() in ("parameter", "metric", "sensor", "name", "key")
+            # Case A: Two-column key-value format (e.g. parameter,value)
+            is_kv_direct = len(rows[0]) == 2 and try_num(rows[0][1]) is not None
+            is_kv_header = len(rows[0]) == 2 and rows[0][0].lower().strip() in (
+                "parameter", "metric", "sensor", "name", "key", "signal"
+            )
 
+            validated = {}
             if is_kv_direct or is_kv_header:
-                start_idx = 1 if is_kv_header else 0
-                result = {}
-                for r in rows[start_idx:]:
+                start_row = 1 if is_kv_header else 0
+                for r in rows[start_row:]:
                     if len(r) >= 2 and r[0].strip():
-                        val = r[1].strip()
-                        try:
-                            val = float(val) if "." in val else int(val)
-                        except ValueError:
-                            pass
-                        result[r[0].strip()] = val
-                return result
+                        val_num = try_num(r[1])
+                        if val_num is not None:
+                            validated[r[0].strip()] = int(val_num) if val_num.is_integer() else val_num
+                        else:
+                            validated[r[0].strip()] = r[1].strip()
+            else:
+                # Case B: Tabular format (row 0 = headers, row 1+ = readings)
+                headers = [h.strip() for h in rows[0]]
+                if len(rows) > 1:
+                    vals = [v.strip() for v in rows[1]]
+                    for h, v in zip(headers, vals):
+                        if not h:
+                            continue
+                        val_num = try_num(v)
+                        if val_num is not None:
+                            validated[h] = int(val_num) if val_num.is_integer() else val_num
+                        else:
+                            validated[h] = v
+                else:
+                    return False, {}, "CSV file has headers but contains no data rows.", meta
 
-            # Otherwise tabular format: row 0 is headers, row 1+ is readings
-            headers = [h.strip() for h in rows[0]]
-            if len(rows) > 1:
-                vals = [v.strip() for v in rows[1]]
-                result = {}
-                for h, v in zip(headers, vals):
-                    try:
-                        v_conv = float(v) if "." in v else int(v)
-                    except ValueError:
-                        v_conv = v
-                    result[h] = v_conv
-                return result
-            return {}
+            if not validated:
+                return False, {}, "No valid telemetry fields could be extracted from CSV.", meta
+
+            meta["parsed_count"] = len(validated)
+            return True, validated, None, meta
+
         except Exception as exc:
-            st.warning(f"Error parsing telemetry CSV: {exc}. Using empty telemetry.")
-            return {}
+            return False, {}, f"CSV parsing error: {exc}", meta
 
-    return {}
+    return False, {}, f"Unsupported file extension for '{filename}'. Supported: .csv, .json", meta
 
 
 def render_new_investigation_page() -> None:
-    """Renders the technician investigation interface and diagnostic output."""
-    st.markdown("## 🔍 New Fault Investigation")
+    """Renders the comprehensive technician investigation workflow."""
     st.markdown(
-        "Enter observed elevator operational symptoms, telemetry alarms, or manufacturer fault codes to isolate root causes."
+        "Initiate an evidence-grounded root-cause analysis by entering observed operational symptoms, "
+        "OEM diagnostic trouble codes, and physical controller telemetry."
     )
 
-    with st.form("investigation_form"):
-        col1, col2 = st.columns(2)
+    # Initialize investigation state containers
+    if "telemetry_input_mode" not in st.session_state:
+        st.session_state["telemetry_input_mode"] = "file"
+    if "uploaded_telemetry_data" not in st.session_state:
+        st.session_state["uploaded_telemetry_data"] = {}
+    if "manual_json_text" not in st.session_state:
+        st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
+    if "auto_incident_id" not in st.session_state:
+        st.session_state["auto_incident_id"] = f"INC-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{int(time.time()) % 10000:04d}"
 
-        with col1:
-            elevator_id = st.text_input(
-                "Elevator Unit Identifier *",
-                value="ELV-CAR-04",
-                help="Unique car identification number, e.g. ELV-CAR-04, ELV-NORTH-01",
+    # Preset Quick-Load Selector
+    with st.expander("⚡ Load Pre-configured Field Failure Scenario (Quick Demo)", expanded=False):
+        c_scen, c_load = st.columns([3, 1])
+        with c_scen:
+            selected_preset_name = st.selectbox(
+                "Select Failure Scenario Benchmark",
+                options=list(SYMPTOM_PRESETS.keys()),
             )
-            building_id = st.text_input(
-                "Building / Job Site ID",
-                value="Commercial Plaza Tower B",
-                help="Building name or site identifier",
-            )
-            subsystem_options = [s.value for s in SubsystemType]
-            subsystem = st.selectbox(
-                "Suspected Subsystem *",
-                options=subsystem_options,
-                format_func=lambda x: x.replace("_", " ").title(),
-                index=subsystem_options.index("door_system") if "door_system" in subsystem_options else 0,
-            )
+        with c_load:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("Apply Scenario Preset", use_container_width=True):
+                sub, code, syms, notes = SYMPTOM_PRESETS[selected_preset_name]
+                st.session_state["subsystem_select"] = sub
+                st.session_state["fault_code_input"] = code
+                st.session_state["symptoms_input"] = syms
+                st.session_state["notes_input"] = notes
+                st.rerun()
 
-        with col2:
-            fault_code = st.text_input(
-                "Observed Fault Code (if any)",
-                value="E-DR-201",
-                help="OEM controller error code, e.g. E-DR-201, E-VFD-404, FLT-12",
-            )
-            symptoms_input = st.text_area(
-                "Observed Symptoms (one per line or semicolon-separated) *",
-                value="Car door reopens repeatedly without passenger obstruction\nDoor dwell timer buzzer sounding",
-                height=110,
-                help="Describe abnormal physical sensations, noises, leveling errors, or door behavior.",
-            )
+    # =========================================================================
+    # Section 1: Equipment & Incident Identification
+    # =========================================================================
+    st.markdown("### 1. Equipment & Incident Identification")
+    st.caption("Identify the affected vertical transportation asset and operating environment.")
 
-        st.markdown("#### 📡 Physical Telemetry & Sensor Readings (Optional)")
-        t_col1, t_col2 = st.columns(2)
-        with t_col1:
-            uploaded_telemetry = st.file_uploader(
-                "Upload Telemetry File (CSV or JSON)",
-                type=["csv", "json"],
-                help="Upload real-time controller logs or sensor exports.",
-            )
-        with t_col2:
-            telemetry_raw = st.text_area(
-                "Manual Telemetry Readings (JSON format)",
-                value='{\n  "door_open_close_cycles": 142500,\n  "curtain_optical_attenuation_db": 6.8,\n  "motor_current_peak_a": 3.8\n}',
-                height=100,
-                help="Enter direct key-value sensor observations if no file is available.",
-            )
-
-        technician_notes = st.text_input(
-            "Technician Field Notes (Optional)",
-            value="Initial visual check performed on landing sills.",
-            help="Notes on physical inspections, environmental conditions, or prior service history.",
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        incident_id = st.text_input(
+            "Incident / Work Order ID",
+            value=st.session_state.get("auto_incident_id"),
+            disabled=True,
+            help="Automatically generated unique field ticket identifier.",
+        )
+        elevator_id = st.text_input(
+            "Elevator Unit Identifier *",
+            value=st.session_state.get("saved_elv_id", "ELV-CAR-04"),
+            placeholder="e.g. ELV-CAR-04, CAR-NORTH-02",
+            help="Mandatory unique equipment ID assigned by building management or OEM.",
         )
 
-        submitted = st.form_submit_button("⚡ Run Fault Isolation & RCA", type="primary", use_container_width=True)
+    with c2:
+        elevator_model = st.text_input(
+            "Elevator Model / Drive Type (Optional)",
+            value="Geared Traction VVVF Passenger",
+            placeholder="e.g. Gearless High-Rise, Hydraulic Freight",
+            help="Optional vertical transportation system specification.",
+        )
+        building_id = st.text_input(
+            "Building / Job Site ID (Optional)",
+            value="Commercial Plaza Tower B",
+            placeholder="e.g. Metropolitan Medical Center",
+            help="Building name, campus, or physical facility location.",
+        )
 
-    if submitted:
-        # Validation checks
+    with c3:
+        severity = st.selectbox(
+            "Incident Severity Classification (Optional)",
+            options=[
+                "High — Service Interruption / Out of Service",
+                "Critical — Safety Circuit Trip / Passenger Entrapment",
+                "Medium — Intermittent Fault / Degraded Ride",
+                "Low — Routine Preventive Maintenance Finding",
+            ],
+            index=0,
+        )
+        operating_conditions = st.text_input(
+            "Ambient / Traffic Conditions (Optional)",
+            value="Morning peak dispatch; high ambient humidity (82%)",
+            placeholder="e.g. Extreme summer heat, construction dust in hoistway",
+            help="Environmental factors that may accelerate electrical or mechanical wear.",
+        )
+
+    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # Section 2: Fault Indicators & Observed Symptoms
+    # =========================================================================
+    st.markdown("### 2. Fault Indicators & Observed Symptoms")
+    st.caption("Specify the suspected elevator subsystem, controller diagnostic trouble codes (DTC), and technician observations.")
+
+    s_col1, s_col2 = st.columns([1, 1.4])
+    with s_col1:
+        subsystem_options = [s.value for s in SubsystemType]
+        default_sub = st.session_state.get("subsystem_select", "door_system")
+        sub_idx = subsystem_options.index(default_sub) if default_sub in subsystem_options else 0
+        subsystem = st.selectbox(
+            "Affected Subsystem *",
+            options=subsystem_options,
+            format_func=lambda x: x.replace("_", " ").title(),
+            index=sub_idx,
+            key="subsystem_picker",
+            help="Primary physical subsystem exhibiting anomalous behavior.",
+        )
+
+        fault_code = st.text_input(
+            "OEM Controller Fault Code (DTC) (Optional)",
+            value=st.session_state.get("fault_code_input", "E-DR-201"),
+            placeholder="e.g. E-DR-201, E-VFD-404, FLT-12",
+            key="fault_code_field",
+            help="Exact diagnostic error code logged in controller fault history buffer.",
+        )
+
+        technician_notes = st.text_area(
+            "Technician Field Observations (Optional)",
+            value=st.session_state.get("notes_input", "Initial visual check performed on landing sills. No large physical obstruction visible."),
+            height=78,
+            key="notes_field",
+            help="Prior service history, tactile observations, or multimeter spot-checks.",
+        )
+
+    with s_col2:
+        default_syms = st.session_state.get(
+            "symptoms_input",
+            "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer expires causing nudging buzzer activation\nIntermittent reopening at intermediate floors",
+        )
+        symptoms_input = st.text_area(
+            "Observed Operational Symptoms * (One per line or semicolon-separated)",
+            value=default_syms,
+            height=205,
+            key="symptoms_field",
+            help="Accurately describe abnormal movements, noises, optical behavior, or leveling errors.",
+        )
+
+    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # Section 3: Physical Telemetry & Sensor Readings (Two Reliable Methods)
+    # =========================================================================
+    st.markdown("### 3. Physical Telemetry & Sensor Readings")
+    st.markdown(
+        "<div style='color: #94A3B8; font-size: 0.85rem; margin-bottom: 10px;'>"
+        "Provide controller telemetry data through either an <b>uploaded data file</b> or the <b>structured JSON editor</b>. "
+        "Telemetry enables grounding against quantitative sensor thresholds."
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+    tab_upload, tab_editor = st.tabs(["📁 Method A: Upload Telemetry File (CSV / JSON)", "📝 Method B: Structured JSON Editor"])
+
+    active_telemetry: Dict[str, Any] = {}
+
+    with tab_upload:
+        st.markdown(
+            "Upload an exported CSV or JSON telemetry recording. Files are validated immediately upon selection."
+        )
+        up_col1, up_col2 = st.columns([1.8, 1.2])
+
+        with up_col1:
+            uploaded_file = st.file_uploader(
+                "Select Controller Log File",
+                type=["csv", "json"],
+                key="telemetry_uploader_widget",
+                help="Accepts CSV (tabular or key-value) and JSON (object) formats up to 10 MB.",
+            )
+
+        with up_col2:
+            if uploaded_file is not None:
+                is_valid, parsed_data, err_msg, meta = validate_and_parse_telemetry_upload(uploaded_file)
+                if is_valid:
+                    st.session_state["uploaded_telemetry_data"] = parsed_data
+                    st.success(
+                        f"**{meta['filename']}** verified! Parsed **{meta['parsed_count']}** sensor readings "
+                        f"({meta['size_bytes']} bytes, {meta['format']}).",
+                        icon="✅",
+                    )
+                else:
+                    st.session_state["uploaded_telemetry_data"] = {}
+                    st.error(f"**Upload Validation Failed**: {err_msg}", icon="🚨")
+            else:
+                st.caption("No file currently uploaded. Drag and drop or browse for a controller telemetry log.")
+                if st.session_state.get("uploaded_telemetry_data"):
+                    if st.button("🗑️ Clear Cached Uploaded Data"):
+                        st.session_state["uploaded_telemetry_data"] = {}
+                        st.rerun()
+
+        # Telemetry preview table if file is active
+        cached_upload = st.session_state.get("uploaded_telemetry_data", {})
+        if cached_upload:
+            st.markdown("##### 🔍 Uploaded Telemetry Preview")
+            df_tel = pd.DataFrame([
+                {
+                    "Sensor Parameter": k.replace("_", " ").title(),
+                    "Raw Key": k,
+                    "Reading": v,
+                    "Inferred Unit": DiagnosticEnricher._infer_telemetry_unit(k)[0],
+                    "Nominal Range": DiagnosticEnricher._infer_telemetry_unit(k)[1],
+                    "Condition": DiagnosticEnricher._assess_telemetry_reading(k, v),
+                }
+                for k, v in cached_upload.items()
+            ])
+            st.dataframe(df_tel, hide_index=True, use_container_width=True)
+
+    with tab_editor:
+        st.markdown(
+            "Enter sensor measurements directly as a valid JSON object. Numerical values are cross-checked."
+        )
+
+        ed_c1, ed_c2 = st.columns([1.5, 1.5])
+        with ed_c1:
+            raw_editor_text = st.text_area(
+                "Telemetry JSON Structure",
+                value=st.session_state.get("manual_json_text", DEFAULT_JSON_EXAMPLE),
+                height=150,
+                key="manual_json_input_widget",
+                help="Key-value JSON object containing sensor readings and units.",
+            )
+
+            btn_col1, btn_col2 = st.columns(2)
+            with btn_col1:
+                if st.button("↺ Load Standard Example", key="btn_load_ex"):
+                    st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
+                    st.rerun()
+            with btn_col2:
+                if st.button("🗑️ Clear Editor", key="btn_clear_ed"):
+                    st.session_state["manual_json_text"] = "{}"
+                    st.rerun()
+
+        with ed_c2:
+            # Live validation of manual JSON
+            json_valid = False
+            parsed_manual = {}
+            json_err = None
+            if raw_editor_text.strip():
+                try:
+                    parsed_manual = json.loads(raw_editor_text)
+                    if not isinstance(parsed_manual, dict):
+                        json_err = "JSON root must be an object (dictionary with curly braces {})."
+                    else:
+                        json_valid = True
+                except json.JSONDecodeError as exc:
+                    json_err = f"Syntax Error: {exc.msg} (line {exc.lineno}, col {exc.colno})"
+            else:
+                json_valid = True
+                parsed_manual = {}
+
+            if json_valid:
+                if parsed_manual:
+                    st.markdown(
+                        f"""
+                        <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 3px solid #10B981;
+                                    border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
+                            <span style="color: #34D399; font-weight: 700; font-size: 0.85rem;">✓ Valid JSON Structure</span>
+                            <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 2px;">
+                                Detected <b>{len(parsed_manual)}</b> sensor parameters ready for diagnostic evaluation.
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                    st.json(parsed_manual, expanded=False)
+                else:
+                    st.info("JSON editor is empty. Diagnosis will proceed using symptom matching only.")
+            else:
+                st.markdown(
+                    f"""
+                    <div style="background-color: #131F37; border: 1px solid #EF4444; border-left: 3px solid #EF4444;
+                                border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
+                        <span style="color: #F87171; font-weight: 700; font-size: 0.85rem;">🚨 JSON Syntax Invalid</span>
+                        <div style="font-size: 0.78rem; color: #FCA5A5; margin-top: 2px;">{json_err}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    # Determine consolidated telemetry to feed into diagnostic pipeline
+    # Preference: Uploaded file first, then manual editor if file is empty
+    if cached_upload:
+        active_telemetry = cached_upload
+        active_source = "Uploaded Log File"
+    elif json_valid and parsed_manual:
+        active_telemetry = parsed_manual
+        active_source = "Manual JSON Editor"
+    else:
+        active_telemetry = {}
+        active_source = "None (Symptom Matching Only)"
+
+    st.caption(f"Active Telemetry Source for Diagnosis: **{active_source}** ({len(active_telemetry)} readings).")
+
+    st.markdown("<hr style='margin: 16px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+
+    # =========================================================================
+    # Section 4: Run Diagnostic Investigation
+    # =========================================================================
+    st.markdown("### 4. Execute Diagnostic Pipeline")
+
+    run_submitted = st.button(
+        "⚡ Run Fault Isolation & Self-Verification Analysis",
+        type="primary",
+        use_container_width=True,
+        key="btn_run_diagnosis_main",
+    )
+
+    if run_submitted:
+        # Mandatory validation
         if not elevator_id.strip():
             st.error("Validation Error: Please specify the Elevator Unit Identifier.", icon="🚨")
             return
@@ -165,63 +542,54 @@ def render_new_investigation_page() -> None:
             st.error("Validation Error: At least one observed symptom must be provided.", icon="🚨")
             return
 
-        # Parse telemetry
-        telemetry: Dict[str, Any] = {}
-        if uploaded_telemetry is not None:
-            telemetry = parse_telemetry_file(uploaded_telemetry)
-            if telemetry:
-                st.info(f"Loaded **{len(telemetry)}** sensor readings from uploaded file `{uploaded_telemetry.name}`.")
-        elif telemetry_raw.strip():
-            try:
-                telemetry = json.loads(telemetry_raw)
-            except Exception as exc:
-                st.warning(f"Telemetry JSON syntax invalid ({exc}). Proceeding without telemetry.")
-                telemetry = {}
-
+        # Build formal diagnosis request
         request = DiagnosisRequest(
             elevator_id=elevator_id.strip(),
             building_id=building_id.strip() if building_id else None,
             subsystem=subsystem,
             fault_code=fault_code.strip() if fault_code else None,
             symptoms=symptoms,
-            telemetry=telemetry,
+            telemetry=active_telemetry,
             technician_notes=technician_notes.strip() if technician_notes else None,
         )
 
         engine = DiagnosisEngine(enable_verification=True)
+
         try:
-            with st.spinner("Retrieving evidence package, running diagnostic reasoning, and verifying grounding..."):
+            with st.spinner("Retrieving historical evidence, evaluating candidate causes, and executing verification loop..."):
                 result = engine.analyze(request)
 
-            # Persist active investigation ID in session state
+            # Persist session state
             st.session_state["current_investigation_id"] = result.investigation_id
             st.session_state["current_result"] = result
+            st.session_state["saved_elv_id"] = elevator_id.strip()
 
-            st.success(f"Investigation **{result.investigation_id}** completed and saved to persistent audit storage!")
+            st.success(
+                f"Diagnostic Session **{result.investigation_id}** completed and saved to persistent audit database!",
+                icon="✅",
+            )
 
-            # Quick summary header
-            c_score, c_suff, c_verif, c_btn = st.columns([1, 1, 1, 1.5])
+            # Executive Results Banner
+            verif_badge = "✅ Verified Grounded" if result.is_verified else "⚠️ Inconclusive Advisory"
+            c_score, c_verif, c_retry, c_cases = st.columns(4)
             with c_score:
                 st.metric("Advisory Confidence", f"{int(result.confidence_score * 100)}%")
-            with c_suff:
-                st.metric("Sufficiency", result.sufficiency_level.upper())
             with c_verif:
-                v_badge = "✅ Verified" if result.is_verified else "⏳ Inconclusive"
-                st.metric("Verification", v_badge, delta=f"Retries: {result.retry_count}")
-            with c_btn:
-                st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-                if st.button("👉 Open Full Report & Historical Citations", type="primary", use_container_width=True):
-                    st.session_state["nav_page"] = "results"
-                    st.rerun()
+                st.metric("Verification Status", verif_badge)
+            with c_retry:
+                st.metric("Verification Retries", f"{result.retry_count} / 2")
+            with c_cases:
+                st.metric("Matched Evidence Cases", str(len(result.matched_cases)))
 
-            # Primary hypothesis callout
+            # Primary Root Cause Card
             st.markdown(
                 f"""
-                <div style="background-color: #131F37; border-left: 4px solid #06B6D4; padding: 14px 18px; border-radius: 6px; margin: 12px 0;">
-                    <div style="font-size: 0.78rem; font-weight: 700; color: #38BDF8; text-transform: uppercase;">
-                        Synthesized Primary Root Cause
+                <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 4px solid #06B6D4;
+                            padding: 16px 20px; border-radius: 8px; margin: 16px 0;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.6px;">
+                        Synthesized Primary Root Cause Hypothesis
                     </div>
-                    <div style="font-size: 1.05rem; color: #F8FAFC; margin-top: 6px; font-weight: 600;">
+                    <div style="font-size: 1.15rem; color: #F8FAFC; margin-top: 6px; font-weight: 700; line-height: 1.4;">
                         {result.root_cause_hypothesis}
                     </div>
                 </div>
@@ -229,6 +597,16 @@ def render_new_investigation_page() -> None:
                 unsafe_allow_html=True,
             )
 
+            # Direct Navigation Actions
+            act_col1, act_col2 = st.columns(2)
+            with act_col1:
+                if st.button("👉 View Full Diagnostic Report & Verification Audit", key="btn_goto_res", type="primary", use_container_width=True):
+                    navigate_to("results", result.investigation_id)
+
+            with act_col2:
+                if st.button("💬 Consult Diagnostic Assistant with this Session", key="btn_goto_chat", type="secondary", use_container_width=True):
+                    navigate_to("assistant", result.investigation_id)
+
         except Exception as exc:
             logger.error("Diagnostic execution failed: %s", exc, exc_info=True)
-            st.error(f"Diagnostic Engine Error: {exc}. Please check system logs.", icon="🚨")
+            st.error(f"Diagnostic Pipeline Error: {exc}. Please check system logs.", icon="🚨")

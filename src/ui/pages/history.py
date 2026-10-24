@@ -1,17 +1,22 @@
-"""Investigation history page displaying past diagnosis sessions with filters, search, and export."""
+"""Investigation history page displaying past diagnosis sessions with filters, search, and direct PDF export."""
+
+from __future__ import annotations
 
 import json
 import streamlit as st
 
 from fault_sense.schema import SubsystemType
+from src.knowledge_base.manager import KnowledgeBaseManager
 from src.storage.repository import InvestigationRepository
+from src.ui.components.sidebar import navigate_to
+from src.utils.report_generator import DiagnosticReportGenerator
 
 
 def render_history_page() -> None:
     """Renders the historical audit log of technician diagnostic sessions with filters and export."""
-    st.markdown("## 📋 Investigation History & Audit Log")
     st.markdown(
-        "Search and review past elevator fault investigations, verification outcomes, evidence citations, and technician notes."
+        "Search and review past elevator fault investigations, verification outcomes, evidence citations, "
+        "and download authoritative engineering reports."
     )
 
     repo = InvestigationRepository()
@@ -20,8 +25,7 @@ def render_history_page() -> None:
     if not records:
         st.info("No investigation sessions recorded yet. Launch a diagnosis from **New Investigation**.", icon="ℹ️")
         if st.button("🚀 Start First Investigation", type="primary"):
-            st.session_state["nav_page"] = "new_investigation"
-            st.rerun()
+            navigate_to("new_investigation")
         return
 
     # Filters Row
@@ -31,6 +35,7 @@ def render_history_page() -> None:
             "Search investigations",
             value="",
             placeholder="Search by elevator ID, fault code, symptom, or root cause...",
+            key="hist_search_box",
         ).lower().strip()
 
     with f_col2:
@@ -39,22 +44,22 @@ def render_history_page() -> None:
             "Filter Subsystem",
             options=subsystem_options,
             format_func=lambda x: "All Subsystems" if x == "All Subsystems" else x.replace("_", " ").title(),
+            key="hist_sub_filter",
         )
 
     with f_col3:
         status_filter = st.selectbox(
             "Filter Status",
             options=["All Statuses", "Completed / Grounded", "Inconclusive", "Open"],
+            key="hist_status_filter",
         )
 
     # Apply filters
     filtered = []
     for r in records:
-        # Subsystem filter
         if sub_filter != "All Subsystems" and r.get("subsystem") != sub_filter:
             continue
 
-        # Status filter
         status = r.get("status", "open")
         if status_filter == "Completed / Grounded" and status != "completed":
             continue
@@ -63,7 +68,6 @@ def render_history_page() -> None:
         elif status_filter == "Open" and status != "open":
             continue
 
-        # Search keyword
         if search_kw:
             searchable_blob = (
                 f"{r.get('investigation_id', '')} "
@@ -84,6 +88,8 @@ def render_history_page() -> None:
         st.info("No investigations match your search and filter criteria.")
         return
 
+    kb_manager = KnowledgeBaseManager()
+
     # Render filtered records
     for rec in filtered:
         inv_id = rec.get("investigation_id", "Unknown")
@@ -99,7 +105,7 @@ def render_history_page() -> None:
         final_verdict = verif_rec.get("final_verdict", "sufficient" if status == "completed" else "inconclusive")
         is_verified = (final_verdict == "sufficient" or status == "completed")
         badge_color = "#34D399" if is_verified else "#F59E0B"
-        badge_text = "VERIFIED" if is_verified else "INCONCLUSIVE"
+        badge_text = "VERIFIED GROUNDED" if is_verified else "INCONCLUSIVE"
 
         header = f"**{inv_id}** — Elevator: `{elv_id}` [{sub}] | Confidence: {conf}% | {ts}"
 
@@ -114,7 +120,7 @@ def render_history_page() -> None:
             with c2:
                 st.markdown(f"**Building**: {rec.get('building_id') or 'N/A'}")
                 st.markdown(f"**Fault Code**: `{rec.get('fault_code') or 'None'}`")
-                st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● Verification: {badge_text}</span>", unsafe_allow_html=True)
+                st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● {badge_text}</span>", unsafe_allow_html=True)
                 st.caption(f"Verification Retries: {retries}")
                 if rec.get("technician_notes"):
                     st.markdown(f"**Field Notes**: {rec.get('technician_notes')}")
@@ -127,37 +133,37 @@ def render_history_page() -> None:
 
             st.markdown("<hr style='margin: 8px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
 
-            # Quick Action Buttons
-            btn_col1, btn_col2, btn_col3 = st.columns(3)
+            # Quick Action & Direct Download Buttons
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1.2, 1.2, 1.4, 1.2])
             with btn_col1:
                 if st.button("🎯 Open in Results", key=f"hist_open_{inv_id}", type="primary", use_container_width=True):
-                    st.session_state["current_investigation_id"] = inv_id
-                    st.session_state["nav_page"] = "results"
-                    st.rerun()
+                    navigate_to("results", inv_id)
             with btn_col2:
                 if st.button("💬 Ask in Assistant", key=f"hist_chat_{inv_id}", type="secondary", use_container_width=True):
-                    st.session_state["current_investigation_id"] = inv_id
-                    st.session_state["nav_page"] = "assistant"
-                    st.rerun()
+                    navigate_to("assistant", inv_id)
             with btn_col3:
-                # Markdown report export
-                report_md = f"""# FaultSense Diagnostic Report: {inv_id}
-Elevator: {elv_id} | Subsystem: {sub} | Code: {rec.get('fault_code')}
-Date: {ts} UTC | Verification: {badge_text} | Confidence: {conf}%
-
-Root Cause Hypothesis:
-{rec.get('root_cause_hypothesis', 'N/A')}
-
-Corrective Actions:
-{rec.get('recommended_actions', 'N/A')}
-
-Evidence Cases: {', '.join(matched_cases) if matched_cases else 'None'}
-"""
-                st.download_button(
-                    label="📄 Export Report (.md)",
-                    data=report_md,
-                    file_name=f"{inv_id}_report.md",
-                    mime="text/markdown",
-                    key=f"hist_dl_{inv_id}",
-                    use_container_width=True,
-                )
+                try:
+                    pdf_data = DiagnosticReportGenerator.generate_pdf(rec, kb_manager=kb_manager)
+                    st.download_button(
+                        label="📄 Download PDF Report",
+                        data=pdf_data,
+                        file_name=f"{inv_id}_FaultSense_Report.pdf",
+                        mime="application/pdf",
+                        key=f"hist_pdf_{inv_id}",
+                        use_container_width=True,
+                    )
+                except Exception as exc:
+                    st.caption(f"PDF generation error: {exc}")
+            with btn_col4:
+                try:
+                    json_data = DiagnosticReportGenerator.generate_json(rec, kb_manager=kb_manager)
+                    st.download_button(
+                        label="📦 Export JSON",
+                        data=json_data,
+                        file_name=f"{inv_id}_data.json",
+                        mime="application/json",
+                        key=f"hist_json_{inv_id}",
+                        use_container_width=True,
+                    )
+                except Exception:
+                    pass
