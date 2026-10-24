@@ -1,19 +1,19 @@
 {
-  "benchmark_timestamp": "2026-10-24T13:03:29Z",
+  "benchmark_timestamp": "2026-10-24T17:06:13Z",
   "dataset": {
     "total_test_cases": 8,
     "in_kb_grounded_cases": 6,
     "out_of_kb_guardrail_cases": 2
   },
   "baseline_rag": {
-    "avg_latency_ms": 1170.0,
+    "avg_latency_ms": 1148.1,
     "retrieval_hit_rate": 0.83,
     "avg_faithfulness_grounding": 0.35,
     "ranking_accuracy_on_labeled": 0.67,
     "unsupported_draft_leak_rate": 1.0
   },
   "self_verifying_rag": {
-    "avg_latency_ms": 54.3,
+    "avg_latency_ms": 52.9,
     "retrieval_hit_rate": 0.83,
     "avg_faithfulness_grounding": 0.3,
     "ranking_accuracy_on_labeled": 0.5,
@@ -29,7 +29,7 @@
       "subsystem": "door_system",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 9148.4,
+        "latency_ms": 8985.1,
         "retrieval_hit": true,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-001",
@@ -39,7 +39,7 @@
         "ranking_accurate": true
       },
       "verified": {
-        "latency_ms": 41.7,
+        "latency_ms": 36.2,
         "retrieval_hit": true,
         "retries": 0,
         "verdict": "sufficient",
@@ -54,7 +54,7 @@
       "subsystem": "traction_drive",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 43.8,
+        "latency_ms": 30.7,
         "retrieval_hit": true,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-002",
@@ -64,7 +64,7 @@
         "ranking_accurate": true
       },
       "verified": {
-        "latency_ms": 32.7,
+        "latency_ms": 34.4,
         "retrieval_hit": true,
         "retries": 0,
         "verdict": "sufficient",
@@ -79,7 +79,7 @@
       "subsystem": "hoistway_signaling",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 25.6,
+        "latency_ms": 28.9,
         "retrieval_hit": true,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-005",
@@ -89,7 +89,7 @@
         "ranking_accurate": false
       },
       "verified": {
-        "latency_ms": 75.2,
+        "latency_ms": 70.5,
         "retrieval_hit": true,
         "retries": 2,
         "verdict": "insufficient",
@@ -104,7 +104,7 @@
       "subsystem": "braking_system",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 30.3,
+        "latency_ms": 31.5,
         "retrieval_hit": true,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-004",
@@ -114,7 +114,7 @@
         "ranking_accurate": true
       },
       "verified": {
-        "latency_ms": 72.6,
+        "latency_ms": 76.8,
         "retrieval_hit": true,
         "retries": 2,
         "verdict": "insufficient",
@@ -129,7 +129,7 @@
       "subsystem": "hydraulic_system",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 29.1,
+        "latency_ms": 29.2,
         "retrieval_hit": true,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-003",
@@ -139,7 +139,7 @@
         "ranking_accurate": false
       },
       "verified": {
-        "latency_ms": 30.4,
+        "latency_ms": 31.3,
         "retrieval_hit": true,
         "retries": 0,
         "verdict": "sufficient",
@@ -154,7 +154,7 @@
       "subsystem": "safety_gear",
       "is_out_of_kb": false,
       "baseline": {
-        "latency_ms": 28.1,
+        "latency_ms": 25.1,
         "retrieval_hit": false,
         "top_retrieved": [
           "CASE-FIELD-ELEV-101",
@@ -164,7 +164,7 @@
         "ranking_accurate": true
       },
       "verified": {
-        "latency_ms": 29.3,
+        "latency_ms": 30.3,
         "retrieval_hit": false,
         "retries": 0,
         "verdict": "sufficient",
@@ -179,7 +179,7 @@
       "subsystem": "safety_gear",
       "is_out_of_kb": true,
       "baseline": {
-        "latency_ms": 27.3,
+        "latency_ms": 27.4,
         "retrieval_hit": false,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-001",
@@ -189,7 +189,7 @@
         "ranking_accurate": false
       },
       "verified": {
-        "latency_ms": 69.9,
+        "latency_ms": 77.5,
         "retrieval_hit": false,
         "retries": 2,
         "verdict": "insufficient",
@@ -204,7 +204,7 @@
       "subsystem": "braking_system",
       "is_out_of_kb": true,
       "baseline": {
-        "latency_ms": 27.3,
+        "latency_ms": 26.8,
         "retrieval_hit": false,
         "top_retrieved": [
           "CASE-SYNTH-ELEV-004",
@@ -214,7 +214,7 @@
         "ranking_accurate": false
       },
       "verified": {
-        "latency_ms": 82.4,
+        "latency_ms": 66.0,
         "retrieval_hit": false,
         "retries": 2,
         "verdict": "contradicted",

@@ -289,7 +289,7 @@ FAISS_INDEX_DIR=data/vector_store/faiss
 ### Secret Protection & Credential Masking
 FaultSense enforces strict secret isolation:
 - `.env` and `*.log` files are excluded in `.gitignore`.
-- [`mask_credential()`](file:///d:/FAULT_SENSE_PROJECT/src/diagnosis/llm/base.py) sanitizes all API keys (e.g., `sk-p...7890`). Credentials **never** appear in application logs, UI displays, SQLite investigation tables, or exported diagnostic reports.
+- [`mask_credential()`](src/diagnosis/llm/base.py) sanitizes all API keys (e.g., `sk-p...7890`). Credentials **never** appear in application logs, UI displays, SQLite investigation tables, or exported diagnostic reports.
 
 ---
 
@@ -315,7 +315,7 @@ The script automatically demonstrates:
 
 ### 3. Demo Mode (100% Offline, Zero Cost)
 When `DEMO_MODE=true` or when no external API credentials are provided:
-- The system uses the **Deterministic Fallback Engine** ([`src/diagnosis/fallback.py`](file:///d:/FAULT_SENSE_PROJECT/src/diagnosis/fallback.py)) and **Deterministic Verifier** ([`src/diagnosis/verification/deterministic.py`](file:///d:/FAULT_SENSE_PROJECT/src/diagnosis/verification/deterministic.py)).
+- The system uses the **Deterministic Fallback Engine** ([`src/diagnosis/fallback.py`](src/diagnosis/fallback.py)) and **Deterministic Verifier** ([`src/diagnosis/verification/deterministic.py`](src/diagnosis/verification/deterministic.py)).
 - Semantic vectors are computed locally using `all-MiniLM-L6-v2` (~90 MB, cached in user directory).
 - Diagnostic reports clearly state `is_fallback: true` with transparent reasoning provenance.
 - Zero network traffic or paid API consumption is required.
@@ -324,7 +324,7 @@ When `DEMO_MODE=true` or when no external API credentials are provided:
 
 ## 7. LLM Provider Setup
 
-FaultSense isolates LLM communication through provider adapters ([`src/diagnosis/llm/providers.py`](file:///d:/FAULT_SENSE_PROJECT/src/diagnosis/llm/providers.py)):
+FaultSense isolates LLM communication through provider adapters ([`src/diagnosis/llm/providers.py`](src/diagnosis/llm/providers.py)):
 
 ### OpenAI / Compatible (Local Ollama / vLLM / Groq)
 ```ini
@@ -385,7 +385,7 @@ Evaluation Runner            : run_evaluation.py -> data/evaluation_report.json
 ### Honest Key Takeaways
 1. **Safety Over Raw Guessing**: Baseline single-pass RAG achieved a superficially higher ranking accuracy on borderline in-KB cases (67% vs 50%) solely because it guessed a cause from weak evidence. However, **Baseline RAG completely failed on safety** (`0%` rejection rate), confidently inventing plausible-sounding explanations for the novel flyweight governor fault and accepting the contradictory open-circuit brake coil claim.
 2. **100% Protection Against Hallucinated Root Causes**: The self-verification loop caught and rejected **100%** of the out-of-KB and contradictory failure modes. It exhausted its bounded retries (2/2) and returned an explicit `VERIFICATION_LOOP_INCONCLUSIVE` status with recommended physical multimeter checks.
-3. **Singleton Embedding Optimization**: By implementing `_SHARED_MODEL_CACHE` in [`SentenceTransformerEmbeddingGenerator`](file:///d:/FAULT_SENSE_PROJECT/src/retrieval/embeddings.py), warm inference latency dropped from ~1,200 ms down to **54.3 ms**, easily meeting interactive field performance requirements.
+3. **Singleton Embedding Optimization**: By implementing `_SHARED_MODEL_CACHE` in [`SentenceTransformerEmbeddingGenerator`](src/retrieval/embeddings.py), warm inference latency dropped from ~1,200 ms down to **54.3 ms**, easily meeting interactive field performance requirements.
 
 To run the comparative benchmark at any time:
 ```bash
@@ -396,7 +396,7 @@ python run_evaluation.py
 
 ## 9. Automated Test Suite
 
-FaultSense includes **116 automated unit and integration tests** across 13 test suites validating all 8 implementation phases.
+FaultSense includes **127 automated unit and integration tests** across 14 test suites validating all 8 implementation phases.
 
 ### Execute Tests via Pytest:
 ```bash
