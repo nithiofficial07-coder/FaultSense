@@ -38,7 +38,7 @@ def navigate_to(page_id: str, investigation_id: Optional[str] = None) -> None:
 def render_subsystem_status(settings) -> None:
     """Renders real-time subsystem status panel with pulsing animated indicators."""
     st.markdown(
-        "<div class='fs-nav-heading'>Subsystem Status</div>",
+        "<div class='fs-nav-heading' style='padding: 6px 14px 4px 14px; margin-top: 10px; margin-bottom: 6px;'>SUBSYSTEM STATUS</div>",
         unsafe_allow_html=True,
     )
 
@@ -268,7 +268,7 @@ def render_sidebar() -> str:
 
         # 2. Main Navigation Items (Clean, precision-aligned hierarchy matching Screenshot 2)
         st.markdown(
-            "<div class='fs-nav-heading'>NAVIGATION</div>",
+            "<div class='fs-nav-heading' style='padding: 6px 14px 4px 14px; margin-top: 6px; margin-bottom: 6px;'>NAVIGATION</div>",
             unsafe_allow_html=True,
         )
 

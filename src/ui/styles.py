@@ -129,20 +129,35 @@ def apply_custom_styles() -> None:
             }
 
             /* Sidebar compact vertical spacing with guaranteed clearance */
-            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
-                margin-bottom: 0.12rem !important;
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="stElementContainer"],
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="element-container"],
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div.stElementContainer {
+                margin-bottom: 0 !important;
                 min-height: auto !important;
                 overflow: visible !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-                gap: 0.22rem !important;
-            }
-            section[data-testid="stSidebar"] div[data-testid="stButton"] {
-                margin-bottom: 7px !important;
-                margin-top: 0 !important;
+                gap: 0.3rem !important;
             }
 
-            /* Navigation section heading: padded box aligned with navigation content */
+            /* Cancel Streamlit default negative bottom margin on markdown containers in sidebar */
+            section[data-testid="stSidebar"] div[data-testid="stMarkdownContainer"],
+            section[data-testid="stSidebar"] div.stMarkdownContainer,
+            section[data-testid="stSidebar"] div[data-testid="stMarkdown"] {
+                margin-bottom: 0 !important;
+            }
+
+            /* Navigation headings guaranteed clearance and alignment */
+            section[data-testid="stSidebar"] div[data-testid="stElementContainer"]:has(.fs-nav-heading),
+            section[data-testid="stSidebar"] div.stElementContainer:has(.fs-nav-heading),
+            section[data-testid="stSidebar"] div[data-testid="element-container"]:has(.fs-nav-heading) {
+                margin-top: 10px !important;
+                margin-bottom: 6px !important;
+                min-height: 24px !important;
+                display: block !important;
+                overflow: visible !important;
+            }
+
             .fs-nav-heading {
                 display: block !important;
                 width: 100% !important;
@@ -151,11 +166,17 @@ def apply_custom_styles() -> None:
                 font-weight: 700 !important;
                 color: #64748B !important;
                 letter-spacing: 0.08em !important;
-                padding: 10px 14px 6px 14px !important;
-                margin: 0 !important;
+                padding: 4px 14px 2px 14px !important;
+                margin: 0 0 4px 0 !important;
                 line-height: 1.4 !important;
                 box-sizing: border-box !important;
                 clear: both !important;
+            }
+
+            /* Button spacing within sidebar */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] {
+                margin-bottom: 7px !important;
+                margin-top: 0 !important;
             }
 
             /* Explicit cursor: pointer on sidebar navigation buttons and all child nodes */
