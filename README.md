@@ -5,7 +5,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B.svg?logo=Streamlit)](https://streamlit.io/)
 [![FAISS CPU](https://img.shields.io/badge/FAISS-CPU-green.svg)](https://github.com/facebookresearch/faiss)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/tests-139%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-145%20passed-brightgreen.svg)]()
 
 > **Elevator Technician Decision-Support Application**  
 > **Repository:** [https://github.com/nithiofficial07-coder/FaultSense](https://github.com/nithiofficial07-coder/FaultSense)  
@@ -48,8 +48,8 @@ FaultSense accelerates elevator troubleshooting by analyzing operational symptom
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        Streamlit Technician UI                         │
-│   Overview | New Investigation | Diagnostic Results | Assistant        │
-│   Knowledge Base & Search | History Audit | Evaluation | Settings      │
+│   Overview | New Investigation | Diagnostic Results | Diagnostic Report│
+│   Conversational Assistant | Knowledge Base | History | Settings       │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                                     ▼
@@ -93,8 +93,33 @@ FaultSense accelerates elevator troubleshooting by analyzing operational symptom
 │  - Signal Preprocessor: NumPy & Pandas telemetry normalization         │
 │  - SQLite Repositories: fault_cases (relational + FTS5)                │
 │  - SQLite Audit Trail: investigations (audit logs & verification steps)│
+│  - Publication PDF Engine: ReportLab 14-section ASME A17.1 report      │
 └────────────────────────────────────────────────────────────────────────┘
 ```
+
+### 4-Step Professional Field Workflow
+FaultSense implements a structured end-to-end decision-support lifecycle:
+1. **Step 1: Submit Problem (`New Investigation`)** — Capture equipment metadata, building series, observed symptoms, diagnostic trouble code (DTC), subsystem, and optional CSV/JSON telemetry uploads or manual sensor inputs with pre-submission validation.
+2. **Step 2: Analyze & Verify Evidence (`Diagnostic Results`)** — Hybrid retrieval queries FAISS dense vectors and SQLite FTS5 lexical indices. The Agentic Self-Verification Loop audits candidate hypotheses, cross-checks electrical sensor telemetry, filters citations, and presents a 12-factor diagnostic dossier.
+3. **Step 3: Generate Technical PDF Report (`Diagnostic Report`)** — Compiles the comprehensive 14-section publication-grade report with repeated table headers, two-pass `Page X of Y` numbering, color-coded severity callouts, and safety disclaimers adhering to ASME A17.1 elevator safety codes.
+4. **Step 4: Download & Technician Review (`Review Sign-Off`)** — Direct one-click PDF and structured JSON download buttons. Includes an interactive Field Technician Review and Sign-Off block where technicians record their name, license ID, physical findings, and review status (`approved`, `inconclusive`, `escalated`), persisted directly into the SQLite audit table.
+
+### ASME A17.1 Compliant 14-Section PDF Structure
+The ReportLab PDF engine compiles an exhaustive 14-section diagnostic deliverable:
+1. **Header Block & Document Metadata** (Document control, ISO 8601 timestamps, investigation ID).
+2. **Executive Summary & Verification Status** (High-level findings and confidence score).
+3. **Equipment & Site Information** (Elevator series, building ID, machine room, controller).
+4. **Problem Description & Observed Symptoms** (Reported fault narrative and observed indicators).
+5. **Operational Telemetry & Sensor Readings** (Tabular electrical and mechanical metrics with safety ranges).
+6. **Subsystem Analysis & DTC Interpretation** (Coupling analysis and OEM trouble code definitions).
+7. **Identified Candidate Causes & Ranking** (Confidence breakdown, ranking rationale, and risk tier).
+8. **Primary Root Cause Hypothesis** (Deep engineering analysis of the primary failure mode).
+9. **Evidence Grounding & Retrieved Reference Cases** (Historical OEM case citations with similarity scores).
+10. **Agentic Self-Verification Audit Trail** (Iteration count, claim status, and telemetry verification).
+11. **Step-by-Step Troubleshooting & Safety Plan** (PPE requirements, LOTO procedures, actionable tasks).
+12. **Preventive Maintenance Recommendations** (Long-term service life actions and component inspections).
+13. **Technician Review & Field Sign-Off** (Interactive or printable signature block for certified technicians).
+14. **Regulatory Disclaimers & Safety Standards** (ASME A17.1 / CSA B44 advisory decision-support notices).
 
 ---
 
@@ -108,9 +133,10 @@ FaultSense accelerates elevator troubleshooting by analyzing operational symptom
 | **Embeddings** | Sentence-Transformers | `>= 3.0.0` | `all-MiniLM-L6-v2` 384-dimensional dense vectors |
 | **Relational & Search** | SQLite 3 | `Standard Library` | ACID storage, FTS5 lexical BM25 search, audit logs |
 | **Data Processing** | Pandas & NumPy | `>= 2.2.0`, `>= 1.26.0` | Telemetry signal normalization & tabular parsing |
+| **PDF Reporting** | ReportLab | `>= 4.0.0` (v5.1.0) | Publication-grade 14-section engineering report generator |
 | **LLM Integration** | LangChain / HTTP Adapters | `>= 0.2.0` | Configurable OpenAI, Gemini, Anthropic interfaces |
 | **Configuration** | python-dotenv | `>= 1.0.0` | Environment variables & secret isolation |
-| **Testing & Evaluation**| Pytest & Unittest | `>= 8.0.0` | 116 automated unit, integration, and safety tests |
+| **Testing & Evaluation**| Pytest & Unittest | `>= 8.0.0` | 145 automated unit, integration, and safety tests |
 
 ---
 
@@ -122,7 +148,7 @@ FAULT_SENSE_PROJECT/
 ├── demo_e2e.py                    # Complete Phase 8 CLI end-to-end interactive demo
 ├── demo_retrieval.py              # Phase 4 CLI standalone retrieval demonstration
 ├── run_evaluation.py              # Phase 8 comparative benchmark runner (Baseline vs Verified)
-├── run_tests.py                   # Automated test runner (116 tests across 13 suites)
+├── run_tests.py                   # Automated test runner (145 tests across 15 suites)
 ├── config/
 │   ├── __init__.py
 │   └── settings.py                # Environment configuration, validation & secret masking
@@ -148,6 +174,7 @@ FAULT_SENSE_PROJECT/
 │   │   └── vector_store.py        # FAISS IndexFlatIP + secure UTF-8 JSON metadata mapping
 │   ├── diagnosis/                 # Phase 5, 6 & 7: Engine, verifier, assistant & adapters
 │   │   ├── assistant.py           # Investigation-scoped conversational assistant service
+│   │   ├── diagnostic_enricher.py # 12-factor enriched technical diagnostic dossier generator
 │   │   ├── engine.py              # Diagnostic orchestrator (retrieval -> LLM -> loop -> DB)
 │   │   ├── fallback.py            # Transparent offline deterministic diagnostic engine
 │   │   ├── prompt_builder.py      # Untrusted data isolation & epistemic separation rules
@@ -170,8 +197,10 @@ FAULT_SENSE_PROJECT/
 │   │   └── metrics.py
 │   ├── ui/                        # Phase 7: Streamlit Technician-Facing Pages
 │   │   ├── components/            # Header, sidebar, metric cards, status badges
-│   │   └── pages/                 # Overview, Investigation, KB, History, Eval, Settings
-│   └── utils/                     # Logging, exceptions, and automated health checks
+│   │   └── pages/                 # Overview, Investigation, Results, Report, KB, History, Eval, Settings
+│   │       └── diagnostic_report.py # Dedicated Step 4 publication report & sign-off page
+│   └── utils/                     # Logging, exceptions, health checks & ReportLab PDF generator
+│       └── report_generator.py    # ASME A17.1 compliant 14-section ReportLab PDF builder
 ├── data/
 │   ├── sample_fault_cases.json    # Initial 12 benchmark cases (synthetic & verified field logs)
 │   ├── sample_fault_cases.csv     # Tabular CSV representation for import validation
@@ -396,13 +425,13 @@ python run_evaluation.py
 
 ## 9. Automated Test Suite
 
-FaultSense includes **139 automated unit and integration tests** across 15 test suites validating all implementation phases, UI navigation, telemetry uploads, and PDF generation.
+FaultSense includes **145 automated unit and integration tests** across 15 test suites validating all implementation phases, UI navigation, telemetry uploads, technician review persistence, and 14-section ReportLab PDF generation.
 
 ### Execute Tests via Pytest:
 ```bash
 pytest
 ```
-*Output: `139 passed in 12.18s`*
+*Output: `145 passed in 7.97s`*
 
 ### Execute Tests via Standalone Runner:
 ```bash
@@ -413,7 +442,7 @@ python run_tests.py
 
 | Test Suite | File | Tests | Validated Capabilities |
 | :--- | :--- | :---: | :--- |
-| **UI Telemetry & PDF Reports** | `test_ui_and_reports.py` | 12 | CSV/JSON telemetry uploads, malformed JSON recovery, DiagnosticEnricher 18-point dossier, ReportLab PDF generation, JSON export |
+| **UI Telemetry, PDF Reports & Review** | `test_ui_and_reports.py` | 18 | CSV/JSON telemetry uploads, malformed JSON recovery, 14-section ReportLab PDF generation, technician review SQLite persistence, live sign-off block |
 | **Master Audit Scenarios (A–K)** | `test_audit_scenarios.py` | 11 | End-to-end audit: standard diagnosis, CSV/JSON telemetry, ungrounded rejections, retry bounding, provider fallback, persistence, KB updates, UI workflow |
 | **Phase 8: Robustness & Security** | `test_phase8_robustness.py` | 5 | Credential sanitization, synthetic case flagging, LLM timeout fallback, malformed JSON recovery, bounded retries on novel faults |
 | **Phase 6: Verification Loop** | `test_verification_loop.py` | 7 | Step 1 finalization, re-retrieval query expansion, anti-cycling guard, inconclusive exit, SQLite audit trail persistence |
@@ -423,7 +452,7 @@ python run_tests.py
 | **Phase 2: Relational DB & FTS5**| `test_repository.py` | 9 | SQLite schema initialization, case CRUD, FTS5 full-text search, investigation history queries |
 | **Phase 1: Ingestion & Schema** | `test_ingestion.py`, `test_schema.py`, `test_preprocessor.py` | 33 | CSV/JSON parsing, duplicate rejection, telemetry normalization, provenance enforcement |
 | **Configuration & Health Probes**| `test_config.py`, `test_health.py`, `test_smoke.py`, `test_ui_and_assistant.py`, `test_indexing_interface.py` | 25 | Secret masking, system health diagnostics, end-to-end startup verification |
-| **TOTAL** | **15 Suites** | **139** | **139 Passed, 0 Failed, 0 Skipped, 0 Errors** |
+| **TOTAL** | **15 Suites** | **145** | **145 Passed, 0 Failed, 0 Skipped, 0 Errors** |
 
 ---
 
