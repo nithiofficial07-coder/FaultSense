@@ -5,7 +5,7 @@
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B.svg?logo=Streamlit)](https://streamlit.io/)
 [![FAISS CPU](https://img.shields.io/badge/FAISS-CPU-green.svg)](https://github.com/facebookresearch/faiss)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/tests-145%20passed-brightgreen.svg)]()
+[![Tests Passing](https://img.shields.io/badge/tests-146%20passed-brightgreen.svg)]()
 
 > **Elevator Technician Decision-Support Application**  
 > **Repository:** [https://github.com/nithiofficial07-coder/FaultSense](https://github.com/nithiofficial07-coder/FaultSense)  
@@ -425,13 +425,13 @@ python run_evaluation.py
 
 ## 9. Automated Test Suite
 
-FaultSense includes **145 automated unit and integration tests** across 15 test suites validating all implementation phases, UI navigation, telemetry uploads, technician review persistence, and 14-section ReportLab PDF generation.
+FaultSense includes **146 automated unit and integration tests** across 15 test suites validating all implementation phases, UI navigation, telemetry uploads, technician review persistence, and 14-section ReportLab PDF generation.
 
 ### Execute Tests via Pytest:
 ```bash
 pytest
 ```
-*Output: `145 passed in 7.97s`*
+*Output: `146 passed in 10.05s`*
 
 ### Execute Tests via Standalone Runner:
 ```bash
@@ -442,7 +442,7 @@ python run_tests.py
 
 | Test Suite | File | Tests | Validated Capabilities |
 | :--- | :--- | :---: | :--- |
-| **UI Telemetry, PDF Reports & Review** | `test_ui_and_reports.py` | 18 | CSV/JSON telemetry uploads, malformed JSON recovery, 14-section ReportLab PDF generation, technician review SQLite persistence, live sign-off block |
+| **UI Telemetry, PDF Reports & Review** | `test_ui_and_reports.py` | 19 | CSV/JSON telemetry uploads, malformed JSON recovery, 14-section ReportLab PDF generation, technician review SQLite persistence, live sign-off block, widget argument validation |
 | **Master Audit Scenarios (A–K)** | `test_audit_scenarios.py` | 11 | End-to-end audit: standard diagnosis, CSV/JSON telemetry, ungrounded rejections, retry bounding, provider fallback, persistence, KB updates, UI workflow |
 | **Phase 8: Robustness & Security** | `test_phase8_robustness.py` | 5 | Credential sanitization, synthetic case flagging, LLM timeout fallback, malformed JSON recovery, bounded retries on novel faults |
 | **Phase 6: Verification Loop** | `test_verification_loop.py` | 7 | Step 1 finalization, re-retrieval query expansion, anti-cycling guard, inconclusive exit, SQLite audit trail persistence |
@@ -452,7 +452,7 @@ python run_tests.py
 | **Phase 2: Relational DB & FTS5**| `test_repository.py` | 9 | SQLite schema initialization, case CRUD, FTS5 full-text search, investigation history queries |
 | **Phase 1: Ingestion & Schema** | `test_ingestion.py`, `test_schema.py`, `test_preprocessor.py` | 33 | CSV/JSON parsing, duplicate rejection, telemetry normalization, provenance enforcement |
 | **Configuration & Health Probes**| `test_config.py`, `test_health.py`, `test_smoke.py`, `test_ui_and_assistant.py`, `test_indexing_interface.py` | 25 | Secret masking, system health diagnostics, end-to-end startup verification |
-| **TOTAL** | **15 Suites** | **145** | **145 Passed, 0 Failed, 0 Skipped, 0 Errors** |
+| **TOTAL** | **15 Suites** | **146** | **146 Passed, 0 Failed, 0 Skipped, 0 Errors** |
 
 ---
 

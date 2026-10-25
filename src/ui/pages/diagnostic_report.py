@@ -302,7 +302,7 @@ def render_diagnostic_report_page() -> None:
         technician_notes = st.text_area(
             "Technician Jobsite Field Notes & Measurement Findings",
             value=prev_notes,
-            rows=4,
+            height=110,
             placeholder="Record exact multimeter voltage drops, feeler gauge gaps, cleaning actions taken, and return-to-service observations...",
         )
 

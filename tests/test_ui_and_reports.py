@@ -381,6 +381,35 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         nav_ids = [item[0] for item in NAV_ITEMS]
         self.assertIn("report", nav_ids)
 
+    def test_st_text_area_parameters_are_valid(self):
+        """Ensures that no UI file passes unsupported arguments like 'rows' to st.text_area."""
+        import ast
+        import os
+
+        ui_dir = os.path.join(os.path.dirname(__file__), "..", "src", "ui")
+        for root, _, files in os.walk(ui_dir):
+            for file in files:
+                if file.endswith(".py"):
+                    full_path = os.path.join(root, file)
+                    with open(full_path, "r", encoding="utf-8") as f:
+                        tree = ast.parse(f.read(), filename=full_path)
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Call):
+                            # Check for st.text_area or text_area calls
+                            is_text_area = False
+                            if isinstance(node.func, ast.Attribute) and node.func.attr == "text_area":
+                                is_text_area = True
+                            elif isinstance(node.func, ast.Name) and node.func.id == "text_area":
+                                is_text_area = True
+
+                            if is_text_area:
+                                kwarg_names = [kw.arg for kw in node.keywords if kw.arg is not None]
+                                self.assertNotIn(
+                                    "rows",
+                                    kwarg_names,
+                                    f"File {file} uses unsupported 'rows' kwarg in st.text_area! Use 'height' instead.",
+                                )
+
 
 if __name__ == "__main__":
     unittest.main()
