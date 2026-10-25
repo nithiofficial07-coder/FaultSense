@@ -262,13 +262,13 @@ def render_sidebar() -> str:
     with st.sidebar:
         # 1. Compact Custom SVG Branding
         st.markdown(
-            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #DFE7F1; margin-bottom: 12px; text-align: center;">{get_logo_html(width=196, height=44, show_text=True, dark_mode=False)}</div>',
+            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #DCE5F1; margin-bottom: 12px; text-align: center;">{get_logo_html(width=196, height=44, show_text=True, dark_mode=False)}</div>',
             unsafe_allow_html=True,
         )
 
-        # 2. Main Navigation Items (Clean, precision-aligned hierarchy)
+        # 2. Main Navigation Items (Clean, precision-aligned hierarchy matching Screenshot 2)
         st.markdown(
-            "<div class='fs-nav-heading'>Navigation</div>",
+            "<div class='fs-nav-heading'>NAVIGATION</div>",
             unsafe_allow_html=True,
         )
 
@@ -288,7 +288,7 @@ def render_sidebar() -> str:
         # Inject non-intrusive application-wide custom cursor pointer script
         render_cursor_pointer_script()
 
-        st.markdown("<hr style='border: 0; border-top: 1px solid #DFE7F1; margin: 10px 0 10px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 0; border-top: 1px solid #DCE5F1; margin: 10px 0 10px 0;'>", unsafe_allow_html=True)
 
         # 3. Active Session Quick-Access Card
         active_inv = st.session_state.get("current_investigation_id")

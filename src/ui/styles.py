@@ -29,16 +29,16 @@ def apply_custom_styles() -> None:
             /* Design Tokens */
             :root {
                 --fs-bg-main: #F6F8FB;
-                --fs-bg-sidebar: #F4F7FC;
+                --fs-bg-sidebar: #F5F8FD;
                 --fs-bg-card: #FFFFFF;
                 --fs-text-primary: #27364B;
-                --fs-text-secondary: #718096;
+                --fs-text-secondary: #64748B;
                 --fs-accent-primary: #4169A8;
                 --fs-accent-hover: #34558B;
                 --fs-accent-subtle: #EAF1FA;
-                --fs-border-subtle: #DFE7F1;
-                --fs-bg-hover: #EDF3FC;
-                --fs-nav-active: #E4EDFA;
+                --fs-border-subtle: #DCE5F1;
+                --fs-bg-hover: #EFF4FB;
+                --fs-nav-active: #E6EEFA;
                 --fs-success: #3F7D62;
                 --fs-success-bg: #EFF7F2;
                 --fs-success-border: #C6E2D3;
@@ -116,8 +116,8 @@ def apply_custom_styles() -> None:
 
             /* Sidebar container */
             section[data-testid="stSidebar"] {
-                background-color: #F4F7FC !important;
-                border-right: 1px solid #DFE7F1 !important;
+                background-color: #F5F8FD !important;
+                border-right: 1px solid #DCE5F1 !important;
             }
             section[data-testid="stSidebar"] > div,
             section[data-testid="stSidebar"] div[data-testid="stSidebarUserContent"] {
@@ -125,7 +125,7 @@ def apply_custom_styles() -> None:
                 padding-bottom: 1.5rem !important;
                 padding-left: 0.85rem !important;
                 padding-right: 0.85rem !important;
-                background-color: #F4F7FC !important;
+                background-color: #F5F8FD !important;
             }
 
             /* Sidebar compact vertical spacing with guaranteed clearance */
@@ -138,20 +138,20 @@ def apply_custom_styles() -> None:
                 gap: 0.22rem !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stButton"] {
-                margin-bottom: 6px !important;
+                margin-bottom: 7px !important;
                 margin-top: 0 !important;
             }
 
-            /* Navigation section heading: padded box, immune to margin collapse or overlapping */
+            /* Navigation section heading: padded box aligned with navigation content */
             .fs-nav-heading {
                 display: block !important;
                 width: 100% !important;
                 font-size: 0.72rem !important;
                 text-transform: uppercase !important;
                 font-weight: 700 !important;
-                color: #718096 !important;
+                color: #64748B !important;
                 letter-spacing: 0.08em !important;
-                padding: 12px 14px 6px 14px !important;
+                padding: 10px 14px 6px 14px !important;
                 margin: 0 !important;
                 line-height: 1.4 !important;
                 box-sizing: border-box !important;
@@ -192,12 +192,12 @@ def apply_custom_styles() -> None:
                 margin: 0 !important;
                 box-sizing: border-box !important;
                 background-color: #FFFFFF !important;
-                border: 1px solid #DFE7F1 !important;
+                border: 1px solid #DCE5F1 !important;
                 border-radius: 10px !important;
                 color: #27364B !important;
                 font-weight: 500 !important;
                 font-size: 0.88rem !important;
-                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.04) !important;
+                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.03) !important;
                 transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
                 position: relative !important;
                 overflow: hidden !important;
@@ -221,11 +221,11 @@ def apply_custom_styles() -> None:
 
             /* Navigation button hover state with smooth micro-interaction */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
-                background-color: #EDF3FC !important;
+                background-color: #EFF4FB !important;
                 border-color: #CBDDF5 !important;
                 color: #4169A8 !important;
-                transform: translateX(3px) !important;
-                box-shadow: 0 3px 8px rgba(65, 105, 168, 0.12) !important;
+                transform: translateX(2px) !important;
+                box-shadow: 0 2px 6px rgba(65, 105, 168, 0.08) !important;
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover::before {
@@ -237,7 +237,7 @@ def apply_custom_styles() -> None:
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span.material-symbols-rounded {
                 color: #4169A8 !important;
-                transform: scale(1.1) !important;
+                transform: scale(1.08) !important;
                 transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease !important;
             }
 
@@ -247,13 +247,13 @@ def apply_custom_styles() -> None:
                     box-shadow: 0 1px 3px rgba(65, 105, 168, 0.1);
                 }
                 50% {
-                    box-shadow: 0 2px 7px rgba(65, 105, 168, 0.22);
+                    box-shadow: 0 2px 7px rgba(65, 105, 168, 0.2);
                 }
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
-                background-color: #E4EDFA !important;
-                border: 1px solid #C2D7F2 !important;
+                background-color: #E6EEFA !important;
+                border: 1px solid #C4D7F0 !important;
                 color: #27364B !important;
                 font-weight: 600 !important;
                 animation: fs-active-pulse 3.5s ease-in-out infinite !important;
@@ -276,8 +276,8 @@ def apply_custom_styles() -> None:
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover {
-                background-color: #DBE7F8 !important;
-                border-color: #B5CEF0 !important;
+                background-color: #DEE9F8 !important;
+                border-color: #B8D2F4 !important;
                 color: #27364B !important;
                 transform: none !important;
             }
@@ -336,7 +336,7 @@ def apply_custom_styles() -> None:
                 margin-right: 12px !important;
                 margin-left: 0 !important;
                 flex-shrink: 0 !important;
-                color: #718096 !important;
+                color: #64748B !important;
                 transition: color 160ms ease !important;
                 vertical-align: middle !important;
             }
@@ -364,7 +364,7 @@ def apply_custom_styles() -> None:
                 margin-right: 4px !important;
             }
 
-            /* Refined Micro Pointer & Global Custom Cursor (16px outer ring, 4px inner dot) */
+            /* Refined Cursor Indicator (matching Screenshot 2: soft translucent blue lens on hover) */
             #fs-global-cursor,
             #fs-sidebar-pointer {
                 position: fixed !important;
@@ -373,30 +373,15 @@ def apply_custom_styles() -> None:
                 width: 16px !important;
                 height: 16px !important;
                 border-radius: 50% !important;
-                background: rgba(139, 173, 232, 0.15) !important;
-                border: 1.5px solid rgba(65, 105, 168, 0.6) !important;
+                background: rgba(139, 173, 232, 0.28) !important;
+                border: 1.5px solid #8BADE8 !important;
                 pointer-events: none !important;
                 z-index: 999999 !important;
                 opacity: 0;
-                transform: translate(-50%, -50%) scale(0.6);
+                transform: translate(-50%, -50%) scale(0.7);
                 transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease;
-                box-shadow: 0 0 4px rgba(65, 105, 168, 0.15) !important;
+                box-shadow: 0 0 6px rgba(139, 173, 232, 0.35) !important;
                 will-change: left, top, transform;
-            }
-
-            #fs-global-cursor::after,
-            #fs-sidebar-pointer::after {
-                content: '' !important;
-                position: absolute !important;
-                left: 50% !important;
-                top: 50% !important;
-                width: 4px !important;
-                height: 4px !important;
-                margin-left: -2px !important;
-                margin-top: -2px !important;
-                border-radius: 50% !important;
-                background-color: #4169A8 !important;
-                transition: transform 0.15s ease, background-color 0.15s ease !important;
             }
 
             #fs-global-cursor.fs-cursor-visible,
@@ -407,16 +392,10 @@ def apply_custom_styles() -> None:
 
             #fs-global-cursor.fs-cursor-hover,
             #fs-sidebar-pointer.fs-pointer-hover {
-                transform: translate(-50%, -50%) scale(1.2) !important;
-                border-color: #4169A8 !important;
-                background: rgba(139, 173, 232, 0.25) !important;
-                box-shadow: 0 0 6px rgba(65, 105, 168, 0.25) !important;
-            }
-
-            #fs-global-cursor.fs-cursor-hover::after,
-            #fs-sidebar-pointer.fs-pointer-hover::after {
-                transform: scale(1.1) !important;
-                background-color: #27364B !important;
+                transform: translate(-50%, -50%) scale(1.18) !important;
+                border-color: #719BE0 !important;
+                background: rgba(139, 173, 232, 0.42) !important;
+                box-shadow: 0 0 8px rgba(139, 173, 232, 0.45) !important;
             }
 
             @media (prefers-reduced-motion: reduce) {
@@ -676,11 +655,11 @@ def apply_custom_styles() -> None:
             /* Subsystem Status Panel in Sidebar */
             .fs-status-panel {
                 background-color: #FFFFFF;
-                border: 1px solid #DFE7F1;
+                border: 1px solid #DCE5F1;
                 border-radius: 10px;
                 padding: 10px 14px;
                 margin-bottom: 12px;
-                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.04);
+                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.03);
             }
             .fs-status-row {
                 display: flex;
@@ -688,7 +667,7 @@ def apply_custom_styles() -> None:
                 justify-content: space-between;
                 padding: 7px 0;
                 font-size: 0.78rem;
-                border-bottom: 1px solid #DFE7F1;
+                border-bottom: 1px solid #DCE5F1;
             }
             .fs-status-row:last-child {
                 border-bottom: none;
