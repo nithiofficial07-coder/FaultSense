@@ -22,7 +22,7 @@ You are assisting a technician currently investigating an elevator fault.
 STRICT OPERATIONAL DIRECTIVES:
 1. ONLY use the verified facts, symptoms, telemetry readings, diagnostic findings, and retrieved historical cases provided in the INVESTIGATION CONTEXT below.
 2. If the technician asks a question that is NOT addressed or supported by the provided investigation evidence, you MUST explicitly state:
-   "⚠️ This question cannot be answered from the evidence retrieved for this investigation."
+   "This question cannot be answered from the evidence retrieved for this investigation."
    Explain what evidence is missing and recommend what physical check or OEM bulletin the technician should consult.
 3. NEVER guess, speculate, or fabricate elevator specifications, fault codes, or wiring schematics not present in the context.
 4. Always cite specific historical case IDs (e.g. CASE-SYNTH-ELEV-001) when referencing past incidents, confirmed root causes, or corrective actions.
@@ -184,7 +184,7 @@ Provide your evidence-grounded response. If unsupported by the investigation con
             max_tokens=600,
         )
 
-        is_supported = "⚠️ This question cannot be answered from the evidence" not in response_text
+        is_supported = "This question cannot be answered from the evidence" not in response_text
         cited_cases = [cid for cid in inv.get("matched_case_ids", []) if cid in response_text]
 
         return {
@@ -217,7 +217,7 @@ Provide your evidence-grounded response. If unsupported by the investigation con
             if kw in q_lower and kw not in inv_text:
                 return {
                     "answer": (
-                        f"⚠️ **Unsupported Question**: The inquiry regarding '{kw}' cannot be answered from "
+                        f"**Unsupported Question**: The inquiry regarding '{kw}' cannot be answered from "
                         f"the evidence retrieved for investigation `{inv_id}` ({elv_id}, Subsystem: `{sub}`).\n\n"
                         f"No relevant telemetry or historical maintenance records in this session address '{kw}'. "
                         f"Please consult the OEM technical manual or perform on-site physical diagnostic checks."
@@ -289,7 +289,7 @@ Provide your evidence-grounded response. If unsupported by the investigation con
                 "De-energize main controller breaker and execute Lockout/Tagout (LOTO) prior to servicing.",
                 "Ensure elevator is parked and mechanically secured before inspecting hoistway or landing sills.",
             ])
-            s_str = "\n".join(f"- ⚠️ {s}" for s in safeties)
+            s_str = "\n".join(f"- {s}" for s in safeties)
             ans = f"**Mandatory Technician Safety Advisories**:\n\n{s_str}"
             return {"answer": ans, "is_supported": True, "cited_cases": [], "mode": "deterministic_fallback"}
 

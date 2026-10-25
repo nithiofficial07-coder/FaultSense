@@ -1,4 +1,4 @@
-"""Knowledge Base browser and dataset ingestion page for FaultSense."""
+"""Knowledge Base browser and dataset ingestion page for FaultSense in enterprise light theme."""
 
 from pathlib import Path
 import tempfile
@@ -10,13 +10,13 @@ from src.knowledge_base.manager import KnowledgeBaseManager
 
 def render_knowledge_base_page() -> None:
     """Renders the case repository search browser, file ingestion workflow, and FAISS indexing controls."""
-    st.markdown("## 📚 Elevator Fault Knowledge Base")
+    st.markdown("## Elevator Fault Knowledge Base")
     st.markdown("Search verified field maintenance logs, OEM service bulletins, and benchmark diagnostic cases.")
 
     kb_manager = KnowledgeBaseManager()
     kb_manager.seed_initial_data_if_empty()
 
-    tab_browse, tab_import, tab_vector = st.tabs(["🔍 Browse & Search Cases", "📥 Ingest New Datasets", "⚡ Vector Store (FAISS)"])
+    tab_browse, tab_import, tab_vector = st.tabs(["Browse & Search Cases", "Ingest New Datasets", "Vector Store (FAISS)"])
 
     with tab_browse:
         c1, c2, c3, c4 = st.columns([2, 1, 1, 1])
@@ -78,8 +78,8 @@ def render_knowledge_base_page() -> None:
             st.info("No fault cases match your current filter criteria.")
         else:
             for c in cases:
-                prov_badge = "⚡ Synthetic Benchmark" if c.is_synthetic else "✓ Verified Incident"
-                prov_color = "#38BDF8" if c.is_synthetic else "#34D399"
+                prov_badge = "Synthetic Benchmark" if c.is_synthetic else "Verified Incident"
+                prov_color = "#2563EB" if c.is_synthetic else "#15803D"
 
                 header_text = f"**{c.case_id}** — {c.source_title} [{c.subsystem.replace('_', ' ').title()} | {c.fault_code}]"
 
@@ -90,7 +90,7 @@ def render_knowledge_base_page() -> None:
                         st.markdown(f"**Origin Category**: `{c.source_type}` | **Verification**: `{c.verification_status}`")
                     with m_col2:
                         st.markdown(
-                            f"<span style='color: {prov_color}; font-weight: 600; font-size: 0.85rem;'>{prov_badge}</span>",
+                            f"<span style='color: {prov_color}; font-weight: 600; font-size: 0.85rem;'>● {prov_badge}</span>",
                             unsafe_allow_html=True,
                         )
 
@@ -118,7 +118,7 @@ def render_knowledge_base_page() -> None:
         )
 
         if uploaded_file is not None:
-            if st.button("Validate & Import Dataset", type="primary"):
+            if st.button("Validate & Import Dataset", icon=":material/upload_file:", type="primary"):
                 with tempfile.NamedTemporaryFile(
                     delete=False, suffix=Path(uploaded_file.name).suffix
                 ) as tmp_file:
@@ -147,7 +147,7 @@ def render_knowledge_base_page() -> None:
                         tmp_path.unlink()
 
     with tab_vector:
-        st.markdown("### ⚡ FAISS Vector Indexing & Synchronization")
+        st.markdown("### FAISS Vector Indexing & Synchronization")
         st.markdown(
             "Dense vector embeddings index elevator fault cases for sub-millisecond semantic similarity search."
         )
@@ -170,14 +170,14 @@ def render_knowledge_base_page() -> None:
 
         col_act1, col_act2 = st.columns(2)
         with col_act1:
-            if st.button("🔄 Rebuild Vector Index (Atomic)", type="primary"):
+            if st.button("Rebuild Vector Index (Atomic)", icon=":material/refresh:", type="primary"):
                 with st.spinner("Embedding fault cases and building FAISS index..."):
                     count = kb_manager.rebuild_vector_index(idx_mgr)
                     st.success(f"FAISS index successfully rebuilt with **{count}** vectors!")
                     st.rerun()
 
         with col_act2:
-            if st.button("⚡ Synchronize Unindexed Cases", type="secondary"):
+            if st.button("Synchronize Unindexed Cases", icon=":material/sync:", type="secondary"):
                 with st.spinner("Scanning for unindexed records in SQLite..."):
                     added = kb_manager.sync_vector_index(idx_mgr)
                     if added > 0:

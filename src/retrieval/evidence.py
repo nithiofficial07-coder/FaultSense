@@ -137,7 +137,7 @@ class EvidencePackage:
     def summary_markdown(self) -> str:
         """Renders a formatted Markdown summary suitable for terminal or Streamlit display."""
         lines = [
-            f"### 📦 FaultSense Evidence Package",
+            f"### FaultSense Evidence Package",
             f"**Query**: Subsystem: `{self.query.subsystem or 'Any'}` | Fault Code: `{self.query.fault_code or 'None'}`",
             f"**Symptoms**: {', '.join(self.query.symptoms) if self.query.symptoms else 'None'}",
             f"**Evidence Sufficiency**: **{self.sufficiency.level.upper()}** (Sufficient: `{self.sufficiency.is_sufficient}`)",
@@ -145,7 +145,7 @@ class EvidencePackage:
         ]
 
         if self.warnings:
-            lines.append(f"\n> ⚠️ **Warnings**:")
+            lines.append(f"\n> **Warnings**:")
             for w in self.warnings:
                 lines.append(f"> - {w}")
 
@@ -154,7 +154,7 @@ class EvidencePackage:
             lines.append("_No matching historical cases found._")
         else:
             for it in self.items:
-                prov = "⚡ Synthetic" if it.is_synthetic else "✓ Verified"
+                prov = "Synthetic" if it.is_synthetic else "Verified"
                 lines.append(
                     f"- **#{it.rank} [{it.case_id}]** (`{it.subsystem}` / `{it.fault_code}`) — "
                     f"**Cosine Sim**: `{it.similarity_score:.4f}` | **Composite**: `{it.composite_score:.4f}` | "
@@ -164,7 +164,7 @@ class EvidencePackage:
                 lines.append(f"  - **Action**: {it.corrective_action}")
                 if it.candidate_propagation:
                     lines.append(
-                        f"  - 🔗 **Candidate Propagation** (`{it.candidate_propagation.source_subsystem}` ➔ `{it.candidate_propagation.target_subsystem}`): "
+                        f"  - **Candidate Propagation** (`{it.candidate_propagation.source_subsystem}` -> `{it.candidate_propagation.target_subsystem}`): "
                         f"{it.candidate_propagation.propagation_mechanism}"
                     )
 

@@ -254,7 +254,7 @@ def render_new_investigation_page() -> None:
         st.session_state["auto_incident_id"] = f"INC-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{int(time.time()) % 10000:04d}"
 
     # Preset Quick-Load Selector
-    with st.expander("⚡ Load Pre-configured Field Failure Scenario (Quick Demo)", expanded=False):
+    with st.expander("Load Pre-configured Field Failure Scenario (Benchmark Presets)", expanded=False):
         c_scen, c_load, c_reset = st.columns([2.5, 1.2, 1.2])
         with c_scen:
             selected_preset_name = st.selectbox(
@@ -263,7 +263,7 @@ def render_new_investigation_page() -> None:
             )
         with c_load:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Apply Scenario Preset", use_container_width=True, key="btn_apply_preset"):
+            if st.button("Apply Scenario Preset", icon=":material/check:", use_container_width=True, key="btn_apply_preset"):
                 preset_data = SYMPTOM_PRESETS[selected_preset_name]
                 sub = preset_data[0]
                 code = preset_data[1]
@@ -290,7 +290,7 @@ def render_new_investigation_page() -> None:
 
         with c_reset:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Reset Form Fields", use_container_width=True, key="btn_reset_form"):
+            if st.button("Reset Form Fields", icon=":material/refresh:", use_container_width=True, key="btn_reset_form"):
                 st.session_state["subsystem_picker"] = "door_system"
                 st.session_state["subsystem_select"] = "door_system"
                 st.session_state["fault_code_field"] = ""
@@ -374,7 +374,7 @@ def render_new_investigation_page() -> None:
         help="Operating context that may explain electrical or mechanical drift.",
     )
 
-    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     # =========================================================================
     # Section 2: Fault Indicators & Observed Symptoms
@@ -448,28 +448,28 @@ def render_new_investigation_page() -> None:
     if missing_items:
         st.markdown(
             f"""
-            <div style="background-color: #1E293B; border-left: 3px solid #F59E0B; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-size: 0.8rem; color: #FCD34D;">
-                <b>ℹ️ Diagnostic Precision Advisory</b>: {'; '.join(missing_items)}. FaultSense will analyze available data without fabricating missing specifications.
+            <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-left: 3px solid #B45309; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #92400E;">
+                <b>Diagnostic Precision Advisory</b>: {'; '.join(missing_items)}. FaultSense will analyze available data without fabricating missing specifications.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     # =========================================================================
-    # Section 3: Physical Telemetry & Sensor Readings (Two Reliable Methods)
+    # Section 3: Physical Telemetry & Sensor Readings
     # =========================================================================
     st.markdown("### 3. Physical Telemetry & Sensor Readings")
     st.markdown(
-        "<div style='color: #94A3B8; font-size: 0.85rem; margin-bottom: 10px;'>"
+        "<div style='color: #64748B; font-size: 0.85rem; margin-bottom: 10px;'>"
         "Provide controller telemetry data through either an <b>uploaded data file</b> or the <b>structured JSON editor</b>. "
         "Telemetry enables grounding against quantitative sensor thresholds."
         "</div>",
         unsafe_allow_html=True,
     )
 
-    tab_upload, tab_editor = st.tabs(["📁 Method A: Upload Telemetry File (CSV / JSON)", "📝 Method B: Structured JSON Editor"])
+    tab_upload, tab_editor = st.tabs(["Method A: Upload Telemetry File (CSV / JSON)", "Method B: Structured JSON Editor"])
 
     active_telemetry: Dict[str, Any] = {}
 
@@ -493,24 +493,23 @@ def render_new_investigation_page() -> None:
                 if is_valid:
                     st.session_state["uploaded_telemetry_data"] = parsed_data
                     st.success(
-                        f"**{meta['filename']}** verified! Parsed **{meta['parsed_count']}** sensor readings "
-                        f"({meta['size_bytes']} bytes, {meta['format']}).",
-                        icon="✅",
+                        f"**{meta['filename']}** verified. Parsed **{meta['parsed_count']}** sensor readings "
+                        f"({meta['size_bytes']} bytes, {meta['format']})."
                     )
                 else:
                     st.session_state["uploaded_telemetry_data"] = {}
-                    st.error(f"**Upload Validation Failed**: {err_msg}", icon="🚨")
+                    st.error(f"**Upload Validation Failed**: {err_msg}")
             else:
                 st.caption("No file currently uploaded. Drag and drop or browse for a controller telemetry log.")
                 if st.session_state.get("uploaded_telemetry_data"):
-                    if st.button("🗑️ Clear Cached Uploaded Data"):
+                    if st.button("Clear Cached Uploaded Data", icon=":material/delete:"):
                         st.session_state["uploaded_telemetry_data"] = {}
                         st.rerun()
 
         # Telemetry preview table if file is active
         cached_upload = st.session_state.get("uploaded_telemetry_data", {})
         if cached_upload:
-            st.markdown("##### 🔍 Uploaded Telemetry Preview")
+            st.markdown("##### Uploaded Telemetry Preview")
             df_tel = pd.DataFrame([
                 {
                     "Sensor Parameter": k.replace("_", " ").title(),
@@ -541,11 +540,11 @@ def render_new_investigation_page() -> None:
 
             btn_col1, btn_col2 = st.columns(2)
             with btn_col1:
-                if st.button("↺ Load Standard Example", key="btn_load_ex"):
+                if st.button("Load Standard Example", icon=":material/refresh:", key="btn_load_ex"):
                     st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
                     st.rerun()
             with btn_col2:
-                if st.button("🗑️ Clear Editor", key="btn_clear_ed"):
+                if st.button("Clear Editor", icon=":material/delete:", key="btn_clear_ed"):
                     st.session_state["manual_json_text"] = "{}"
                     st.rerun()
 
@@ -571,10 +570,10 @@ def render_new_investigation_page() -> None:
                 if parsed_manual:
                     st.markdown(
                         f"""
-                        <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 3px solid #10B981;
+                        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-left: 3px solid #15803D;
                                     border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                            <span style="color: #34D399; font-weight: 700; font-size: 0.85rem;">✓ Valid JSON Structure</span>
-                            <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 2px;">
+                            <span style="color: #15803D; font-weight: 700; font-size: 0.85rem;">Valid JSON Structure</span>
+                            <div style="font-size: 0.8rem; color: #166534; margin-top: 2px;">
                                 Detected <b>{len(parsed_manual)}</b> sensor parameters ready for diagnostic evaluation.
                             </div>
                         </div>
@@ -587,17 +586,16 @@ def render_new_investigation_page() -> None:
             else:
                 st.markdown(
                     f"""
-                    <div style="background-color: #131F37; border: 1px solid #EF4444; border-left: 3px solid #EF4444;
+                    <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-left: 3px solid #B91C1C;
                                 border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                        <span style="color: #F87171; font-weight: 700; font-size: 0.85rem;">🚨 JSON Syntax Invalid</span>
-                        <div style="font-size: 0.78rem; color: #FCA5A5; margin-top: 2px;">{json_err}</div>
+                        <span style="color: #B91C1C; font-weight: 700; font-size: 0.85rem;">JSON Syntax Invalid</span>
+                        <div style="font-size: 0.78rem; color: #991B1B; margin-top: 2px;">{json_err}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
     # Determine consolidated telemetry to feed into diagnostic pipeline
-    # Preference: Uploaded file first, then manual editor if file is empty
     if cached_upload:
         active_telemetry = cached_upload
         active_source = "Uploaded Log File"
@@ -610,7 +608,7 @@ def render_new_investigation_page() -> None:
 
     st.caption(f"Active Telemetry Source for Diagnosis: **{active_source}** ({len(active_telemetry)} readings).")
 
-    st.markdown("<hr style='margin: 16px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='margin: 16px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
     # =========================================================================
     # Section 4: Run Diagnostic Investigation
@@ -618,7 +616,8 @@ def render_new_investigation_page() -> None:
     st.markdown("### 4. Execute Diagnostic Pipeline")
 
     run_submitted = st.button(
-        "⚡ Run Fault Isolation & Self-Verification Analysis",
+        "Run Fault Isolation & Self-Verification Analysis",
+        icon=":material/bolt:",
         type="primary",
         use_container_width=True,
         key="btn_run_diagnosis_main",
@@ -630,7 +629,7 @@ def render_new_investigation_page() -> None:
 
         symptoms = [s.strip() for s in symptoms_input.replace(";", "\n").splitlines() if s.strip()]
         if not symptoms:
-            st.error("Validation Error: At least one observed symptom must be provided.", icon="🚨")
+            st.error("Validation Error: At least one observed symptom must be provided.")
             return
 
         # Build formal diagnosis request with all equipment & operating context
@@ -663,8 +662,7 @@ def render_new_investigation_page() -> None:
             st.session_state["saved_elv_id"] = effective_elv_id
 
             st.success(
-                f"Diagnostic Session **{result.investigation_id}** completed and saved to persistent audit database!",
-                icon="✅",
+                f"Diagnostic Session **{result.investigation_id}** completed and saved to persistent audit database!"
             )
 
             # Fetch enriched record from database
@@ -696,21 +694,21 @@ def render_new_investigation_page() -> None:
             # Evidence Support Score Factor Breakdown Expander
             bd = result.confidence_breakdown or getattr(dossier, "confidence_breakdown", None) or {}
             if bd:
-                with st.expander("📊 Evidence Support Score & Factor Breakdown", expanded=False):
+                with st.expander("Evidence Support Score & Factor Breakdown", expanded=False):
                     f1, f2, f3, f4, f5 = st.columns(5)
                     with f1:
                         st.caption("Semantic Match")
                         st.write(f"**{int(bd.get('semantic_component', 0) * 100 / 0.35)}%** (wt: 35%)")
                     with f2:
                         st.caption("DTC Code Match")
-                        dtc_match = "✅ Matched" if bd.get("exact_fault_code_match") else "❌ No Match"
+                        dtc_match = "Matched" if bd.get("exact_fault_code_match") else "No Match"
                         st.write(f"**{dtc_match}** ({int(bd.get('fault_code_component', 0) * 100)}%)")
                     with f3:
                         st.caption("Symptom Overlap")
                         st.write(f"**{int(bd.get('symptom_overlap_ratio', 0) * 100)}%** (wt: 22%)")
                     with f4:
                         st.caption("Sensor Telemetry")
-                        telem_stat = "✅ Validated" if bd.get("telemetry_provided") else "⚠️ Missing"
+                        telem_stat = "Validated" if bd.get("telemetry_provided") else "Missing"
                         st.write(f"**{telem_stat}**")
                     with f5:
                         st.caption("Corroboration")
@@ -719,19 +717,19 @@ def render_new_investigation_page() -> None:
                     if bd.get("penalties_applied"):
                         st.markdown("**Evidence Gaps & Penalties:**")
                         for p in bd["penalties_applied"]:
-                            st.markdown(f"- ⚠️ *{p}*")
+                            st.markdown(f"- *{p}*")
                     if bd.get("scoring_notes"):
                         st.caption(f"**Scoring Logic**: {bd['scoring_notes']}")
 
             # Primary Root Cause Card
             st.markdown(
                 f"""
-                <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 4px solid #06B6D4;
-                            padding: 16px 20px; border-radius: 8px; margin: 16px 0;">
-                    <div style="font-size: 0.75rem; font-weight: 700; color: #38BDF8; text-transform: uppercase; letter-spacing: 0.6px;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #2563EB;
+                            padding: 16px 20px; border-radius: 8px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.6px;">
                         Synthesized Primary Root Cause Hypothesis
                     </div>
-                    <div style="font-size: 1.15rem; color: #F8FAFC; margin-top: 6px; font-weight: 700; line-height: 1.4;">
+                    <div style="font-size: 1.15rem; color: #1F2937; margin-top: 6px; font-weight: 700; line-height: 1.4;">
                         {result.root_cause_hypothesis}
                     </div>
                 </div>
@@ -740,14 +738,15 @@ def render_new_investigation_page() -> None:
             )
 
             # Prominent PDF Download & JSON Export Block
-            st.markdown("##### 📄 Download Official Investigation Artifacts")
+            st.markdown("##### Download Official Investigation Artifacts")
             dl_col1, dl_col2 = st.columns([1.6, 1.2])
 
             with dl_col1:
                 try:
                     pdf_bytes = DiagnosticReportGenerator.generate_pdf(saved_rec, kb_manager=kb_manager)
                     st.download_button(
-                        label="📄 Download Complete Diagnostic Report (PDF)",
+                        label="Download Complete Diagnostic Report (PDF)",
+                        icon=":material/description:",
                         data=pdf_bytes,
                         file_name=f"FaultSense_Report_{result.investigation_id}.pdf",
                         mime="application/pdf",
@@ -764,7 +763,8 @@ def render_new_investigation_page() -> None:
                 try:
                     json_str = DiagnosticReportGenerator.generate_json(saved_rec, kb_manager=kb_manager)
                     st.download_button(
-                        label="📦 Export Structured JSON Data",
+                        label="Export Structured JSON Data",
+                        icon=":material/download:",
                         data=json_str,
                         file_name=f"FaultSense_Data_{result.investigation_id}.json",
                         mime="application/json",
@@ -776,22 +776,22 @@ def render_new_investigation_page() -> None:
                 except Exception:
                     pass
 
-            st.markdown("<hr style='margin: 12px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 12px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
             # Direct Navigation Actions
             act_col1, act_col2, act_col3 = st.columns([1.4, 1.2, 1.2])
             with act_col1:
-                if st.button("📄 Dedicated Report Page", key="btn_goto_rep", type="primary", use_container_width=True):
+                if st.button("Dedicated Report Page", icon=":material/description:", key="btn_goto_rep", type="primary", use_container_width=True):
                     navigate_to("report", result.investigation_id)
 
             with act_col2:
-                if st.button("👉 View Full Audit Dossier", key="btn_goto_res", type="secondary", use_container_width=True):
+                if st.button("View Full Audit Dossier", icon=":material/analytics:", key="btn_goto_res", type="secondary", use_container_width=True):
                     navigate_to("results", result.investigation_id)
 
             with act_col3:
-                if st.button("💬 Consult Assistant", key="btn_goto_chat", type="secondary", use_container_width=True):
+                if st.button("Consult Assistant", icon=":material/chat:", key="btn_goto_chat", type="secondary", use_container_width=True):
                     navigate_to("assistant", result.investigation_id)
 
         except Exception as exc:
             logger.error("Diagnostic execution failed: %s", exc, exc_info=True)
-            st.error(f"Diagnostic Pipeline Error: {exc}. Please check system logs.", icon="🚨")
+            st.error(f"Diagnostic Pipeline Error: {exc}. Please check system logs.")

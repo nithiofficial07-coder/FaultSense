@@ -97,21 +97,21 @@ class DiagnosticReport:
             status_line += f" | **Verification**: `{self.verification_verdict.upper()}` (Retries: {self.retry_count})"
 
         lines = [
-            f"### 📋 Diagnostic Report: {self.investigation_id}",
+            f"### Diagnostic Report: {self.investigation_id}",
             f"**Elevator Unit**: `{self.elevator_id}` | **Subsystem**: `{self.subsystem}` | **Fault Code**: `{self.fault_code or 'None'}`",
             status_line,
             f"**Confidence Assessment**: `{int(self.confidence_score * 100)}%` (Advisory Likelihood)\n",
-            f"#### 🔍 Executive Summary",
+            f"#### Executive Summary",
             f"{self.summary}\n",
         ]
 
         if self.safety_advisories:
-            lines.append("#### ⚠️ Mandatory Safety Advisories")
+            lines.append("#### Mandatory Safety Advisories")
             for adv in self.safety_advisories:
                 lines.append(f"- **SAFETY**: {adv}")
             lines.append("")
 
-        lines.append("#### 🎯 Ranked Candidate Root Causes")
+        lines.append("#### Ranked Candidate Root Causes")
         if not self.candidate_causes:
             lines.append("_No candidate root causes identified from available evidence._\n")
         else:
@@ -128,14 +128,14 @@ class DiagnosticReport:
                     lines.append(f"- **Documented Corrective Actions**: {'; '.join(c.documented_corrective_actions)}")
                 if c.citation_warnings:
                     for cw in c.citation_warnings:
-                        lines.append(f"- ⚠️ *Citation Warning*: {cw}")
+                        lines.append(f"- *Citation Warning*: {cw}")
                 lines.append("")
 
         if self.uncertainty_and_missing_info:
-            lines.append("#### ❓ Uncertainty & Missing Information")
+            lines.append("#### Uncertainty & Missing Information")
             for u in self.uncertainty_and_missing_info:
                 lines.append(f"- {u}")
             lines.append("")
 
-        lines.append(f"> ℹ️ _{self.disclaimer}_")
+        lines.append(f"> _{self.disclaimer}_")
         return "\n".join(lines)

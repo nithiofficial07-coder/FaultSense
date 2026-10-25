@@ -1,4 +1,4 @@
-"""Investigation history page displaying past diagnosis sessions with filters, search, and direct PDF export."""
+"""Investigation history page displaying past diagnosis sessions with filters, search, and direct PDF export in enterprise light theme."""
 
 from __future__ import annotations
 
@@ -23,8 +23,8 @@ def render_history_page() -> None:
     records = repo.list_all(limit=100)
 
     if not records:
-        st.info("No investigation sessions recorded yet. Launch a diagnosis from **New Investigation**.", icon="ℹ️")
-        if st.button("🚀 Start First Investigation", type="primary"):
+        st.info("No investigation sessions recorded yet. Launch a diagnosis from **New Investigation**.")
+        if st.button("Start First Investigation", icon=":material/search:", type="primary"):
             navigate_to("new_investigation")
         return
 
@@ -107,23 +107,23 @@ def render_history_page() -> None:
         retries = rec.get("retry_count", 0)
 
         # Evidence-based status
-        ev_status = rec.get("evidence_based_status")
+        ev_status = rec.get("diagnostic_status") or rec.get("evidence_based_status")
         if not ev_status:
             verif_rec = rec.get("verification_record") or {}
             final_verdict = verif_rec.get("final_verdict", "sufficient" if status == "completed" else "inconclusive")
             if final_verdict == "sufficient" or status == "completed":
-                ev_status = "Requires Technician Verification"
+                ev_status = "Evidence Supported"
             else:
-                ev_status = "Root-Cause Hypothesis"
+                ev_status = "Review Required"
 
-        if "Verified Against" in ev_status:
-            badge_color = "#34D399"
-        elif "Requires Technician" in ev_status:
-            badge_color = "#38BDF8"
-        elif "Hypothesis" in ev_status:
-            badge_color = "#F59E0B"
+        if "Supported" in ev_status or "Verified" in ev_status:
+            badge_color = "#15803D"
+        elif "Review" in ev_status or "Technician" in ev_status:
+            badge_color = "#2563EB"
+        elif "Insufficient" in ev_status:
+            badge_color = "#64748B"
         else:
-            badge_color = "#94A3B8"
+            badge_color = "#B45309"
 
         header = f"**{inv_id}** — Unit: `{elv_id}` ({mfg} {model}) [{sub}] | {sev} | {ts}"
 
@@ -149,24 +149,25 @@ def render_history_page() -> None:
             # Evidence citations
             matched_cases = rec.get("matched_case_ids", [])
             if matched_cases:
-                cites_html = " ".join(f"<code style='color: #38BDF8;'>{cid}</code>" for cid in matched_cases)
+                cites_html = " ".join(f"<code style='color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1px 4px; border-radius: 4px;'>{cid}</code>" for cid in matched_cases)
                 st.markdown(f"**Evidence Citations**: {cites_html}", unsafe_allow_html=True)
 
-            st.markdown("<hr style='margin: 8px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 8px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
 
             # Quick Action & Direct Download Buttons
             btn_col1, btn_col2, btn_col3, btn_col4 = st.columns([1.2, 1.2, 1.4, 1.2])
             with btn_col1:
-                if st.button("🎯 Open in Results", key=f"hist_open_{inv_id}", type="primary", use_container_width=True):
+                if st.button("Open in Results", key=f"hist_open_{inv_id}", icon=":material/analytics:", type="primary", use_container_width=True):
                     navigate_to("results", inv_id)
             with btn_col2:
-                if st.button("💬 Ask in Assistant", key=f"hist_chat_{inv_id}", type="secondary", use_container_width=True):
+                if st.button("Ask in Assistant", key=f"hist_chat_{inv_id}", icon=":material/chat:", type="secondary", use_container_width=True):
                     navigate_to("assistant", inv_id)
             with btn_col3:
                 try:
                     pdf_data = DiagnosticReportGenerator.generate_pdf(rec, kb_manager=kb_manager)
                     st.download_button(
-                        label="📄 Download PDF Report",
+                        label="Download PDF Report",
+                        icon=":material/description:",
                         data=pdf_data,
                         file_name=f"FaultSense_Report_{inv_id}.pdf",
                         mime="application/pdf",
@@ -179,7 +180,8 @@ def render_history_page() -> None:
                 try:
                     json_data = DiagnosticReportGenerator.generate_json(rec, kb_manager=kb_manager)
                     st.download_button(
-                        label="📦 Export JSON",
+                        label="Export JSON",
+                        icon=":material/download:",
                         data=json_data,
                         file_name=f"FaultSense_Data_{inv_id}.json",
                         mime="application/json",

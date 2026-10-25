@@ -57,26 +57,26 @@ def render_overview_page() -> None:
     with c4:
         render_metric_card("FAISS Vector Index", str(idx_status.get("total_vectors", 0)), "384-dim all-MiniLM-L6-v2")
 
-    # Call to action banner
+    # Call to action banner in light theme
     col_act1, col_act2 = st.columns([3, 1])
     with col_act1:
         st.markdown(
-            '<div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 8px; padding: 14px 18px; margin: 8px 0 16px 0;">'
-            '<div style="font-weight: 700; color: #38BDF8; font-size: 1.05rem;">Ready to troubleshoot an elevator anomaly?</div>'
-            '<div style="color: #94A3B8; font-size: 0.88rem; margin-top: 4px;">Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.</div>'
+            '<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; margin: 8px 0 16px 0;">'
+            '<div style="font-weight: 700; color: #1E40AF; font-size: 1.02rem;">Ready to troubleshoot an elevator anomaly?</div>'
+            '<div style="color: #475569; font-size: 0.88rem; margin-top: 4px;">Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
     with col_act2:
         st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
-        if st.button("🚀 Start Investigation", type="primary", use_container_width=True, key="overview_start_btn"):
+        if st.button("Start Investigation", icon=":material/search:", type="primary", use_container_width=True, key="overview_start_btn"):
             navigate_to("new_investigation")
 
     # Mid section: Subsystem distribution & Verification summary
     col_dist, col_verif = st.columns([1, 1])
 
     with col_dist:
-        st.markdown("### 🏢 Monitored Subsystems")
+        st.markdown("### Monitored Subsystems")
         subsystems_data = kb_stats.get("subsystem_distribution", {})
         if subsystems_data:
             df_sub = pd.DataFrame(
@@ -87,7 +87,7 @@ def render_overview_page() -> None:
             st.info("No cases loaded in database.")
 
     with col_verif:
-        st.markdown("### 🛡️ Verification Performance Summary")
+        st.markdown("### Verification Performance Summary")
         if total_invs > 0:
             df_verif = pd.DataFrame([
                 {"Metric": "Verified Grounded Cases", "Value": str(verified_count)},
@@ -100,7 +100,7 @@ def render_overview_page() -> None:
             st.info("No investigations logged yet. Run an investigation to generate verification metrics.")
 
     st.markdown("---")
-    st.markdown("### 📋 Recent Diagnostic Investigations")
+    st.markdown("### Recent Diagnostic Investigations")
 
     recent_invs = all_invs[:5]
     if recent_invs:
@@ -112,7 +112,7 @@ def render_overview_page() -> None:
             status = inv.get("status", "open")
             ts = inv.get("created_at", "")[:19].replace("T", " ")
 
-            badge_color = "#34D399" if status == "completed" else "#F59E0B"
+            badge_color = "#15803D" if status == "completed" else "#B45309"
             with st.expander(f"**{inv_id}** — Unit: `{elv_id}` [{sub}] | Confidence: {conf}% | {ts}"):
                 c_info1, c_info2 = st.columns([3, 1.2])
                 with c_info1:
@@ -121,7 +121,7 @@ def render_overview_page() -> None:
                 with c_info2:
                     st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● Status: {status.upper()}</span>", unsafe_allow_html=True)
                     st.caption(f"Retries: {inv.get('retry_count', 0)}")
-                    if st.button("Inspect Full Report", key=f"btn_open_{inv_id}", type="primary", use_container_width=True):
+                    if st.button("Inspect Full Report", key=f"btn_open_{inv_id}", icon=":material/analytics:", type="primary", use_container_width=True):
                         navigate_to("results", inv_id)
     else:
         st.info("No investigation history found. Launch a diagnostic session to populate this audit log.")

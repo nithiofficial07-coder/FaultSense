@@ -1,6 +1,6 @@
 """FaultSense - Autonomous Fault Isolation and Root Cause Analysis Assistant.
 
-Main Streamlit Application Shell with Dark Navy Industrial Diagnostic Theme.
+Main Streamlit Application Shell with Enterprise Light Diagnostic Theme.
 """
 
 import streamlit as st
@@ -28,12 +28,12 @@ logger = get_logger("app")
 settings = get_settings()
 st.set_page_config(
     page_title=f"{settings.app_name} - Elevator RCA Assistant",
-    page_icon="🛗",
+    page_icon=":material/analytics:",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Apply Centralized Industrial Dark Navy & Cyan Design System
+# Apply Centralized Enterprise Light Theme Design System
 apply_custom_styles()
 
 

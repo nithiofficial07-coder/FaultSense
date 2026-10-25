@@ -59,7 +59,7 @@ class DeterministicFallbackEngine:
             ]
             if item.candidate_propagation:
                 checks.append(
-                    f"Coupled Subsystem Check ({item.candidate_propagation.source_subsystem} ➔ {item.candidate_propagation.target_subsystem}): "
+                    f"Coupled Subsystem Check ({item.candidate_propagation.source_subsystem} -> {item.candidate_propagation.target_subsystem}): "
                     f"{item.candidate_propagation.diagnostic_check}"
                 )
 

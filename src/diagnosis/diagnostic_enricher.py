@@ -644,16 +644,16 @@ class DiagnosticEnricher:
 
         k = key.lower()
         if "attenuation" in k and num > 5.5:
-            return "🔴 HIGH ATTENUATION (Optical obstruction/dirt)"
+            return "CRITICAL: High Attenuation (Optical obstruction/dirt)"
         if "motor_current_peak" in k and num > 3.5:
-            return "🟡 ELEVATED PEAK CURRENT (Mechanical drag)"
+            return "WARNING: Elevated Peak Current (Mechanical drag)"
         if "cycles" in k and num > 100000:
-            return "🟡 HIGH CYCLE WEAR (Component fatigue)"
+            return "WARNING: High Cycle Wear (Component fatigue)"
         if "vibration" in k and num > 0.10:
-            return "🔴 HIGH VIBRATION (Bearing/rail anomaly)"
+            return "CRITICAL: High Vibration (Bearing/rail anomaly)"
         if "bus_voltage" in k and num > 750:
-            return "🔴 REGENERATIVE OVERVOLTAGE"
-        return "🟢 WITHIN ACCEPTABLE LIMITS"
+            return "CRITICAL: Regenerative Overvoltage"
+        return "NOMINAL: Within Acceptable Limits"
 
     @classmethod
     def _assess_data_quality(cls, fault_code: Optional[str], symptoms: List[str], telemetry: Dict[str, Any]) -> str:

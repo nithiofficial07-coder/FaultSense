@@ -1,4 +1,4 @@
-"""Dedicated Diagnostic Report Page with PDF Generation, Download, and Technician Review.
+"""Dedicated Diagnostic Report Page with PDF Generation, Download, and Technician Review in enterprise light theme.
 
 Implements Step 4 of the FaultSense engineering workflow:
 Submit Problem -> Analyze Evidence -> Generate PDF -> Download Report
@@ -22,26 +22,26 @@ def render_diagnostic_report_page() -> None:
     # 1. Workflow Progress Stepper Banner
     st.markdown(
         """
-        <div style="background: linear-gradient(90deg, #0A1120 0%, #131F37 100%); border: 1px solid #1E293B; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">STEP 1</span>
-                    <span style="color: #94A3B8; font-size: 0.82rem; font-weight: 600;">Submit Problem</span>
+                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 1</span>
+                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Submit Problem</span>
                 </div>
-                <div style="color: #475569; font-size: 0.8rem;">➔</div>
+                <div style="color: #94A3B8; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">STEP 2</span>
-                    <span style="color: #94A3B8; font-size: 0.82rem; font-weight: 600;">Analyze Evidence</span>
+                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 2</span>
+                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Analyze Evidence</span>
                 </div>
-                <div style="color: #475569; font-size: 0.8rem;">➔</div>
+                <div style="color: #94A3B8; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">STEP 3</span>
-                    <span style="color: #94A3B8; font-size: 0.82rem; font-weight: 600;">Generate PDF</span>
+                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 3</span>
+                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Generate PDF</span>
                 </div>
-                <div style="color: #06B6D4; font-size: 0.8rem;">➔</div>
+                <div style="color: #2563EB; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: rgba(6, 182, 212, 0.25); color: #38BDF8; font-weight: 800; font-size: 0.75rem; padding: 3px 9px; border-radius: 12px; border: 1px solid #06B6D4; box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);">STEP 4 (ACTIVE)</span>
-                    <span style="color: #F8FAFC; font-size: 0.88rem; font-weight: 700;">Download &amp; Technician Review</span>
+                    <span style="background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 0.75rem; padding: 3px 9px; border-radius: 6px; border: 1px solid #BFDBFE;">STEP 4 (ACTIVE)</span>
+                    <span style="color: #1F2937; font-size: 0.88rem; font-weight: 700;">Download &amp; Technician Review</span>
                 </div>
             </div>
         </div>
@@ -53,8 +53,8 @@ def render_diagnostic_report_page() -> None:
     all_records = repo.list_all(limit=100)
 
     if not all_records:
-        st.info("No diagnostic investigations recorded yet. Submit a problem to generate your first report.", icon="ℹ️")
-        if st.button("🚀 Submit Elevator Problem", type="primary"):
+        st.info("No diagnostic investigations recorded yet. Submit a problem to generate your first report.")
+        if st.button("Submit Elevator Problem", icon=":material/search:", type="primary"):
             navigate_to("new_investigation")
         return
 
@@ -87,7 +87,7 @@ def render_diagnostic_report_page() -> None:
     with col_quick:
         st.write("")
         st.write("")
-        if st.button("➕ New Investigation", use_container_width=True):
+        if st.button("New Investigation", icon=":material/search:", use_container_width=True):
             navigate_to("new_investigation")
 
     if selected_id != current_inv_id:
@@ -104,41 +104,41 @@ def render_diagnostic_report_page() -> None:
 
     # 3. Investigation Summary Card & PDF Status Badge
     ev_status = dossier.evidence_based_status
-    if "Verified Against" in ev_status:
-        badge_color = "#34D399"
-    elif "Requires Technician" in ev_status:
-        badge_color = "#38BDF8"
-    elif "Hypothesis" in ev_status:
-        badge_color = "#F59E0B"
+    if "Supported" in ev_status or "Verified" in ev_status:
+        badge_color = "#15803D"
+    elif "Review" in ev_status:
+        badge_color = "#2563EB"
+    elif "Insufficient" in ev_status:
+        badge_color = "#64748B"
     else:
-        badge_color = "#94A3B8"
+        badge_color = "#B45309"
 
     st.markdown(
         f"""
-        <div style="background: #131F37; border: 1px solid #1E293B; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px;">
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px;">
                 <div>
                     <div style="font-size: 0.72rem; color: #64748B; text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px;">Diagnostic Report Summary</div>
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #F8FAFC; margin-top: 2px;">{dossier.investigation_id}</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #1F2937; margin-top: 2px;">{dossier.investigation_id}</div>
                 </div>
                 <div style="text-align: right;">
-                    <span style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.4); padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
+                    <span style="background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
                         ● PDF REPORT GENERATED &amp; READY
                     </span>
                     <div style="font-size: 0.72rem; color: #64748B; margin-top: 4px;">Standard: ASME A17.1 / EN 81-20</div>
                 </div>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; padding: 10px 14px; background: #0A1120; border-radius: 8px; border: 1px solid #1E293B;">
-                <div><span style="color: #64748B; font-size: 0.75rem;">Elevator Unit:</span><br/><b style="color: #F8FAFC;">{dossier.elevator_id}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">OEM / Model:</span><br/><b style="color: #F8FAFC;">{dossier.manufacturer} {dossier.equipment_model}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">Affected Subsystem:</span><br/><b style="color: #38BDF8;">{dossier.subsystem.replace('_', ' ').title()}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">OEM DTC Code:</span><br/><code style="color: #F59E0B;">{dossier.fault_code or 'None'}</code></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">Operating Severity:</span><br/><b style="color: #F8FAFC;">{dossier.severity}</b></div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; padding: 12px 14px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0;">
+                <div><span style="color: #64748B; font-size: 0.75rem;">Elevator Unit:</span><br/><b style="color: #1F2937;">{dossier.elevator_id}</b></div>
+                <div><span style="color: #64748B; font-size: 0.75rem;">OEM / Model:</span><br/><b style="color: #1F2937;">{dossier.manufacturer} {dossier.equipment_model}</b></div>
+                <div><span style="color: #64748B; font-size: 0.75rem;">Affected Subsystem:</span><br/><b style="color: #2563EB;">{dossier.subsystem.replace('_', ' ').title()}</b></div>
+                <div><span style="color: #64748B; font-size: 0.75rem;">OEM DTC Code:</span><br/><code style="color: #2563EB;">{dossier.fault_code or 'None'}</code></div>
+                <div><span style="color: #64748B; font-size: 0.75rem;">Operating Severity:</span><br/><b style="color: #1F2937;">{dossier.severity}</b></div>
             </div>
             <div style="margin-top: 10px;">
-                <span style="color: #64748B; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">AI Evidence-Based Status:</span>
+                <span style="color: #64748B; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Evidence-Based Status:</span>
                 <span style="color: {badge_color}; font-weight: 700; margin-left: 6px;">● {ev_status}</span>
-                <p style="margin: 6px 0 0 0; color: #E2E8F0; font-size: 0.88rem; line-height: 1.4;">
+                <p style="margin: 6px 0 0 0; color: #1F2937; font-size: 0.88rem; line-height: 1.4;">
                     <b>Synthesized Primary Root Cause</b>: {dossier.primary_root_cause}
                 </p>
             </div>
@@ -148,7 +148,7 @@ def render_diagnostic_report_page() -> None:
     )
 
     # 4. Prominent Download Action Section
-    st.subheader("📥 Download Publication-Grade Technical Reports", divider="gray")
+    st.subheader("Download Publication-Grade Technical Reports", divider="gray")
     st.markdown(
         "Download the independent 14-section engineering dossier containing all empirical evidence, required instrumentation, "
         "PPE, step-by-step manual troubleshooting checklist, and ASME A17.1 return-to-service acceptance criteria."
@@ -161,7 +161,8 @@ def render_diagnostic_report_page() -> None:
         pdf_filename = f"FaultSense_Report_{dossier.investigation_id}.pdf"
         with pdf_col:
             st.download_button(
-                label="📄 Download Complete Diagnostic Report (PDF)",
+                label="Download Complete Diagnostic Report (PDF)",
+                icon=":material/description:",
                 data=pdf_bytes,
                 file_name=pdf_filename,
                 mime="application/pdf",
@@ -178,7 +179,8 @@ def render_diagnostic_report_page() -> None:
         json_filename = f"FaultSense_Data_{dossier.investigation_id}.json"
         with json_col:
             st.download_button(
-                label="📦 Export Structured JSON Data",
+                label="Export Structured JSON Data",
+                icon=":material/download:",
                 data=json_str,
                 file_name=json_filename,
                 mime="application/json",
@@ -191,18 +193,17 @@ def render_diagnostic_report_page() -> None:
             st.caption(f"JSON export unavailable: {exc}")
 
     with audit_col:
-        if st.button("🎯 Open in Results", use_container_width=True):
+        if st.button("Open in Results", icon=":material/analytics:", use_container_width=True):
             navigate_to("results", dossier.investigation_id)
 
-    st.markdown("<hr style='border: 0; border-top: 1px solid #1E293B; margin: 24px 0 20px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 0; border-top: 1px solid #E2E8F0; margin: 24px 0 20px 0;'>", unsafe_allow_html=True)
 
     # 5. Technician Review and Physical Field Verification Section
-    st.subheader("🛠️ Technician Review & Physical Verification Sign-Off", divider="gray")
+    st.subheader("Technician Review & Physical Verification Sign-Off", divider="gray")
     st.info(
         "**Advisory Decision-Support Boundary**: FaultSense does not certify or clear an elevator. "
         "A physical elevator fault cannot be marked as resolved merely because the AI diagnostic analysis completed. "
-        "Certified technicians must verify physical conditions on-site and record the outcome separately below.",
-        icon="🛡️"
+        "Certified technicians must verify physical conditions on-site and record the outcome separately below."
     )
 
     # Load existing technician review if previously saved
@@ -216,7 +217,7 @@ def render_diagnostic_report_page() -> None:
 
     if prev_reviewed_at:
         st.success(
-            f"✅ **Technician Review Recorded on {prev_reviewed_at[:19].replace('T', ' ')} UTC** by "
+            f"Technician Review Recorded on {prev_reviewed_at[:19].replace('T', ' ')} UTC by "
             f"**{prev_tech_name or 'Certified Mechanic'}** (Cert/License: `{prev_cert or 'N/A'}`) — "
             f"Outcome: **{prev_outcome}**"
         )
@@ -307,7 +308,8 @@ def render_diagnostic_report_page() -> None:
         )
 
         submit_review = st.form_submit_button(
-            "💾 Save Technician Review to Persistent Storage",
+            "Save Technician Review to Persistent Storage",
+            icon=":material/save:",
             type="primary",
             use_container_width=True,
         )
@@ -326,7 +328,6 @@ def render_diagnostic_report_page() -> None:
                 "chk_test": chk_test,
                 "chk_house": chk_house,
             }
-            # Record status in database without overriding AI diagnostic status blindly
             db_status = "completed" if "Physically Resolved" in physical_status else "open"
             repo.update_technician_review(
                 investigation_id=dossier.investigation_id,
@@ -335,7 +336,7 @@ def render_diagnostic_report_page() -> None:
                 status=db_status,
             )
             st.success(
-                f"✅ Technician review successfully saved to persistent database for {dossier.investigation_id}! "
+                f"Technician review successfully saved to persistent database for {dossier.investigation_id}. "
                 f"Any newly downloaded PDF report will now incorporate these credentials and findings."
             )
             st.rerun()

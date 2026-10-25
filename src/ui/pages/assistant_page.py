@@ -1,4 +1,4 @@
-"""Conversational Assistant page for technician follow-up Q&A grounded in investigation evidence."""
+"""Conversational Assistant page for technician follow-up Q&A grounded in investigation evidence in enterprise light theme."""
 
 import streamlit as st
 
@@ -8,7 +8,7 @@ from src.storage.repository import InvestigationRepository
 
 def render_assistant_page() -> None:
     """Renders the conversational assistant interface scoped to the selected investigation."""
-    st.markdown("## 💬 Diagnostic Conversational Assistant")
+    st.markdown("## Diagnostic Conversational Assistant")
     st.markdown(
         "Ask targeted follow-up questions regarding the active fault investigation, physical sensor readings, "
         "and documented OEM corrective procedures."
@@ -18,8 +18,8 @@ def render_assistant_page() -> None:
     all_invs = repo.list_all(limit=50)
 
     if not all_invs:
-        st.info("No investigations logged yet. Please execute an investigation from **New Investigation** first.", icon="ℹ️")
-        if st.button("🚀 Launch Investigation", type="primary"):
+        st.info("No investigations logged yet. Please execute an investigation from **New Investigation** first.")
+        if st.button("Launch Investigation", icon=":material/search:", type="primary"):
             from src.ui.components.sidebar import navigate_to
             navigate_to("new_investigation")
         return
@@ -40,7 +40,7 @@ def render_assistant_page() -> None:
     with c_clear:
         st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
         chat_key = f"chat_{selected_inv_id}"
-        if st.button("🗑️ Reset Chat History", use_container_width=True):
+        if st.button("Reset Chat History", icon=":material/delete:", use_container_width=True):
             if chat_key in st.session_state:
                 st.session_state[chat_key] = []
             st.rerun()
@@ -50,7 +50,7 @@ def render_assistant_page() -> None:
         st.error("Selected investigation could not be retrieved.")
         return
 
-    # Context Header Card
+    # Context Header Card in Light Theme
     elv_id = inv_data.get("elevator_id", "UNKNOWN")
     subsystem = str(inv_data.get("subsystem", "")).replace("_", " ").title()
     fault_code = inv_data.get("fault_code") or "N/A"
@@ -58,15 +58,15 @@ def render_assistant_page() -> None:
 
     st.markdown(
         f"""
-        <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 3px solid #06B6D4;
-                    border-radius: 6px; padding: 10px 16px; margin: 8px 0 16px 0;">
-            <div style="font-size: 0.75rem; color: #38BDF8; font-weight: 700; text-transform: uppercase;">
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB;
+                    border-radius: 6px; padding: 10px 16px; margin: 8px 0 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+            <div style="font-size: 0.75rem; color: #2563EB; font-weight: 700; text-transform: uppercase;">
                 Active Investigation Scope
             </div>
-            <div style="font-size: 0.95rem; color: #F8FAFC; margin-top: 2px;">
+            <div style="font-size: 0.95rem; color: #1F2937; margin-top: 2px;">
                 Unit <b>{elv_id}</b> | Subsystem: <b>{subsystem}</b> | Code: <code>{fault_code}</code>
             </div>
-            <div style="font-size: 0.82rem; color: #94A3B8; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+            <div style="font-size: 0.82rem; color: #64748B; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                 Primary Hypothesis: {rc_summary}
             </div>
         </div>
@@ -80,7 +80,7 @@ def render_assistant_page() -> None:
             {
                 "role": "assistant",
                 "content": (
-                    f"Hello! I am ready to assist with **{selected_inv_id}** (Elevator `{elv_id}`). "
+                    f"Hello. I am ready to assist with **{selected_inv_id}** (Elevator `{elv_id}`). "
                     f"My responses are strictly grounded in this session's telemetry, symptoms, and retrieved OEM cases. "
                     f"What technical questions do you have about the diagnosis or corrective steps?"
                 ),
@@ -95,16 +95,16 @@ def render_assistant_page() -> None:
     suggested_prompt = None
 
     with q_col1:
-        if st.button("🔧 Recommended Checks", key=f"btn_chk_{selected_inv_id}", use_container_width=True):
+        if st.button("Recommended Checks", icon=":material/build:", key=f"btn_chk_{selected_inv_id}", use_container_width=True):
             suggested_prompt = "What physical diagnostic checks and multimeter tests are recommended?"
     with q_col2:
-        if st.button("🛠️ Corrective Actions", key=f"btn_act_{selected_inv_id}", use_container_width=True):
+        if st.button("Corrective Actions", icon=":material/check_circle:", key=f"btn_act_{selected_inv_id}", use_container_width=True):
             suggested_prompt = "What step-by-step corrective actions should I execute?"
     with q_col3:
-        if st.button("📡 Telemetry Analysis", key=f"btn_tel_{selected_inv_id}", use_container_width=True):
+        if st.button("Telemetry Analysis", icon=":material/analytics:", key=f"btn_tel_{selected_inv_id}", use_container_width=True):
             suggested_prompt = "Explain the recorded sensor telemetry readings for this unit."
     with q_col4:
-        if st.button("⚠️ Safety Advisories", key=f"btn_saf_{selected_inv_id}", use_container_width=True):
+        if st.button("Safety Advisories", icon=":material/shield:", key=f"btn_saf_{selected_inv_id}", use_container_width=True):
             suggested_prompt = "What LOTO and electrical safety precautions must I follow?"
 
     # Display Chat History
@@ -113,9 +113,9 @@ def render_assistant_page() -> None:
             st.markdown(msg["content"])
             if msg.get("cited_cases"):
                 cites_str = " ".join(f"`{cid}`" for cid in msg["cited_cases"])
-                st.caption(f"📚 Grounded in OEM cases: {cites_str}")
+                st.caption(f"Grounded in OEM cases: {cites_str}")
             if msg.get("is_supported") is False:
-                st.caption("⚠️ Grounding Note: Out-of-domain or unsupported query rejected by assistant guardrail.")
+                st.caption("Grounding Note: Out-of-domain or unsupported query rejected by assistant guardrail.")
 
     # Process Input
     user_input = st.chat_input("Ask a question about this elevator investigation...") or suggested_prompt
@@ -139,9 +139,9 @@ def render_assistant_page() -> None:
             st.markdown(response["answer"])
             if response.get("cited_cases"):
                 cites_str = " ".join(f"`{cid}`" for cid in response["cited_cases"])
-                st.caption(f"📚 Grounded in OEM cases: {cites_str}")
+                st.caption(f"Grounded in OEM cases: {cites_str}")
             if not response.get("is_supported"):
-                st.caption("⚠️ Grounding Note: Inquiry is unsupported by current investigation evidence.")
+                st.caption("Grounding Note: Inquiry is unsupported by current investigation evidence.")
 
         # Persist assistant reply
         st.session_state[chat_key].append({

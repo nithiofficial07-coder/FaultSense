@@ -1,21 +1,22 @@
-"""Evaluation and benchmarking page comparing Baseline RAG and Self-Verifying RAG."""
+"""Evaluation and benchmarking page comparing Baseline RAG and Self-Verifying RAG in enterprise light theme."""
 
 import pandas as pd
 import streamlit as st
 
 from src.evaluation.evaluator import BENCHMARK_SUITE, ComparativeEvaluationReport, EvaluationEngine
+from src.ui.assets.icons import get_icon_svg
 
 
 def render_evaluation_page() -> None:
     """Renders quantitative comparative evaluation metrics and benchmark suite details."""
-    st.markdown("## 📈 RAG Evaluation & Self-Verification Benchmarking")
+    st.markdown("## RAG Evaluation & Self-Verification Benchmarking")
     st.markdown(
         "Quantitative quality assurance comparing **Baseline RAG** (standard retrieval + draft generation) "
         "against **Self-Verifying RAG** (agentic verification loop with query expansion and anti-hallucination audits)."
     )
 
     # 1. Test-set Details Section
-    with st.expander("📋 Benchmark Suite Specifications (6 Standard Elevator Failure Scenarios)", expanded=False):
+    with st.expander("Benchmark Suite Specifications (6 Standard Elevator Failure Scenarios)", expanded=False):
         st.markdown(
             "The benchmark suite encompasses core vertical transportation subsystems: doors, traction drives, "
             "positioning encoders, electromechanical brakes, hydraulics, and safety interlock strings."
@@ -36,7 +37,7 @@ def render_evaluation_page() -> None:
     # 2. Benchmark Runner Action
     col_run, col_info = st.columns([1, 2])
     with col_run:
-        run_btn = st.button("⚡ Run Comparative Evaluation Benchmark", type="primary", use_container_width=True)
+        run_btn = st.button("Run Comparative Evaluation Benchmark", icon=":material/speed:", type="primary", use_container_width=True)
     with col_info:
         st.caption("Executes both diagnostic pipelines against the full testbed and measures latency, precision, and retry dynamics.")
 
@@ -45,19 +46,20 @@ def render_evaluation_page() -> None:
         with st.spinner("Executing end-to-end comparative benchmark across all failure scenarios..."):
             report = engine.run_benchmark()
             st.session_state["benchmark_report"] = report
-            st.success(f"Benchmark run **{report.evaluation_id}** completed successfully!")
+            st.success(f"Benchmark run **{report.evaluation_id}** completed successfully.")
 
     # Check if report exists
     report: ComparativeEvaluationReport = st.session_state.get("benchmark_report")
 
     if not report:
+        icon_chart = get_icon_svg("activity", size=32, color="#2563EB")
         st.markdown(
-            """
-            <div style="background-color: #131F37; border: 1px dashed #334155; border-radius: 8px;
-                        padding: 30px; text-align: center; margin: 24px 0;">
-                <span style="font-size: 2.2rem;">📊</span>
-                <h4 style="color: #F8FAFC; margin: 10px 0 4px 0;">No Active Benchmark Evaluation Data</h4>
-                <p style="color: #94A3B8; font-size: 0.9rem; max-width: 500px; margin: 0 auto 16px auto;">
+            f"""
+            <div style="background-color: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 8px;
+                        padding: 30px; text-align: center; margin: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div>{icon_chart}</div>
+                <h4 style="color: #1F2937; margin: 10px 0 4px 0;">No Active Benchmark Evaluation Data</h4>
+                <p style="color: #64748B; font-size: 0.9rem; max-width: 500px; margin: 0 auto 16px auto;">
                     Metrics are currently unavailable for this session. Click the button above to run the automated
                     evaluation harness comparing Baseline vs Self-Verifying RAG.
                 </p>
@@ -68,7 +70,7 @@ def render_evaluation_page() -> None:
         return
 
     # 3. High-Level Comparative Metrics Cards
-    st.markdown("### 🎯 Baseline RAG vs. Self-Verifying RAG Comparison")
+    st.markdown("### Baseline RAG vs. Self-Verifying RAG Comparison")
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
@@ -102,7 +104,7 @@ def render_evaluation_page() -> None:
         )
 
     # 4. Detailed Scenario Breakdown Table
-    st.markdown("### 📋 Per-Scenario Benchmark Execution Results")
+    st.markdown("### Per-Scenario Benchmark Execution Results")
 
     table_data = []
     for s in report.scenario_results:
@@ -110,7 +112,7 @@ def render_evaluation_page() -> None:
             "Scenario": f"{s.scenario_id}: {s.title}",
             "Subsystem": s.subsystem.replace("_", " ").title(),
             "Target Case": s.expected_case_id,
-            "Baseline Retrieval": f"{s.baseline_top_case} ({'✓' if s.baseline_retrieval_hit else '✗'})",
+            "Baseline Retrieval": f"{s.baseline_top_case} ({'Hit' if s.baseline_retrieval_hit else 'Miss'})",
             "Baseline Grounding": f"{(s.baseline_grounding_score * 100):.0f}%",
             "Verified Status": s.verified_status.upper(),
             "Retries": s.verified_retries,
@@ -122,7 +124,7 @@ def render_evaluation_page() -> None:
     st.dataframe(pd.DataFrame(table_data), hide_index=True, use_container_width=True)
 
     # 5. Key Architecture Insights
-    st.markdown("### 💡 Key Architectural Findings")
+    st.markdown("### Key Architectural Findings")
     st.markdown(
         f"""
         - **Anti-Hallucination Barrier**: In Baseline RAG, when relevant cases are missing or partial, 

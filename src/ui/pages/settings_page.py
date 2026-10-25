@@ -1,4 +1,4 @@
-"""Settings, configuration inspector, and system health status page for FaultSense."""
+"""Settings, configuration inspector, and system health status page for FaultSense in enterprise light theme."""
 
 import json
 import streamlit as st
@@ -11,7 +11,7 @@ from src.utils.health import HealthChecker
 
 def render_settings_page() -> None:
     """Renders application configuration, secret protection status, health probes, and troubleshooting guides."""
-    st.markdown("## ⚙️ Settings & System Status")
+    st.markdown("## Settings & System Status")
     st.markdown(
         "Inspect application configuration parameters, verify secret masking, probe component connectivity, "
         "and review diagnostic troubleshooting procedures."
@@ -33,33 +33,45 @@ def render_settings_page() -> None:
     with c3:
         st.metric("Embedding Model", "Active (CPU)", settings.embedding_model)
     with c4:
-        mode_text = "🟡 Offline Demo" if settings.is_demo_mode else "🟢 Connected (LLM)"
+        mode_text = "Offline Demo" if settings.is_demo_mode else "Connected (LLM)"
         st.metric("LLM Provider Mode", mode_text, f"Provider: {settings.llm_provider}")
 
     st.markdown("---")
 
     tab_diagnostics, tab_config, tab_troubleshoot = st.tabs([
-        "🩺 Live Health Diagnostics",
-        "⚙️ Provider & System Config",
-        "🛠️ Troubleshooting & Support",
+        "Live Health Diagnostics",
+        "Provider & System Config",
+        "Troubleshooting & Support",
     ])
 
     with tab_diagnostics:
         st.markdown("### Component Health Diagnostics")
-        if st.button("🔄 Re-run All Health Probes", type="secondary"):
+        if st.button("Re-run All Health Probes", icon=":material/refresh:", type="secondary"):
             st.rerun()
 
         health = HealthChecker.run_all_checks()
 
-        overall_color = "#34D399" if health.overall_status == "healthy" else ("#F59E0B" if health.overall_status == "degraded" else "#EF4444")
+        if health.overall_status == "healthy":
+            overall_bg = "#F0FDF4"
+            overall_color = "#15803D"
+            overall_border = "#BBF7D0"
+        elif health.overall_status == "degraded":
+            overall_bg = "#FFFBEB"
+            overall_color = "#B45309"
+            overall_border = "#FDE68A"
+        else:
+            overall_bg = "#FEF2F2"
+            overall_color = "#B91C1C"
+            overall_border = "#FECACA"
+
         st.markdown(
             f"""
-            <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 4px solid {overall_color};
+            <div style="background-color: {overall_bg}; border: 1px solid {overall_border}; border-left: 4px solid {overall_color};
                         padding: 12px 18px; border-radius: 8px; margin-bottom: 16px;">
                 <span style="font-size: 1.05rem; font-weight: 700; color: {overall_color};">
                     ● Overall System Health: {health.overall_status.upper()}
                 </span>
-                <span style="font-size: 0.85rem; color: #94A3B8; margin-left: 14px;">
+                <span style="font-size: 0.85rem; color: #64748B; margin-left: 14px;">
                     Timestamp: {health.timestamp[:19].replace('T', ' ')} UTC
                 </span>
             </div>
@@ -68,7 +80,7 @@ def render_settings_page() -> None:
         )
 
         for comp_name, comp_status in health.components.items():
-            st_color = "#34D399" if comp_status.status == "healthy" else ("#F59E0B" if comp_status.status == "degraded" else "#EF4444")
+            st_color = "#15803D" if comp_status.status == "healthy" else ("#B45309" if comp_status.status == "degraded" else "#B91C1C")
             with st.expander(f"**{comp_name.title()}**: {comp_status.status.upper()} — {comp_status.message}"):
                 st.markdown(f"**Status**: <span style='color: {st_color}; font-weight: 700;'>{comp_status.status.upper()}</span>", unsafe_allow_html=True)
                 st.markdown(f"**Message**: {comp_status.message}")
@@ -100,7 +112,7 @@ def render_settings_page() -> None:
             st.json(safe_cfg)
 
     with tab_troubleshoot:
-        st.markdown("### 🛠️ Field Troubleshooting & Operator Guidance")
+        st.markdown("### Field Troubleshooting & Operator Guidance")
 
         st.markdown("#### 1. Operating in Offline / Air-Gapped Environments")
         st.markdown(
@@ -140,6 +152,5 @@ def render_settings_page() -> None:
             "FaultSense is classified as a Technician Decision-Support System (TDSS). "
             "Under ASME A17.1 / EN 81-20/50 regulations, software recommendations do NOT supersede certified technician "
             "judgment, physical multimeter readings, or manufacturer safety interlock protocols. "
-            "Never bypass hoistway door locks or safety governor circuits.",
-            icon="🚨",
+            "Never bypass hoistway door locks or safety governor circuits."
         )

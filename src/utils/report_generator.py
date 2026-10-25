@@ -512,7 +512,7 @@ class DiagnosticReportGenerator:
             story.append(Spacer(1, 6))
 
         # Evidence Gaps Callout
-        gaps_text = "<br/>".join([f"⚠️ <b>EVIDENCE GAP</b>: {g}" for g in dossier.evidence_gaps]) or "No critical evidence gaps detected."
+        gaps_text = "<br/>".join([f"<b>EVIDENCE GAP</b>: {g}" for g in dossier.evidence_gaps]) or "No critical evidence gaps detected."
         gaps_box = Table([
             [Paragraph("<b>Identified Evidence Gaps, Contradictions &amp; Missing Information</b>", table_header_style)],
             [Paragraph(gaps_text, ParagraphStyle("GapsP", parent=body_style, textColor=cls.AMBER_WARN, leading=10.5))]
@@ -605,7 +605,7 @@ class DiagnosticReportGenerator:
                     ),
                 ],
                 [
-                    Paragraph(f"⚠️ <b>SAFETY WARNING &amp; STOP CONDITION</b>: {step.safety_precautions}", ParagraphStyle("StepWarn", parent=body_style, textColor=cls.RED_ALERT, fontSize=7, leading=9)),
+                    Paragraph(f"<b>SAFETY WARNING &amp; STOP CONDITION</b>: {step.safety_precautions}", ParagraphStyle("StepWarn", parent=body_style, textColor=cls.RED_ALERT, fontSize=7, leading=9)),
                     Paragraph("<i>Verification: Technician measurement required</i>", subtle_style),
                 ]
             ]
@@ -675,8 +675,8 @@ class DiagnosticReportGenerator:
         # SECTION 11: SAFETY INSTRUCTIONS AND STOP CONDITIONS
         # =========================================================================
         story.append(Paragraph("11. Safety Instructions &amp; Critical Stop Conditions", h1_style))
-        safety_text = "<br/>".join([f"🔒 <b>MANDATORY SAFETY PROTOCOL</b>: {s}" for s in dossier.safety_precautions])
-        esc_text = "<br/>".join([f"🚨 <b>MANDATORY STOP &amp; ESCALATION CONDITION</b>: {e}" for e in dossier.escalation_requirements])
+        safety_text = "<br/>".join([f"<b>MANDATORY SAFETY PROTOCOL</b>: {s}" for s in dossier.safety_precautions])
+        esc_text = "<br/>".join([f"<b>MANDATORY STOP &amp; ESCALATION CONDITION</b>: {e}" for e in dossier.escalation_requirements])
         safety_box = Table([
             [Paragraph("<b>Jobsite Safety Precautions &amp; Critical Stop Conditions</b>", table_header_style)],
             [Paragraph(f"{safety_text}<br/><br/>{esc_text}", ParagraphStyle("SafeP", parent=body_style, leading=10))]
