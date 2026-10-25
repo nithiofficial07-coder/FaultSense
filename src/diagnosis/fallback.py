@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from src.diagnosis.evidence_scorer import EvidenceScorer
 from src.diagnosis.schema import CandidateCause, DiagnosticReport, DiagnosticStatus, ProbabilityBand
 from src.diagnosis.session import DiagnosisRequest
 from src.retrieval.evidence import EvidencePackage, EvidenceSufficiencyLevel
@@ -102,19 +103,22 @@ class DeterministicFallbackEngine:
             "Check safety string continuity with calibrated multimeter; do NOT place jumper clips across safety contacts.",
         ]
 
-        conf_map = {
-            EvidenceSufficiencyLevel.HIGH.value: 0.88,
-            EvidenceSufficiencyLevel.MODERATE.value: 0.72,
-            EvidenceSufficiencyLevel.LOW.value: 0.45,
-            EvidenceSufficiencyLevel.INSUFFICIENT.value: 0.20,
-        }
-        confidence = conf_map.get(evidence.sufficiency.level, 0.65)
+        confidence, breakdown = EvidenceScorer.compute_confidence(
+            evidence_items=evidence.items,
+            request_symptoms=request.symptoms,
+            request_fault_code=request.fault_code,
+            request_subsystem=request.subsystem,
+            request_telemetry=request.telemetry,
+            verification_verdict=None,
+            is_verified=False,
+        )
 
         model_meta = {
             "mode": "deterministic_fallback",
             "reason": fallback_reason or "Offline demo mode or non-LLM execution requested",
             "retrieved_count": len(evidence.items),
             "sufficiency_level": evidence.sufficiency.level,
+            "confidence_breakdown": breakdown.to_dict(),
         }
 
         return DiagnosticReport(
@@ -181,6 +185,16 @@ class DeterministicFallbackEngine:
             "Verify safety circuit integrity prior to manual movement.",
         ]
 
+        confidence, breakdown = EvidenceScorer.compute_confidence(
+            evidence_items=evidence.items,
+            request_symptoms=request.symptoms,
+            request_fault_code=request.fault_code,
+            request_subsystem=request.subsystem,
+            request_telemetry=request.telemetry,
+            verification_verdict="insufficient",
+            is_verified=False,
+        )
+
         return DiagnosticReport(
             investigation_id=investigation_id,
             elevator_id=request.elevator_id,
@@ -196,6 +210,7 @@ class DeterministicFallbackEngine:
             model_metadata={
                 "mode": "deterministic_fallback",
                 "reason": fallback_reason or "Insufficient evidence in knowledge base",
+                "confidence_breakdown": breakdown.to_dict(),
             },
-            confidence_score=0.25,
+            confidence_score=confidence,
         )

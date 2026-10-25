@@ -11,6 +11,7 @@ import uuid
 from typing import Optional
 
 from config.settings import get_settings
+from src.diagnosis.evidence_scorer import EvidenceScorer
 from src.diagnosis.fallback import DeterministicFallbackEngine
 from src.diagnosis.llm import BaseLLMProvider, get_llm_provider
 from src.diagnosis.prompt_builder import DiagnosticPromptBuilder
@@ -228,6 +229,49 @@ class DiagnosisEngine:
                 ]
             confidence = report.confidence_score
 
+        # Identify any physical contradictions or verification failures
+        contradictions_found: list = []
+        if verification_record and hasattr(verification_record, "steps"):
+            for step in verification_record.steps:
+                if getattr(step, "contradicted_claims", 0) > 0:
+                    contradictions_found.extend(getattr(step, "reasons", []))
+
+        verdict_str = report.verification_verdict if (report and getattr(report, "verification_verdict", None)) else ("sufficient" if is_verified else "unverified")
+        verif_failed = bool(verification_record and "fail" in getattr(verification_record, "final_status", "").lower())
+
+        # Calculate empirical evidence support score
+        evidence_items_list = evidence_pkg.items if ('evidence_pkg' in locals() and evidence_pkg is not None) else []
+        calculated_conf, breakdown = EvidenceScorer.compute_confidence(
+            evidence_items=evidence_items_list,
+            request_symptoms=request.symptoms,
+            request_fault_code=request.fault_code,
+            request_subsystem=request.subsystem,
+            request_telemetry=request.telemetry,
+            verification_verdict=verdict_str,
+            is_verified=is_verified,
+            contradictions=contradictions_found,
+            verification_failed=verif_failed,
+        )
+
+        status_type = EvidenceScorer.determine_status(
+            is_verified=is_verified,
+            verification_verdict=verdict_str,
+            confidence_score=calculated_conf,
+            evidence_items=evidence_items_list,
+            has_fault_code=bool(request.fault_code and request.fault_code.strip()),
+            has_telemetry=bool(request.telemetry and len(request.telemetry) > 0),
+            symptom_count=len(request.symptoms),
+            contradictions=contradictions_found,
+            verification_failed=verif_failed,
+        )
+        diagnostic_status = status_type.value
+        confidence = calculated_conf
+
+        if report is not None:
+            report.confidence_score = confidence
+            if hasattr(report, "model_metadata") and isinstance(report.model_metadata, dict):
+                report.model_metadata["confidence_breakdown"] = breakdown.to_dict()
+
         result = DiagnosisResult(
             investigation_id=inv_id,
             elevator_id=request.elevator_id,
@@ -246,6 +290,8 @@ class DiagnosisEngine:
             verification_record=verification_record.to_dict() if verification_record else None,
             retry_count=retry_count,
             is_verified=is_verified,
+            diagnostic_status=diagnostic_status,
+            confidence_breakdown=breakdown.to_dict(),
         )
 
         # Persist session to SQLite
@@ -263,6 +309,8 @@ class DiagnosisEngine:
                 "confidence_score": confidence,
                 "matched_case_ids": [m["case_id"] for m in matched],
                 "status": "completed" if is_verified else "inconclusive",
+                "diagnostic_status": diagnostic_status,
+                "confidence_breakdown": breakdown.to_dict(),
                 "technician_notes": request.technician_notes,
                 "verification_record": verification_record.to_dict() if verification_record else None,
                 "retry_count": retry_count,

@@ -264,9 +264,34 @@ class FaultRetrievalService:
             )
             scored_items.append(item)
 
-        # 5. Sort candidates by composite score descending (tie-break on raw cosine similarity)
-        scored_items.sort(key=lambda it: (it.composite_score, it.similarity_score), reverse=True)
-        final_items = scored_items[:clean_top_k]
+        # 5. Deduplicate and filter out noise floor items
+        seen_case_ids: Set[str] = set()
+        unique_scored_items: List[EvidenceItem] = []
+        for it in scored_items:
+            if it.case_id not in seen_case_ids:
+                seen_case_ids.add(it.case_id)
+                unique_scored_items.append(it)
+
+        # Relevance filtering: Exclude items below noise floor unless corroborated
+        retained_items: List[EvidenceItem] = []
+        for it in unique_scored_items:
+            has_dtc = it.match_rationale.exact_fault_code_match
+            has_sub = it.match_rationale.exact_subsystem_match
+            has_prop = it.candidate_propagation is not None
+            sim = it.similarity_score
+            comp = it.composite_score
+
+            if has_dtc:
+                retained_items.append(it)
+            elif (clean_subsystem is None or has_sub) and (sim >= 0.25 or comp >= 0.28):
+                retained_items.append(it)
+            elif has_prop and (sim >= 0.30 or comp >= 0.35):
+                retained_items.append(it)
+            elif sim >= 0.35 or comp >= 0.38:
+                retained_items.append(it)
+
+        retained_items.sort(key=lambda it: (it.composite_score, it.similarity_score), reverse=True)
+        final_items = retained_items[:clean_top_k]
 
         # Assign final rank
         for rank, item in enumerate(final_items, start=1):

@@ -11,6 +11,7 @@ import json
 import re
 from typing import Any, Dict, List, Optional, Set
 
+from src.diagnosis.evidence_scorer import EvidenceScorer
 from src.diagnosis.llm.base import LLMResponse, LLMResponseFormatError
 from src.diagnosis.schema import CandidateCause, DiagnosticReport, DiagnosticStatus, ProbabilityBand
 from src.diagnosis.session import DiagnosisRequest
@@ -120,12 +121,16 @@ class DiagnosticValidator:
                 "Measure zero voltage across main disconnect switch before inspecting electrical components.",
             ]
 
-        # 4. Parse confidence score (advisory only)
-        raw_conf = parsed_json.get("confidence_score", 0.70)
-        try:
-            confidence = max(0.10, min(0.95, float(raw_conf)))
-        except (ValueError, TypeError):
-            confidence = 0.70
+        # 4. Compute empirical evidence support score
+        confidence, breakdown = EvidenceScorer.compute_confidence(
+            evidence_items=evidence.items,
+            request_symptoms=request.symptoms,
+            request_fault_code=request.fault_code,
+            request_subsystem=request.subsystem,
+            request_telemetry=request.telemetry,
+            verification_verdict=None,
+            is_verified=False,
+        )
 
         model_meta = {
             "provider": llm_response.provider,
@@ -134,6 +139,8 @@ class DiagnosticValidator:
             "prompt_tokens": llm_response.prompt_tokens,
             "completion_tokens": llm_response.completion_tokens,
             "total_tokens": llm_response.total_tokens,
+            "llm_self_reported_confidence": parsed_json.get("confidence_score"),
+            "confidence_breakdown": breakdown.to_dict(),
         }
 
         return DiagnosticReport(

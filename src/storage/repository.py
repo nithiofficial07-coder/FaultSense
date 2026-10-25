@@ -44,6 +44,12 @@ class InvestigationRepository:
         if isinstance(evid_pkg, (dict, list)):
             evid_pkg = json.dumps(evid_pkg)
 
+        conf_breakdown = session_data.get("confidence_breakdown")
+        if isinstance(conf_breakdown, (dict, list)):
+            conf_breakdown = json.dumps(conf_breakdown)
+
+        diag_status = session_data.get("diagnostic_status") or session_data.get("status", "open")
+
         with self.db.get_connection() as conn:
             conn.execute(
                 """
@@ -54,8 +60,9 @@ class InvestigationRepository:
                     status, technician_notes, verification_record, retry_count,
                     diagnostic_report, evidence_package,
                     manufacturer, equipment_model, severity, operating_conditions, problem_description,
+                    diagnostic_status, confidence_breakdown,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
                 (
                     inv_id,
@@ -80,6 +87,8 @@ class InvestigationRepository:
                     session_data.get("severity", "Medium"),
                     session_data.get("operating_conditions", ""),
                     session_data.get("problem_description", ""),
+                    diag_status,
+                    conf_breakdown,
                     now_iso,
                     now_iso,
                 ),
@@ -121,6 +130,11 @@ class InvestigationRepository:
                         d["technician_review"] = json.loads(d["technician_review"])
                     except Exception:
                         pass
+                if d.get("confidence_breakdown"):
+                    try:
+                        d["confidence_breakdown"] = json.loads(d["confidence_breakdown"])
+                    except Exception:
+                        pass
                 results.append(d)
             return results
 
@@ -157,6 +171,11 @@ class InvestigationRepository:
             if d.get("technician_review"):
                 try:
                     d["technician_review"] = json.loads(d["technician_review"])
+                except Exception:
+                    pass
+            if d.get("confidence_breakdown"):
+                try:
+                    d["confidence_breakdown"] = json.loads(d["confidence_breakdown"])
                 except Exception:
                     pass
             return d

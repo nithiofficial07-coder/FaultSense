@@ -162,15 +162,50 @@ def render_diagnostic_results_page() -> None:
             st.metric(
                 "Advisory Confidence",
                 f"{int(dossier.confidence_score * 100)}%",
-                help="Evidence affinity score based on historical precedent similarity (NOT a calibrated probability)",
+                help="Empirical evidence support score based on measurable empirical factors (NOT a calibrated statistical probability)",
             )
         with m2:
-            verif_delta = "Grounded against KB" if dossier.is_verified else "Retries exhausted"
-            st.metric("Verification Status", dossier.verification_status, delta=verif_delta)
+            st.metric("Diagnostic Status", dossier.evidence_based_status)
         with m3:
-            st.metric("Input Sufficiency", dossier.input_sufficiency, help="Completeness of symptoms, fault code, and telemetry")
+            retry_count = int(inv_data.get("retry_count", 0))
+            if retry_count == 0 and dossier.is_verified:
+                retry_str = "0 (Passed 1st Step)"
+            elif retry_count > 0:
+                retry_str = f"{retry_count} retries ({retry_count + 1} steps)"
+            else:
+                retry_str = "0 retries (Unverified)"
+            st.metric("Verification Retries", retry_str)
         with m4:
-            st.metric("Evidence Cases", str(len(dossier.supporting_evidence)), "Citing OEM bulletins")
+            st.metric("Matched Evidence Cases", str(len(dossier.supporting_evidence)))
+
+        bd = getattr(dossier, "confidence_breakdown", None) or inv_data.get("confidence_breakdown") or {}
+        if bd:
+            with st.expander("📊 Evidence Support Score & Factor Breakdown", expanded=False):
+                f1, f2, f3, f4, f5 = st.columns(5)
+                with f1:
+                    st.caption("Semantic Match")
+                    st.write(f"**{int(bd.get('semantic_component', 0) * 100 / 0.35)}%** (wt: 35%)")
+                with f2:
+                    st.caption("DTC Code Match")
+                    dtc_match = "✅ Matched" if bd.get("exact_fault_code_match") else "❌ No Match"
+                    st.write(f"**{dtc_match}** ({int(bd.get('fault_code_component', 0) * 100)}%)")
+                with f3:
+                    st.caption("Symptom Overlap")
+                    st.write(f"**{int(bd.get('symptom_overlap_ratio', 0) * 100)}%** (wt: 22%)")
+                with f4:
+                    st.caption("Sensor Telemetry")
+                    telem_stat = "✅ Validated" if bd.get("telemetry_provided") else "⚠️ Missing"
+                    st.write(f"**{telem_stat}**")
+                with f5:
+                    st.caption("Corroboration")
+                    st.write(f"**{bd.get('corroboration_count', 0)} case(s)**")
+
+                if bd.get("penalties_applied"):
+                    st.markdown("**Evidence Gaps & Penalties:**")
+                    for p in bd["penalties_applied"]:
+                        st.markdown(f"- ⚠️ *{p}*")
+                if bd.get("scoring_notes"):
+                    st.caption(f"**Scoring Logic**: {bd['scoring_notes']}")
 
         if not dossier.is_verified:
             st.warning(

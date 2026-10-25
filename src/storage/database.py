@@ -116,6 +116,8 @@ class DatabaseManager:
                     operating_conditions TEXT,
                     problem_description TEXT,
                     technician_review TEXT,
+                    diagnostic_status TEXT,
+                    confidence_breakdown TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                 );
@@ -160,6 +162,14 @@ class DatabaseManager:
                 pass
             try:
                 conn.execute("ALTER TABLE investigations ADD COLUMN technician_review TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN diagnostic_status TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN confidence_breakdown TEXT;")
             except sqlite3.OperationalError:
                 pass
 

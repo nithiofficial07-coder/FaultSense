@@ -360,42 +360,102 @@ class MockLLMProvider(BaseLLMProvider):
                 execution_time_s=0.02,
             )
 
-        # Extract allowed citation ID from prompt if present
-        cited_cases = ["CASE-SYNTH-ELEV-001"]
+        # 1. Parse target subsystem and fault code from prompt
+        sub_match = re.search(r'Target Subsystem\s*:\s*([^\n\r]+)', prompt)
+        target_subsystem = sub_match.group(1).strip() if sub_match else "door_system"
+
+        code_match = re.search(r'OEM Fault Code\s*:\s*([^\n\r]+)', prompt)
+        target_code = code_match.group(1).strip() if code_match else "None"
+        if "None" in target_code:
+            target_code = ""
+
+        # 2. Extract allowed citation IDs
+        cited_cases: List[str] = []
         match = re.search(r'\[ALLOWED CITATION CASE IDS\]\s*\[(.*?)\]', prompt)
         if match and match.group(1).strip() and match.group(1).strip() != "None":
             extracted = [x.strip().strip('"').strip("'") for x in match.group(1).split(",") if x.strip()]
-            if extracted:
-                cited_cases = [extracted[0]]
+            cited_cases = extracted
 
-        # Default structured mock output
-        default_json = {
-            "summary": "Mock diagnostic reasoning based on supplied elevator evidence.",
-            "candidate_causes": [
-                {
-                    "rank": 1,
-                    "hypothesis_title": "Optical curtain sensor obstruction from track debris",
-                    "subsystem": "door_system",
-                    "probability_band": "likely",
-                    "explanation": "Reported symptoms of repeated door reopening align directly with optical beam disruption.",
-                    "supporting_case_ids": cited_cases,
+        # 3. Extract retrieved case blocks from prompt
+        case_pattern = re.compile(
+            r'--- BEGIN RETRIEVED CASE: \[(?P<case_id>[^\]]+)\] ---\s*'
+            r'Subsystem:\s*(?P<subsystem>[^\n\r]+)\s*'
+            r'Diagnostic Fault Code:\s*(?P<fault_code>[^\n\r]+)\s*.*?'
+            r'Confirmed Root Cause:\s*(?P<root_cause>[^\n\r]+)\s*'
+            r'Documented Corrective Action:\s*(?P<action>[^\n\r]+)',
+            re.DOTALL
+        )
+        parsed_cases = [m.groupdict() for m in case_pattern.finditer(prompt)]
+
+        # 4. Formulate candidate causes based on parsed cases or novel fault
+        candidate_causes = []
+        if parsed_cases:
+            for idx, c in enumerate(parsed_cases[:2], start=1):
+                cid = c["case_id"].strip()
+                valid_cites = [cid] if cid in cited_cases else (cited_cases[:1] if cited_cases else [])
+                band = "likely" if idx == 1 else "possible"
+                candidate_causes.append({
+                    "rank": idx,
+                    "hypothesis_title": c["root_cause"].strip(),
+                    "subsystem": c["subsystem"].strip(),
+                    "probability_band": band,
+                    "explanation": (
+                        f"Technician report aligns with historical precedent [{cid}] "
+                        f"for subsystem '{c['subsystem'].strip()}'. "
+                        f"Precedent documents confirmed root cause: '{c['root_cause'].strip()}'."
+                    ),
+                    "supporting_case_ids": valid_cites,
                     "conflicting_evidence": [],
                     "recommended_checks": [
-                        "Perform visual inspection of car bottom door sill groove",
-                        "Measure optical curtain supply rail voltage (24VDC +/- 10%)",
+                        f"Perform targeted multimeter continuity and physical inspection of {c['subsystem'].strip()}",
+                        f"Verify operating tolerances against OEM technical manual for fault code {c['fault_code'].strip() or target_code or 'general'}",
                     ],
                     "documented_corrective_actions": [
-                        "Vacuum sill debris and clean transmitter lenses with isopropyl alcohol"
+                        c["action"].strip(),
                     ],
-                }
-            ],
+                })
+            summary = (
+                f"Diagnostic synthesis for subsystem '{target_subsystem}': Identified "
+                f"{len(candidate_causes)} candidate cause(s) grounded in historical precedents. "
+                f"Primary root cause hypothesis: '{candidate_causes[0]['hypothesis_title']}'."
+            )
+            score = 0.78
+        else:
+            candidate_causes.append({
+                "rank": 1,
+                "hypothesis_title": f"Unindexed or novel anomalous condition in {target_subsystem}",
+                "subsystem": target_subsystem,
+                "probability_band": "unlikely",
+                "explanation": (
+                    f"No matching historical precedents retrieved from knowledge base for subsystem '{target_subsystem}'. "
+                    "Physical instrumentation testing and manual controller log analysis required."
+                ),
+                "supporting_case_ids": [],
+                "conflicting_evidence": [],
+                "recommended_checks": [
+                    f"Perform baseline multimeter voltage checks on {target_subsystem} power rails",
+                    "Extract controller diagnostic event buffer via hand-held service tool",
+                ],
+                "documented_corrective_actions": [
+                    f"Perform physical visual inspection of {target_subsystem} assembly",
+                ],
+            })
+            summary = (
+                f"Insufficient historical evidence matching '{target_subsystem}'. "
+                "Baseline physical troubleshooting protocol required."
+            )
+            score = 0.15
+
+        default_json = {
+            "summary": summary,
+            "candidate_causes": candidate_causes,
             "uncertainty_and_missing_info": [
-                "Door controller error log register 0x4B not provided in current telemetry"
+                f"Field controller diagnostic buffer register for '{target_subsystem}' not attached in telemetry"
             ],
             "safety_advisories": [
-                "Place elevator car on INDEPENDENT SERVICE mode before entering car sill threshold"
+                f"Place elevator car on INDEPENDENT SERVICE mode before entering {target_subsystem} workspace"
             ],
-            "confidence_score": 0.85,
+            "confidence_score": score,
         }
 
         return LLMResponse(

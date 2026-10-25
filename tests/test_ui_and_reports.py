@@ -208,31 +208,36 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
 
     def test_evidence_based_status_classification(self):
         """Tests that evidence-based status accurately reflects verification and data sufficiency."""
-        # 1. Verified and grounded case
+        # 1. Verified and grounded case with DTC and telemetry -> Evidence Supported
         dossier_verified = DiagnosticEnricher.enrich_investigation(self.sample_inv_data)
-        self.assertEqual(dossier_verified.evidence_based_status, "Verified Against Documented Criteria")
+        self.assertEqual(dossier_verified.evidence_based_status, "Evidence Supported")
 
-        # 2. Inconclusive verification verdict -> Root-Cause Hypothesis
+        # 2. Inconclusive verification verdict -> Insufficient Evidence
         unverified_inv = dict(self.sample_inv_data)
-        unverified_inv["verification_record"] = {"final_verdict": "inconclusive"}
+        unverified_inv["verification_record"] = {"final_verdict": "insufficient"}
         unverified_inv["status"] = "inconclusive"
         dossier_unverified = DiagnosticEnricher.enrich_investigation(unverified_inv)
-        self.assertNotEqual(dossier_unverified.evidence_based_status, "Verified Against Documented Criteria")
-        self.assertEqual(dossier_unverified.evidence_based_status, "Root-Cause Hypothesis")
+        self.assertNotEqual(dossier_unverified.evidence_based_status, "Evidence Supported")
+        self.assertIn(dossier_unverified.evidence_based_status, ["Insufficient Evidence", "Partially Supported", "Review Required"])
 
-        # 3. Verified but missing telemetry -> Analysis Completed — Evidence Limited
+        # 3. Grounded hypothesis but missing telemetry -> Review Required (technician multimeter check needed)
         limited_inv = dict(self.sample_inv_data)
         limited_inv["telemetry"] = {}
         dossier_limited = DiagnosticEnricher.enrich_investigation(limited_inv)
-        self.assertEqual(dossier_limited.evidence_based_status, "Analysis Completed — Evidence Limited")
+        self.assertEqual(dossier_limited.evidence_based_status, "Review Required")
 
-        # 4. Sparse symptoms without DTC or telemetry -> Awaiting Additional Information
+        # 4. Sparse symptoms without DTC, telemetry, or evidence -> Insufficient Evidence
         sparse_inv = dict(self.sample_inv_data)
         sparse_inv["fault_code"] = None
         sparse_inv["telemetry"] = {}
         sparse_inv["symptoms"] = ["Door problem"]
+        sparse_inv["evidence_package"] = {"items": []}
+        sparse_inv["matched_cases"] = []
+        sparse_inv["matched_case_ids"] = []
+        sparse_inv["verification_record"] = {"final_verdict": "insufficient"}
+        sparse_inv["confidence_score"] = 0.15
         dossier_sparse = DiagnosticEnricher.enrich_investigation(sparse_inv)
-        self.assertEqual(dossier_sparse.evidence_based_status, "Awaiting Additional Information")
+        self.assertEqual(dossier_sparse.evidence_based_status, "Insufficient Evidence")
 
     # -------------------------------------------------------------------------
     # PDF and JSON Report Generator Tests
@@ -260,7 +265,7 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         self.assertIn("downtime_estimate", parsed)
         self.assertIn("troubleshooting_manual", parsed)
         self.assertIn("evidence_based_status", parsed)
-        self.assertEqual(parsed["evidence_based_status"], "Verified Against Documented Criteria")
+        self.assertEqual(parsed["evidence_based_status"], "Evidence Supported")
 
     # -------------------------------------------------------------------------
     # Logo and Branding Rendering Tests

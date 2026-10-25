@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from src.diagnosis.evidence_scorer import DiagnosticStatusType, EvidenceScorer
+
 
 @dataclass
 class ToolRequirement:
@@ -150,6 +152,7 @@ class DiagnosticDossier:
     operating_conditions: str = "Standard Operational Range"
     severity: str = "Medium"
     evidence_based_status: str = "Requires Technician Verification"
+    confidence_breakdown: Optional[Dict[str, Any]] = None
     troubleshooting_manual: List[TroubleshootingStep] = field(default_factory=list)
     alternative_causes: List[Dict[str, Any]] = field(default_factory=list)
     evidence_gaps: List[str] = field(default_factory=list)
@@ -190,6 +193,7 @@ class DiagnosticDossier:
             "operating_conditions": self.operating_conditions,
             "severity": self.severity,
             "evidence_based_status": self.evidence_based_status,
+            "confidence_breakdown": self.confidence_breakdown,
             "troubleshooting_manual": [t.to_dict() for t in self.troubleshooting_manual],
             "alternative_causes": self.alternative_causes,
             "evidence_gaps": self.evidence_gaps,
@@ -408,7 +412,14 @@ class DiagnosticEnricher:
         # 4. Historical evidence cases
         supporting_evidence: List[Dict[str, Any]] = []
         matched_ids = inv_data.get("matched_case_ids", [])
-        if kb_manager and hasattr(kb_manager, "repo"):
+        evid_pkg_items = (inv_data.get("evidence_package") or {}).get("items", [])
+        matched_cases_list = inv_data.get("matched_cases", [])
+
+        if evid_pkg_items:
+            supporting_evidence.extend(evid_pkg_items)
+        elif matched_cases_list:
+            supporting_evidence.extend(matched_cases_list)
+        elif kb_manager and hasattr(kb_manager, "repo") and matched_ids:
             for cid in matched_ids:
                 case = kb_manager.repo.get(cid)
                 if case:
@@ -423,6 +434,17 @@ class DiagnosticEnricher:
                         "is_synthetic": case.is_synthetic,
                         "verification_status": case.verification_status,
                     })
+        elif matched_ids:
+            for cid in matched_ids:
+                supporting_evidence.append({
+                    "case_id": cid,
+                    "source_title": f"Documented Case Precedent [{cid}]",
+                    "subsystem": subsystem,
+                    "fault_code": fault_code,
+                    "confirmed_root_cause": root_cause,
+                    "corrective_action": inv_data.get("recommended_actions") or "Inspect subsystem assembly",
+                    "verification_status": "verified_incident",
+                })
 
         # 5. Missing / Conflicting Evidence
         missing_evidence: List[str] = list(diag_report.get("uncertainty_and_missing_info", []))
@@ -499,16 +521,34 @@ class DiagnosticEnricher:
         has_telemetry = bool(telemetry_items)
         has_symp = len(symptoms) >= 1
 
-        if is_verified and sufficiency_level.lower() == "high" and has_dtc:
-            evidence_based_status = "Verified Against Documented Criteria"
-        elif not has_symp or (not has_dtc and not has_telemetry and len(symptoms) < 2):
-            evidence_based_status = "Awaiting Additional Information"
-        elif not has_telemetry or not has_dtc:
-            evidence_based_status = "Analysis Completed — Evidence Limited"
-        elif is_verified:
-            evidence_based_status = "Requires Technician Verification"
+        persisted_status = inv_data.get("diagnostic_status")
+        if persisted_status and persisted_status in [s.value for s in DiagnosticStatusType]:
+            evidence_based_status = persisted_status
         else:
-            evidence_based_status = "Root-Cause Hypothesis"
+            status_enum = EvidenceScorer.determine_status(
+                is_verified=is_verified,
+                verification_verdict=verif_status,
+                confidence_score=conf_score,
+                evidence_items=supporting_evidence,
+                has_fault_code=has_dtc,
+                has_telemetry=has_telemetry,
+                symptom_count=len(symptoms),
+                contradictions=[m for m in missing_evidence if "contradict" in str(m).lower()] or None,
+            )
+            evidence_based_status = status_enum.value
+
+        conf_breakdown = inv_data.get("confidence_breakdown")
+        if not conf_breakdown:
+            _, calc_bd = EvidenceScorer.compute_confidence(
+                evidence_items=supporting_evidence,
+                request_symptoms=symptoms,
+                request_fault_code=fault_code,
+                request_subsystem=subsystem,
+                request_telemetry=inv_data.get("telemetry", {}),
+                verification_verdict=verif_status,
+                is_verified=is_verified,
+            )
+            conf_breakdown = calc_bd.to_dict()
 
         # 17. Alternative causes (Rank 2+)
         alternative_causes = [c for c in ranked_causes if c.get("rank", 1) > 1]
@@ -561,6 +601,7 @@ class DiagnosticEnricher:
             operating_conditions=operating_conditions,
             severity=severity,
             evidence_based_status=evidence_based_status,
+            confidence_breakdown=conf_breakdown,
             troubleshooting_manual=troubleshooting_manual,
             alternative_causes=alternative_causes,
             evidence_gaps=evidence_gaps,

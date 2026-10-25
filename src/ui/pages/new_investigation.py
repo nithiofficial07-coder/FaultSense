@@ -43,31 +43,41 @@ SYMPTOM_PRESETS = {
         "door_system",
         "E-DR-201",
         "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer buzzer sounding\nIntermittent reopening at intermediate floors",
-        "Initial visual check performed on landing sills. No large physical obstruction visible."
+        "Initial visual check performed on landing sills. Optical curtain alignment tested.",
+        "Elevator car doors cycling open and closed repeatedly at Floor 4 without passenger obstruction, preventing departure.",
+        '{\n  "door_open_close_cycles": 142500,\n  "curtain_optical_attenuation_db": 6.8,\n  "motor_current_peak_a": 3.8\n}',
     ),
     "Traction Drive — Overvoltage": (
         "traction_drive",
         "E-VFD-404",
         "Drive trips on regenerative overvoltage during downward deceleration under heavy load\nMotor hunting sensation during braking",
-        "Machine room ambient temperature 34°C. Dynamic braking resistor cage warm to touch."
+        "Machine room ambient temperature 34°C. Dynamic braking resistor cage warm to touch.",
+        "VVVF drive controller trips on regenerative overvoltage fault during full-load downward express travel.",
+        '{\n  "dc_bus_voltage_v": 785.0,\n  "ambient_temperature_c": 36.2,\n  "motor_rpm": 1420\n}',
     ),
     "Braking System — Air-Gap Drag": (
         "braking_system",
         "E-BRK-102",
         "Burning friction smell reported in machine room after express runs\nBrake shoe fails to lift cleanly on run command",
-        "Brake arm visual check reveals friction material residue around brake drum."
+        "Brake arm visual check reveals friction material residue around brake drum.",
+        "Machine room friction smoke odor detected following express descent; brake shoes failing to fully clear drum.",
+        '{\n  "brake_coil_current_a": 1.4,\n  "brake_lining_temp_c": 88.5,\n  "lift_switch_delay_ms": 380\n}',
     ),
     "Hoistway Signaling — Pulse Drop": (
         "hoistway_signaling",
         "E-POS-305",
         "Car exhibits sudden jerky leveling oscillation at floor arrivals\nPositioning discrepancy detected between primary tape and motor encoder",
-        "Encoder cable shielded harness grounded at controller chassis."
+        "Encoder cable shielded harness grounded at controller chassis.",
+        "Elevator leveling exhibits jerky hunting motion at terminal landings due to optical encoder pulse count drift.",
+        '{\n  "encoder_pulse_deviation": 42,\n  "landing_level_error_mm": 18.5,\n  "guide_rail_vibration_g": 0.08\n}',
     ),
     "Hydraulic System — Valve Contamination": (
         "hydraulic_system",
         "E-HYD-501",
         "Car exhibits downward crawl creep when parked at top terminal landing\nOil temperature alarm logged in controller",
-        "Hydraulic fluid last replaced 3 years ago; filter restriction indicator in amber zone."
+        "Hydraulic fluid last replaced 3 years ago; filter restriction indicator in amber zone.",
+        "Hydraulic passenger elevator car slowly sinking below floor landing level when parked under load.",
+        '{\n  "hydraulic_oil_temp_c": 64.2,\n  "pump_pressure_psi": 2250,\n  "valve_solenoid_voltage_v": 23.8\n}',
     ),
 }
 
@@ -245,7 +255,7 @@ def render_new_investigation_page() -> None:
 
     # Preset Quick-Load Selector
     with st.expander("⚡ Load Pre-configured Field Failure Scenario (Quick Demo)", expanded=False):
-        c_scen, c_load = st.columns([3, 1])
+        c_scen, c_load, c_reset = st.columns([2.5, 1.2, 1.2])
         with c_scen:
             selected_preset_name = st.selectbox(
                 "Select Failure Scenario Benchmark",
@@ -253,12 +263,46 @@ def render_new_investigation_page() -> None:
             )
         with c_load:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-            if st.button("Apply Scenario Preset", use_container_width=True):
-                sub, code, syms, notes = SYMPTOM_PRESETS[selected_preset_name]
+            if st.button("Apply Scenario Preset", use_container_width=True, key="btn_apply_preset"):
+                preset_data = SYMPTOM_PRESETS[selected_preset_name]
+                sub = preset_data[0]
+                code = preset_data[1]
+                syms = preset_data[2]
+                notes = preset_data[3]
+                desc = preset_data[4] if len(preset_data) > 4 else syms.splitlines()[0]
+                telem_json = preset_data[5] if len(preset_data) > 5 else "{}"
+
+                st.session_state["subsystem_picker"] = sub
                 st.session_state["subsystem_select"] = sub
+                st.session_state["fault_code_field"] = code
                 st.session_state["fault_code_input"] = code
+                st.session_state["symptoms_field"] = syms
                 st.session_state["symptoms_input"] = syms
+                st.session_state["notes_field"] = notes
                 st.session_state["notes_input"] = notes
+                st.session_state["problem_desc_field"] = desc
+                st.session_state["manual_json_text"] = telem_json
+                try:
+                    st.session_state["uploaded_telemetry_data"] = json.loads(telem_json)
+                except Exception:
+                    pass
+                st.rerun()
+
+        with c_reset:
+            st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+            if st.button("Reset Form Fields", use_container_width=True, key="btn_reset_form"):
+                st.session_state["subsystem_picker"] = "door_system"
+                st.session_state["subsystem_select"] = "door_system"
+                st.session_state["fault_code_field"] = ""
+                st.session_state["fault_code_input"] = ""
+                st.session_state["symptoms_field"] = ""
+                st.session_state["symptoms_input"] = ""
+                st.session_state["notes_field"] = ""
+                st.session_state["notes_input"] = ""
+                st.session_state["problem_desc_field"] = ""
+                st.session_state["manual_json_text"] = "{}"
+                st.session_state["uploaded_telemetry_data"] = {}
+                st.session_state["current_result"] = None
                 st.rerun()
 
     # =========================================================================
@@ -354,7 +398,7 @@ def render_new_investigation_page() -> None:
 
         fault_code = st.text_input(
             "OEM Controller Fault Code (DTC) (if registered)",
-            value=st.session_state.get("fault_code_input", "E-DR-201"),
+            value=st.session_state.get("fault_code_field", st.session_state.get("fault_code_input", "E-DR-201")),
             placeholder="e.g. E-DR-201, E-VFD-404, FLT-12 (leave blank if none)",
             key="fault_code_field",
             help="Diagnostic trouble code logged in controller fault history buffer.",
@@ -362,7 +406,7 @@ def render_new_investigation_page() -> None:
 
         technician_notes = st.text_area(
             "Technician Field Observations & Notes (Optional)",
-            value=st.session_state.get("notes_input", "Initial visual check performed on landing sills. No large physical obstruction visible."),
+            value=st.session_state.get("notes_field", st.session_state.get("notes_input", "Initial visual check performed on landing sills. No large physical obstruction visible.")),
             height=78,
             key="notes_field",
             help="Multimeter spot-checks, tactile observations, or recent maintenance history.",
@@ -371,15 +415,18 @@ def render_new_investigation_page() -> None:
     with s_col2:
         problem_description = st.text_area(
             "Problem Description / Incident Narrative *",
-            value="Elevator car doors cycling open and closed repeatedly at Floor 4 without passenger obstruction, preventing departure.",
+            value=st.session_state.get("problem_desc_field", "Elevator car doors cycling open and closed repeatedly at Floor 4 without passenger obstruction, preventing departure."),
             height=75,
             key="problem_desc_field",
             help="Plain-language description of the problem reported by building staff or observed on arrival.",
         )
 
         default_syms = st.session_state.get(
-            "symptoms_input",
-            "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer expires causing nudging buzzer activation\nIntermittent reopening at intermediate floors",
+            "symptoms_field",
+            st.session_state.get(
+                "symptoms_input",
+                "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer expires causing nudging buzzer activation\nIntermittent reopening at intermediate floors",
+            ),
         )
         symptoms_input = st.text_area(
             "Observed Operational Symptoms * (One per line or semicolon-separated)",
@@ -628,13 +675,53 @@ def render_new_investigation_page() -> None:
             verif_badge = dossier.evidence_based_status
             c_score, c_verif, c_retry, c_cases = st.columns(4)
             with c_score:
-                st.metric("Advisory Confidence", f"{int(result.confidence_score * 100)}%")
+                st.metric(
+                    "Advisory Confidence",
+                    f"{int(result.confidence_score * 100)}%",
+                    help="Empirical evidence support score based on semantic similarity, DTC alignment, symptom overlap, sensor telemetry, and corroboration (NOT a calibrated statistical probability).",
+                )
             with c_verif:
                 st.metric("Diagnostic Status", verif_badge)
             with c_retry:
-                st.metric("Verification Retries", f"{result.retry_count} / 2")
+                if result.retry_count == 0 and result.is_verified:
+                    retry_label = "0 (Passed 1st Step)"
+                elif result.retry_count > 0:
+                    retry_label = f"{result.retry_count} retries ({result.retry_count + 1} steps)"
+                else:
+                    retry_label = "0 retries (Unverified)"
+                st.metric("Verification Retries", retry_label)
             with c_cases:
                 st.metric("Matched Evidence Cases", str(len(result.matched_cases)))
+
+            # Evidence Support Score Factor Breakdown Expander
+            bd = result.confidence_breakdown or getattr(dossier, "confidence_breakdown", None) or {}
+            if bd:
+                with st.expander("📊 Evidence Support Score & Factor Breakdown", expanded=False):
+                    f1, f2, f3, f4, f5 = st.columns(5)
+                    with f1:
+                        st.caption("Semantic Match")
+                        st.write(f"**{int(bd.get('semantic_component', 0) * 100 / 0.35)}%** (wt: 35%)")
+                    with f2:
+                        st.caption("DTC Code Match")
+                        dtc_match = "✅ Matched" if bd.get("exact_fault_code_match") else "❌ No Match"
+                        st.write(f"**{dtc_match}** ({int(bd.get('fault_code_component', 0) * 100)}%)")
+                    with f3:
+                        st.caption("Symptom Overlap")
+                        st.write(f"**{int(bd.get('symptom_overlap_ratio', 0) * 100)}%** (wt: 22%)")
+                    with f4:
+                        st.caption("Sensor Telemetry")
+                        telem_stat = "✅ Validated" if bd.get("telemetry_provided") else "⚠️ Missing"
+                        st.write(f"**{telem_stat}**")
+                    with f5:
+                        st.caption("Corroboration")
+                        st.write(f"**{bd.get('corroboration_count', 0)} case(s)**")
+
+                    if bd.get("penalties_applied"):
+                        st.markdown("**Evidence Gaps & Penalties:**")
+                        for p in bd["penalties_applied"]:
+                            st.markdown(f"- ⚠️ *{p}*")
+                    if bd.get("scoring_notes"):
+                        st.caption(f"**Scoring Logic**: {bd['scoring_notes']}")
 
             # Primary Root Cause Card
             st.markdown(

@@ -44,6 +44,8 @@ class DiagnosisResult:
     verification_record: Optional[Dict[str, Any]] = None
     retry_count: int = 0
     is_verified: bool = False
+    diagnostic_status: Optional[str] = None
+    confidence_breakdown: Optional[Dict[str, Any]] = None
     timestamp: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
