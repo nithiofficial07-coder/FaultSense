@@ -8,13 +8,13 @@ pandas>=2.2.0
 numpy>=1.26.0
 python-dotenv>=1.0.0
 reportlab>=4.0.0
+requests>=2.31.0
 
 # Testing & Quality Assurance
 pytest>=8.0.0
 
-# Vector Indexing & AI Pipelines (Phase 2 & Phase 3 - CPU Execution)
-# Configured with CPU-only execution; pre-compiled wheels standard for Python <= 3.13
-sentence-transformers>=3.0.0; python_version < "3.14"
-faiss-cpu>=1.8.0; python_version < "3.14"
-langchain>=0.2.0; python_version < "3.14"
-ragas>=0.1.0; python_version < "3.14"
+# Vector Indexing & AI Pipelines (CPU Execution)
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
+langchain>=0.2.0
+ragas>=0.1.0
