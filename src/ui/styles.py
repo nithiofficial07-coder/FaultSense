@@ -310,8 +310,19 @@ def apply_custom_styles() -> None:
             }
 
             /* Internal layout: flex alignment for Streamlit markdown container & paragraph */
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button div[data-testid="stMarkdownContainer"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button > div {
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button div[data-testid="stMarkdownContainer"] {
                 width: 100% !important;
                 display: flex !important;
                 flex-direction: row !important;
@@ -341,25 +352,41 @@ def apply_custom_styles() -> None:
                 text-overflow: ellipsis !important;
             }
 
-            /* Material icon container: dedicated 20px column, perfectly centered, 12px gap to text */
+            /* Icon wrapper span: dedicated 20px column with 10px spacing to text */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button span:has(> [data-testid="stIconMaterial"]),
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button span[class*="e1fmktau2"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button span.st-emotion-cache-28gi3v {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 20px !important;
+                min-width: 20px !important;
+                max-width: 20px !important;
+                height: 20px !important;
+                margin: 0 10px 0 0 !important;
+                padding: 0 !important;
+                flex-shrink: 0 !important;
+                overflow: visible !important;
+            }
+
+            /* Material icon glyph: centered inside 20px wrapper without negative offsets or clipping */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button span.material-symbols-rounded {
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
                 text-align: center !important;
-                width: 20px !important;
-                min-width: 20px !important;
-                max-width: 20px !important;
-                height: 20px !important;
-                font-size: 18px !important;
-                line-height: 20px !important;
-                margin-right: 12px !important;
-                margin-left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                font-size: 19px !important;
+                line-height: 1 !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 flex-shrink: 0 !important;
                 color: #64748B !important;
                 transition: color 160ms ease !important;
                 vertical-align: middle !important;
+                overflow: visible !important;
             }
 
             /* Quick-action 3-column buttons in active session card */
