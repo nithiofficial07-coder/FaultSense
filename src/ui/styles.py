@@ -116,54 +116,200 @@ def apply_custom_styles() -> None:
 
             /* Sidebar container */
             section[data-testid="stSidebar"] {
-                background-color: #FFFFFF !important;
+                background-color: #F8FAFD !important;
                 border-right: 1px solid #E2E8F0 !important;
             }
-            section[data-testid="stSidebar"] > div {
-                padding-top: 1.2rem;
-                padding-bottom: 1.8rem;
-                background-color: #FFFFFF !important;
+            section[data-testid="stSidebar"] > div,
+            section[data-testid="stSidebar"] div[data-testid="stSidebarUserContent"] {
+                padding-top: 0.85rem !important;
+                padding-bottom: 1.5rem !important;
+                padding-left: 0.85rem !important;
+                padding-right: 0.85rem !important;
+                background-color: #F8FAFD !important;
             }
 
-            /* Sidebar navigation button item styling */
-            .nav-item-btn button {
+            /* Sidebar compact vertical spacing */
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
+                margin-bottom: 0.25rem !important;
+                gap: 0 !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
+                gap: 0.25rem !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="stButton"] {
+                margin-bottom: 5px !important;
+                margin-top: 0 !important;
+            }
+
+            /* Sidebar navigation button item styling (standard 44px height, left-aligned) */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
                 width: 100% !important;
-                text-align: left !important;
+                min-height: 44px !important;
+                height: 44px !important;
+                max-height: 44px !important;
                 display: flex !important;
-                justify-content: flex-start !important;
+                flex-direction: row !important;
                 align-items: center !important;
-                padding: 10px 14px !important;
-                margin-bottom: 3px !important;
-                background-color: transparent !important;
-                border: 1px solid transparent !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                padding: 0 14px !important;
+                margin: 0 !important;
+                background-color: #FFFFFF !important;
+                border: 1px solid #E2E8F0 !important;
                 border-radius: 8px !important;
-                color: #55657E !important;
+                color: #27364B !important;
                 font-weight: 500 !important;
                 font-size: 0.88rem !important;
-                transition: all 0.15s ease-in-out !important;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+                transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+                position: relative !important;
+                overflow: hidden !important;
+                cursor: pointer !important;
             }
-            .nav-item-btn button:hover {
-                background-color: #F0F4F9 !important;
-                border-color: #E2E8F0 !important;
-                color: #243247 !important;
-                transform: translateX(2px);
+
+            /* Subtle animated pointer highlight on hover */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button::before {
+                content: '' !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 25% !important;
+                height: 50% !important;
+                width: 3px !important;
+                background: #8BADE8 !important;
+                border-radius: 0 3px 3px 0 !important;
+                opacity: 0 !important;
+                transition: all 180ms ease !important;
             }
-            .nav-item-btn-active button {
-                width: 100% !important;
-                text-align: left !important;
-                display: flex !important;
-                justify-content: flex-start !important;
-                align-items: center !important;
-                padding: 10px 14px !important;
-                margin-bottom: 3px !important;
+
+            /* Navigation button hover state */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
+                background-color: #EFF4FB !important;
+                border-color: #CBD5E1 !important;
+                color: #4169A8 !important;
+                transform: translateX(3px) !important;
+                box-shadow: 0 2px 5px rgba(65, 105, 168, 0.08) !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover::before {
+                opacity: 1 !important;
+                height: 70% !important;
+                top: 15% !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span[data-testid="stIconMaterial"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span.material-symbols-rounded {
+                color: #4169A8 !important;
+                transform: scale(1.08) !important;
+            }
+
+            /* Active navigation item styling */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
                 background-color: #E8EFF9 !important;
                 border: 1px solid #C4D7F0 !important;
                 border-left: 4px solid #4169A8 !important;
-                border-radius: 8px !important;
-                color: #243F6C !important;
+                color: #315A96 !important;
                 font-weight: 700 !important;
+                box-shadow: 0 1px 3px rgba(65, 105, 168, 0.1) !important;
+                transform: none !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]::before {
+                display: none !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span[data-testid="stIconMaterial"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span.material-symbols-rounded {
+                color: #4169A8 !important;
+                font-weight: 700 !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover {
+                background-color: #DFEAFC !important;
+                border-color: #B2CDFA !important;
+                color: #243F6C !important;
+                transform: none !important;
+            }
+
+            /* Text and Material icon alignment inside sidebar buttons */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button p,
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button div {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
                 font-size: 0.88rem !important;
-                box-shadow: 0 1px 2px rgba(65, 105, 168, 0.08) !important;
+                font-weight: inherit !important;
+                color: inherit !important;
+                margin: 0 !important;
+                line-height: 1 !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button span[data-testid="stIconMaterial"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button span.material-symbols-rounded {
+                font-size: 18px !important;
+                width: 18px !important;
+                height: 18px !important;
+                margin-right: 10px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                color: #718096 !important;
+                transition: color 180ms ease, transform 180ms ease !important;
+                vertical-align: middle !important;
+            }
+
+            /* Quick-action 3-column buttons in active session card */
+            section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button {
+                height: 32px !important;
+                min-height: 32px !important;
+                max-height: 32px !important;
+                padding: 0 6px !important;
+                font-size: 0.78rem !important;
+                justify-content: center !important;
+                text-align: center !important;
+                border-radius: 6px !important;
+                transform: none !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button::before {
+                display: none !important;
+            }
+            section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button span[data-testid="stIconMaterial"],
+            section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button span.material-symbols-rounded {
+                font-size: 14px !important;
+                margin-right: 4px !important;
+            }
+
+            /* Animated Cursor-Following Pointer Indicator */
+            #fs-sidebar-pointer {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: radial-gradient(circle, rgba(139, 173, 232, 0.45) 0%, rgba(65, 105, 168, 0.12) 65%, transparent 100%);
+                border: 1.5px solid rgba(139, 173, 232, 0.65);
+                pointer-events: none !important;
+                z-index: 999999;
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.6);
+                transition: opacity 0.22s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+                box-shadow: 0 0 10px rgba(139, 173, 232, 0.35);
+            }
+            #fs-sidebar-pointer.fs-pointer-visible {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            @media (prefers-reduced-motion: reduce) {
+                #fs-sidebar-pointer {
+                    display: none !important;
+                }
+                section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
+                    transition: none !important;
+                }
+                section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
+                    transform: none !important;
+                }
             }
 
             /* General Buttons */

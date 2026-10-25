@@ -6,6 +6,7 @@ active session indicator, and ASME A17.1 safety notices in enterprise light styl
 
 from typing import Optional
 import streamlit as st
+import streamlit.components.v1 as components
 
 from config.settings import get_settings
 from src.ui.assets.icons import get_icon_svg
@@ -137,6 +138,85 @@ def render_safety_disclaimer() -> None:
         )
 
 
+def render_cursor_pointer_script() -> None:
+    """Injects a smooth, non-intrusive cursor-following pointer inside the sidebar navigation."""
+    script_html = """
+    <script>
+    (function() {
+        try {
+            // Respect accessibility reduced-motion preference
+            if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                return;
+            }
+            // Disable on touch devices
+            if ('ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0)) {
+                return;
+            }
+
+            const doc = window.parent.document;
+            if (!doc) return;
+
+            // Ensure pointer element exists in main document body
+            let pointer = doc.getElementById('fs-sidebar-pointer');
+            if (!pointer) {
+                pointer = doc.createElement('div');
+                pointer.id = 'fs-sidebar-pointer';
+                pointer.setAttribute('aria-hidden', 'true');
+                doc.body.appendChild(pointer);
+            }
+
+            const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+            if (!sidebar || sidebar.dataset.fsPointerReady) return;
+            sidebar.dataset.fsPointerReady = 'true';
+
+            let curX = 0, curY = 0;
+            let targetX = 0, targetY = 0;
+            let isVisible = false;
+
+            function animate() {
+                if (isVisible) {
+                    curX += (targetX - curX) * 0.24;
+                    curY += (targetY - curY) * 0.24;
+                    pointer.style.left = curX.toFixed(1) + 'px';
+                    pointer.style.top = curY.toFixed(1) + 'px';
+                }
+                requestAnimationFrame(animate);
+            }
+            requestAnimationFrame(animate);
+
+            sidebar.addEventListener('mouseenter', function(e) {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                curX = targetX;
+                curY = targetY;
+                pointer.style.left = curX + 'px';
+                pointer.style.top = curY + 'px';
+                isVisible = true;
+                pointer.classList.add('fs-pointer-visible');
+            });
+
+            sidebar.addEventListener('mousemove', function(e) {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                if (!isVisible) {
+                    isVisible = true;
+                    pointer.classList.add('fs-pointer-visible');
+                }
+            });
+
+            sidebar.addEventListener('mouseleave', function() {
+                isVisible = false;
+                pointer.classList.remove('fs-pointer-visible');
+            });
+        } catch (err) {
+            // Graceful fallback without impacting navigation
+        }
+    })();
+    </script>
+    """
+    components.html(script_html, height=0)
+
+
 def render_sidebar() -> str:
     """Renders the navigation menu and returns the active page identifier."""
     settings = get_settings()
@@ -148,43 +228,43 @@ def render_sidebar() -> str:
     current_page = st.session_state["nav_page"]
 
     with st.sidebar:
-        # 1. Custom SVG Branding (Light Mode)
+        # 1. Compact Custom SVG Branding
         st.markdown(
-            f'<div style="padding: 6px 0 14px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 16px; text-align: center;">{get_logo_html(width=180, height=44, show_text=True, dark_mode=False)}</div>',
+            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 12px; text-align: center;">{get_logo_html(width=172, height=42, show_text=True, dark_mode=False)}</div>',
             unsafe_allow_html=True,
         )
 
-        # 2. Main Navigation Items
+        # 2. Main Navigation Items (Clean, compact hierarchy)
         st.markdown(
-            "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748B; margin-bottom: 8px; letter-spacing: 0.8px;'>Main Navigation</div>",
+            "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #718096; margin-bottom: 6px; letter-spacing: 0.8px; padding-left: 2px;'>Navigation</div>",
             unsafe_allow_html=True,
         )
 
         for page_id, label, icon_name, subtext in NAV_ITEMS:
             is_active = (current_page == page_id)
-            btn_class = "nav-item-btn-active" if is_active else "nav-item-btn"
-
-            st.markdown(f'<div class="{btn_class}">', unsafe_allow_html=True)
             if st.button(
                 label,
                 key=f"nav_btn_{page_id}",
                 icon=icon_name,
                 use_container_width=True,
+                type="primary" if is_active else "secondary",
             ):
                 if current_page != page_id:
                     st.session_state["nav_page"] = page_id
                     st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
-        st.markdown("<hr style='border: 0; border-top: 1px solid #E2E8F0; margin: 16px 0 12px 0;'>", unsafe_allow_html=True)
+        # Inject non-intrusive cursor-following pointer script
+        render_cursor_pointer_script()
+
+        st.markdown("<hr style='border: 0; border-top: 1px solid #E2E8F0; margin: 12px 0 10px 0;'>", unsafe_allow_html=True)
 
         # 3. Active Session Quick-Access Card
         active_inv = st.session_state.get("current_investigation_id")
         if active_inv:
             st.markdown(
-                f'<div style="background: #EAF1FA; border: 1px solid #CADDF5; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">'
+                f'<div style="background: #EAF1FA; border: 1px solid #CADDF5; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;">'
                 f'<div style="font-size: 0.68rem; color: #4169A8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Active Investigation</div>'
-                f'<div style="font-size: 0.88rem; color: #243247; font-weight: 700; margin-top: 2px;">{active_inv}</div>'
+                f'<div style="font-size: 0.84rem; color: #27364B; font-weight: 700; margin-top: 2px;">{active_inv}</div>'
                 f'</div>',
                 unsafe_allow_html=True,
             )
