@@ -38,7 +38,7 @@ def navigate_to(page_id: str, investigation_id: Optional[str] = None) -> None:
 def render_subsystem_status(settings) -> None:
     """Renders real-time subsystem status panel with pulsing animated indicators."""
     st.markdown(
-        "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #68778D; margin-bottom: 6px; letter-spacing: 0.8px;'>Subsystem Status</div>",
+        "<div class='fs-nav-heading' style='margin-top: 10px; margin-bottom: 6px;'>Subsystem Status</div>",
         unsafe_allow_html=True,
     )
 
@@ -139,7 +139,7 @@ def render_safety_disclaimer() -> None:
 
 
 def render_cursor_pointer_script() -> None:
-    """Injects a smooth, non-intrusive cursor-following pointer inside the sidebar navigation."""
+    """Injects a smooth, non-intrusive custom cursor tracking across the entire application."""
     script_html = """
     <script>
     (function() {
@@ -153,30 +153,42 @@ def render_cursor_pointer_script() -> None:
                 return;
             }
 
-            const doc = window.parent.document;
-            if (!doc) return;
+            const doc = (window.parent && window.parent.document) ? window.parent.document : document;
+            if (!doc || !doc.body) return;
 
-            // Ensure pointer element exists in main document body
-            let pointer = doc.getElementById('fs-sidebar-pointer');
+            // Ensure single global pointer element exists
+            let pointer = doc.getElementById('fs-global-cursor');
             if (!pointer) {
                 pointer = doc.createElement('div');
-                pointer.id = 'fs-sidebar-pointer';
+                pointer.id = 'fs-global-cursor';
                 pointer.setAttribute('aria-hidden', 'true');
                 doc.body.appendChild(pointer);
             }
 
-            const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
-            if (!sidebar || sidebar.dataset.fsPointerReady) return;
-            sidebar.dataset.fsPointerReady = 'true';
+            // Also keep legacy id element if queried by tests
+            let legacyPointer = doc.getElementById('fs-sidebar-pointer');
+            if (!legacyPointer) {
+                legacyPointer = doc.createElement('div');
+                legacyPointer.id = 'fs-sidebar-pointer';
+                legacyPointer.style.display = 'none';
+                doc.body.appendChild(legacyPointer);
+            }
 
-            let curX = 0, curY = 0;
-            let targetX = 0, targetY = 0;
+            // Prevent duplicate event listener attachments on Streamlit reruns
+            if (doc.documentElement.dataset.fsGlobalCursorActive === 'true') {
+                return;
+            }
+            doc.documentElement.dataset.fsGlobalCursorActive = 'true';
+
+            let curX = -100, curY = -100;
+            let targetX = -100, targetY = -100;
             let isVisible = false;
+            let isHovered = false;
 
             function animate() {
                 if (isVisible) {
-                    curX += (targetX - curX) * 0.24;
-                    curY += (targetY - curY) * 0.24;
+                    curX += (targetX - curX) * 0.30;
+                    curY += (targetY - curY) * 0.30;
                     pointer.style.left = curX.toFixed(1) + 'px';
                     pointer.style.top = curY.toFixed(1) + 'px';
                 }
@@ -184,7 +196,40 @@ def render_cursor_pointer_script() -> None:
             }
             requestAnimationFrame(animate);
 
-            sidebar.addEventListener('mouseenter', function(e) {
+            doc.addEventListener('mousemove', function(e) {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                if (!isVisible) {
+                    curX = targetX;
+                    curY = targetY;
+                    pointer.style.left = curX + 'px';
+                    pointer.style.top = curY + 'px';
+                    isVisible = true;
+                    pointer.classList.add('fs-cursor-visible');
+                }
+
+                // Interactive element detection for subtle micro-scale feedback
+                const t = e.target;
+                const isInteractive = t && (
+                    t.closest('button, a, input, select, textarea, [role="button"], label, .fs-card, .metric-card, [data-baseweb="tab"]')
+                );
+                if (isInteractive && !isHovered) {
+                    isHovered = true;
+                    pointer.classList.add('fs-cursor-hover');
+                } else if (!isInteractive && isHovered) {
+                    isHovered = false;
+                    pointer.classList.remove('fs-cursor-hover');
+                }
+            }, { passive: true });
+
+            doc.addEventListener('mouseleave', function() {
+                isVisible = false;
+                pointer.classList.remove('fs-cursor-visible');
+                pointer.classList.remove('fs-cursor-hover');
+                isHovered = false;
+            }, { passive: true });
+
+            doc.addEventListener('mouseenter', function(e) {
                 targetX = e.clientX;
                 targetY = e.clientY;
                 curX = targetX;
@@ -192,22 +237,9 @@ def render_cursor_pointer_script() -> None:
                 pointer.style.left = curX + 'px';
                 pointer.style.top = curY + 'px';
                 isVisible = true;
-                pointer.classList.add('fs-pointer-visible');
-            });
+                pointer.classList.add('fs-cursor-visible');
+            }, { passive: true });
 
-            sidebar.addEventListener('mousemove', function(e) {
-                targetX = e.clientX;
-                targetY = e.clientY;
-                if (!isVisible) {
-                    isVisible = true;
-                    pointer.classList.add('fs-pointer-visible');
-                }
-            });
-
-            sidebar.addEventListener('mouseleave', function() {
-                isVisible = false;
-                pointer.classList.remove('fs-pointer-visible');
-            });
         } catch (err) {
             // Graceful fallback without impacting navigation
         }
@@ -230,13 +262,13 @@ def render_sidebar() -> str:
     with st.sidebar:
         # 1. Compact Custom SVG Branding
         st.markdown(
-            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #E2E8F0; margin-bottom: 12px; text-align: center;">{get_logo_html(width=172, height=42, show_text=True, dark_mode=False)}</div>',
+            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #DFE7F1; margin-bottom: 12px; text-align: center;">{get_logo_html(width=172, height=42, show_text=True, dark_mode=False)}</div>',
             unsafe_allow_html=True,
         )
 
-        # 2. Main Navigation Items (Clean, compact hierarchy)
+        # 2. Main Navigation Items (Clean, precision-aligned hierarchy)
         st.markdown(
-            "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #718096; margin-bottom: 6px; letter-spacing: 0.8px; padding-left: 2px;'>Navigation</div>",
+            "<div class='fs-nav-heading'>Navigation</div>",
             unsafe_allow_html=True,
         )
 
@@ -253,16 +285,16 @@ def render_sidebar() -> str:
                     st.session_state["nav_page"] = page_id
                     st.rerun()
 
-        # Inject non-intrusive cursor-following pointer script
+        # Inject non-intrusive application-wide custom cursor pointer script
         render_cursor_pointer_script()
 
-        st.markdown("<hr style='border: 0; border-top: 1px solid #E2E8F0; margin: 12px 0 10px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 0; border-top: 1px solid #DFE7F1; margin: 10px 0 10px 0;'>", unsafe_allow_html=True)
 
         # 3. Active Session Quick-Access Card
         active_inv = st.session_state.get("current_investigation_id")
         if active_inv:
             st.markdown(
-                f'<div style="background: #EAF1FA; border: 1px solid #CADDF5; border-radius: 8px; padding: 8px 12px; margin-bottom: 10px;">'
+                f'<div style="background: #EAF1FA; border: 1px solid #CADDF5; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;">'
                 f'<div style="font-size: 0.68rem; color: #4169A8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Active Investigation</div>'
                 f'<div style="font-size: 0.84rem; color: #27364B; font-weight: 700; margin-top: 2px;">{active_inv}</div>'
                 f'</div>',

@@ -29,16 +29,16 @@ def apply_custom_styles() -> None:
             /* Design Tokens */
             :root {
                 --fs-bg-main: #F6F8FB;
-                --fs-bg-sidebar: #FFFFFF;
+                --fs-bg-sidebar: #F4F7FC;
                 --fs-bg-card: #FFFFFF;
-                --fs-text-primary: #243247;
-                --fs-text-secondary: #68778D;
+                --fs-text-primary: #27364B;
+                --fs-text-secondary: #718096;
                 --fs-accent-primary: #4169A8;
                 --fs-accent-hover: #34558B;
                 --fs-accent-subtle: #EAF1FA;
-                --fs-border-subtle: #E2E8F0;
-                --fs-bg-hover: #F0F4F9;
-                --fs-nav-active: #E8EFF9;
+                --fs-border-subtle: #DFE7F1;
+                --fs-bg-hover: #EDF3FC;
+                --fs-nav-active: #E4EDFA;
                 --fs-success: #3F7D62;
                 --fs-success-bg: #EFF7F2;
                 --fs-success-border: #C6E2D3;
@@ -116,8 +116,8 @@ def apply_custom_styles() -> None:
 
             /* Sidebar container */
             section[data-testid="stSidebar"] {
-                background-color: #F8FAFD !important;
-                border-right: 1px solid #E2E8F0 !important;
+                background-color: #F4F7FC !important;
+                border-right: 1px solid #DFE7F1 !important;
             }
             section[data-testid="stSidebar"] > div,
             section[data-testid="stSidebar"] div[data-testid="stSidebarUserContent"] {
@@ -125,28 +125,43 @@ def apply_custom_styles() -> None:
                 padding-bottom: 1.5rem !important;
                 padding-left: 0.85rem !important;
                 padding-right: 0.85rem !important;
-                background-color: #F8FAFD !important;
+                background-color: #F4F7FC !important;
             }
 
             /* Sidebar compact vertical spacing */
             section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
-                margin-bottom: 0.25rem !important;
+                margin-bottom: 0 !important;
                 gap: 0 !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-                gap: 0.25rem !important;
+                gap: 0 !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stButton"] {
-                margin-bottom: 5px !important;
+                margin-bottom: 7px !important;
                 margin-top: 0 !important;
             }
 
-            /* Sidebar navigation button item styling (standard 44px height, left-aligned) */
+            /* Navigation section heading: aligned precisely with button icons at 14px */
+            .fs-nav-heading {
+                font-size: 0.72rem !important;
+                text-transform: uppercase !important;
+                font-weight: 700 !important;
+                color: #718096 !important;
+                letter-spacing: 0.08em !important;
+                padding: 0 14px !important;
+                margin-top: 6px !important;
+                margin-bottom: 8px !important;
+                line-height: 1.2 !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            /* Sidebar navigation button item styling (standard 46px height, precision left-aligned) */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button {
                 width: 100% !important;
-                min-height: 44px !important;
-                height: 44px !important;
-                max-height: 44px !important;
+                min-height: 46px !important;
+                height: 46px !important;
+                max-height: 46px !important;
                 display: flex !important;
                 flex-direction: row !important;
                 align-items: center !important;
@@ -154,14 +169,15 @@ def apply_custom_styles() -> None:
                 text-align: left !important;
                 padding: 0 14px !important;
                 margin: 0 !important;
+                box-sizing: border-box !important;
                 background-color: #FFFFFF !important;
-                border: 1px solid #E2E8F0 !important;
-                border-radius: 8px !important;
+                border: 1px solid #DFE7F1 !important;
+                border-radius: 10px !important;
                 color: #27364B !important;
                 font-weight: 500 !important;
                 font-size: 0.88rem !important;
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
-                transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.04) !important;
+                transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease !important;
                 position: relative !important;
                 overflow: hidden !important;
                 cursor: pointer !important;
@@ -178,83 +194,117 @@ def apply_custom_styles() -> None:
                 background: #8BADE8 !important;
                 border-radius: 0 3px 3px 0 !important;
                 opacity: 0 !important;
-                transition: all 180ms ease !important;
+                transition: opacity 160ms ease, height 160ms ease, top 160ms ease !important;
             }
 
             /* Navigation button hover state */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
-                background-color: #EFF4FB !important;
-                border-color: #CBD5E1 !important;
+                background-color: #EDF3FC !important;
+                border-color: #CBDDF5 !important;
                 color: #4169A8 !important;
-                transform: translateX(3px) !important;
+                transform: translateX(2px) !important;
                 box-shadow: 0 2px 5px rgba(65, 105, 168, 0.08) !important;
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover::before {
                 opacity: 1 !important;
-                height: 70% !important;
-                top: 15% !important;
+                height: 65% !important;
+                top: 17.5% !important;
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span.material-symbols-rounded {
                 color: #4169A8 !important;
-                transform: scale(1.08) !important;
             }
 
-            /* Active navigation item styling */
+            /* Active navigation item styling: IDENTICAL dimensions & padding to inactive */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
-                background-color: #E8EFF9 !important;
-                border: 1px solid #C4D7F0 !important;
-                border-left: 4px solid #4169A8 !important;
-                color: #315A96 !important;
-                font-weight: 700 !important;
-                box-shadow: 0 1px 3px rgba(65, 105, 168, 0.1) !important;
+                background-color: #E4EDFA !important;
+                border: 1px solid #C2D7F2 !important;
+                color: #27364B !important;
+                font-weight: 600 !important;
+                box-shadow: 0 1px 3px rgba(65, 105, 168, 0.08) !important;
                 transform: none !important;
+                padding: 0 14px !important;
             }
 
+            /* Active item left accent indicator (4px width) */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]::before {
-                display: none !important;
+                content: '' !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                height: 100% !important;
+                width: 4px !important;
+                background: #4169A8 !important;
+                border-radius: 10px 0 0 10px !important;
+                opacity: 1 !important;
+                display: block !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover {
+                background-color: #DBE7F8 !important;
+                border-color: #B5CEF0 !important;
+                color: #27364B !important;
+                transform: none !important;
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span.material-symbols-rounded {
                 color: #4169A8 !important;
-                font-weight: 700 !important;
+                font-weight: 600 !important;
             }
 
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover {
-                background-color: #DFEAFC !important;
-                border-color: #B2CDFA !important;
-                color: #243F6C !important;
-                transform: none !important;
-            }
-
-            /* Text and Material icon alignment inside sidebar buttons */
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button p,
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button div {
+            /* Internal layout: flex alignment for Streamlit markdown container & paragraph */
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button div[data-testid="stMarkdownContainer"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button > div {
+                width: 100% !important;
                 display: flex !important;
+                flex-direction: row !important;
                 align-items: center !important;
                 justify-content: flex-start !important;
                 text-align: left !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: hidden !important;
+            }
+
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button p {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+                justify-content: flex-start !important;
+                text-align: left !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
                 font-size: 0.88rem !important;
                 font-weight: inherit !important;
                 color: inherit !important;
-                margin: 0 !important;
-                line-height: 1 !important;
+                line-height: 1.25 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
 
+            /* Material icon container: dedicated 20px column, perfectly centered, 12px gap to text */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button span.material-symbols-rounded {
-                font-size: 18px !important;
-                width: 18px !important;
-                height: 18px !important;
-                margin-right: 10px !important;
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
+                text-align: center !important;
+                width: 20px !important;
+                min-width: 20px !important;
+                max-width: 20px !important;
+                height: 20px !important;
+                font-size: 18px !important;
+                line-height: 20px !important;
+                margin-right: 12px !important;
+                margin-left: 0 !important;
+                flex-shrink: 0 !important;
                 color: #718096 !important;
-                transition: color 180ms ease, transform 180ms ease !important;
+                transition: color 160ms ease !important;
                 vertical-align: middle !important;
             }
 
@@ -276,31 +326,68 @@ def apply_custom_styles() -> None:
             section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="column"] div[data-testid="stButton"] > button span.material-symbols-rounded {
                 font-size: 14px !important;
+                width: 14px !important;
+                min-width: 14px !important;
                 margin-right: 4px !important;
             }
 
-            /* Animated Cursor-Following Pointer Indicator */
+            /* Refined Micro Pointer & Global Custom Cursor (16px outer ring, 4px inner dot) */
+            #fs-global-cursor,
             #fs-sidebar-pointer {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: radial-gradient(circle, rgba(139, 173, 232, 0.45) 0%, rgba(65, 105, 168, 0.12) 65%, transparent 100%);
-                border: 1.5px solid rgba(139, 173, 232, 0.65);
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 16px !important;
+                height: 16px !important;
+                border-radius: 50% !important;
+                background: rgba(139, 173, 232, 0.15) !important;
+                border: 1.5px solid rgba(65, 105, 168, 0.6) !important;
                 pointer-events: none !important;
-                z-index: 999999;
+                z-index: 999999 !important;
                 opacity: 0;
                 transform: translate(-50%, -50%) scale(0.6);
-                transition: opacity 0.22s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-                box-shadow: 0 0 10px rgba(139, 173, 232, 0.35);
+                transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.15s ease, border-color 0.15s ease;
+                box-shadow: 0 0 4px rgba(65, 105, 168, 0.15) !important;
+                will-change: left, top, transform;
             }
+
+            #fs-global-cursor::after,
+            #fs-sidebar-pointer::after {
+                content: '' !important;
+                position: absolute !important;
+                left: 50% !important;
+                top: 50% !important;
+                width: 4px !important;
+                height: 4px !important;
+                margin-left: -2px !important;
+                margin-top: -2px !important;
+                border-radius: 50% !important;
+                background-color: #4169A8 !important;
+                transition: transform 0.15s ease, background-color 0.15s ease !important;
+            }
+
+            #fs-global-cursor.fs-cursor-visible,
             #fs-sidebar-pointer.fs-pointer-visible {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
+                opacity: 1 !important;
+                transform: translate(-50%, -50%) scale(1) !important;
             }
+
+            #fs-global-cursor.fs-cursor-hover,
+            #fs-sidebar-pointer.fs-pointer-hover {
+                transform: translate(-50%, -50%) scale(1.2) !important;
+                border-color: #4169A8 !important;
+                background: rgba(139, 173, 232, 0.25) !important;
+                box-shadow: 0 0 6px rgba(65, 105, 168, 0.25) !important;
+            }
+
+            #fs-global-cursor.fs-cursor-hover::after,
+            #fs-sidebar-pointer.fs-pointer-hover::after {
+                transform: scale(1.1) !important;
+                background-color: #27364B !important;
+            }
+
             @media (prefers-reduced-motion: reduce) {
+                #fs-global-cursor,
                 #fs-sidebar-pointer {
                     display: none !important;
                 }
@@ -555,11 +642,12 @@ def apply_custom_styles() -> None:
 
             /* Subsystem Status Panel in Sidebar */
             .fs-status-panel {
-                background-color: #F8FAFC;
-                border: 1px solid #E2E8F0;
+                background-color: #FFFFFF;
+                border: 1px solid #DFE7F1;
                 border-radius: 10px;
-                padding: 12px 14px;
-                margin-bottom: 14px;
+                padding: 10px 14px;
+                margin-bottom: 12px;
+                box-shadow: 0 1px 2px rgba(36, 50, 71, 0.04);
             }
             .fs-status-row {
                 display: flex;
@@ -567,7 +655,7 @@ def apply_custom_styles() -> None:
                 justify-content: space-between;
                 padding: 7px 0;
                 font-size: 0.78rem;
-                border-bottom: 1px solid #E2E8F0;
+                border-bottom: 1px solid #DFE7F1;
             }
             .fs-status-row:last-child {
                 border-bottom: none;
