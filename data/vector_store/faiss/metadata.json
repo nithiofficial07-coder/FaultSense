@@ -12,7 +12,7 @@
     "corrective_action": "Disassembled retiring cam pivot, purged old grease, lubricated with low-temperature synthetic machine grease, adjusted drop clearance to 6mm, and verified departure interlock closure.",
     "is_synthetic": false,
     "document_text": "[ELEVATOR FAULT CASE: CASE-FIELD-ELEV-101]\nSubsystem: door_system\nFault Code: FLT-LCK-12\nVerification: verified (Verified Incident | Origin: field_service_log)\nSource Document: Anonymized Field Service Log: Landing Lock Interlock Retiring Cam Binding (Ref: FSR-2024-ANON-7782)\nObserved Symptoms: Elevator stops at 3rd floor landing but will not depart; Interlock circuit open indicator illuminated on diagnostic board; Retiring cam solenoid hums continuously\nTelemetry Summary: attempted_departures=5, interlock_circuit_voltage_v=0.0, retiring_cam_solenoid_temp_c=64.0\nConfirmed Root Cause: Pivot bearing on retiring cam assembly seized due to dry grease contamination, preventing cam arm from releasing hoistway door interlock latch.\nCorrective Action Taken: Disassembled retiring cam pivot, purged old grease, lubricated with low-temperature synthetic machine grease, adjusted drop clearance to 6mm, and verified departure interlock closure.\nRecorded Timestamp: 2024-09-28T13:45:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   },
   {
     "vector_id": 1,
@@ -27,7 +27,7 @@
     "corrective_action": "Thoroughly vacuumed and cleaned bottom door sill grooves, adjusted transmitter bracket alignment, and verified 20 consecutive test cycles.",
     "is_synthetic": true,
     "document_text": "[ELEVATOR FAULT CASE: CASE-SYNTH-ELEV-001]\nSubsystem: door_system\nFault Code: E-DR-201\nVerification: unverified (Synthetic Benchmark | Origin: synthetic_illustrative)\nSource Document: Illustrative Engineering Benchmark: Optical Curtain Obstruction (Ref: FAULT-SENSE-SYNTH-BENCH-2024-01)\nObserved Symptoms: Car door reopens repeatedly without passenger obstruction; Door dwell timer expires causing nudging buzzer activation; Intermittent safety light curtain status flicker in car console\nTelemetry Summary: curtain_optical_attenuation_db=6.8, door_open_close_cycles=142500, motor_current_peak_a=3.8, sill_obstruction_sensor_state=1\nConfirmed Root Cause: Accumulated fine grit and particulate debris in the car bottom sill guide track causing optical curtain transmitter misalignment.\nCorrective Action Taken: Thoroughly vacuumed and cleaned bottom door sill grooves, adjusted transmitter bracket alignment, and verified 20 consecutive test cycles.\nRecorded Timestamp: 2024-10-10T08:15:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   },
   {
     "vector_id": 2,
@@ -42,7 +42,7 @@
     "corrective_action": "Replaced regenerative chopper braking module, tested brake resistor bank impedance (within nominal 15 ohms +/- 5%), and conducted 10 full-load descent cycles.",
     "is_synthetic": true,
     "document_text": "[ELEVATOR FAULT CASE: CASE-SYNTH-ELEV-002]\nSubsystem: traction_drive\nFault Code: E-VFD-404\nVerification: unverified (Synthetic Benchmark | Origin: synthetic_illustrative)\nSource Document: Illustrative Engineering Benchmark: VVVF DC Bus Overvoltage (Ref: FAULT-SENSE-SYNTH-BENCH-2024-02)\nObserved Symptoms: Elevator initiates emergency deceleration during loaded down trip; Drive inverter trips with regenerative overvoltage error; Car parked safely at nearest landing with passenger release\nTelemetry Summary: brake_resistor_temp_c=118.2, car_payload_percent=92, dc_bus_voltage_v=785.4, motor_rpm=1450, rated_dc_bus_limit_v=750.0\nConfirmed Root Cause: Degraded dynamic braking transistor trigger circuit causing failure to dump regenerative energy into brake resistor bank during full-load down descent.\nCorrective Action Taken: Replaced regenerative chopper braking module, tested brake resistor bank impedance (within nominal 15 ohms +/- 5%), and conducted 10 full-load descent cycles.\nRecorded Timestamp: 2024-10-11T14:40:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   },
   {
     "vector_id": 3,
@@ -57,7 +57,7 @@
     "corrective_action": "Isolated hydraulic system, depressurized accumulator, replaced bypass check valve elastomer O-rings, and verified pressure holding for 60 minutes.",
     "is_synthetic": true,
     "document_text": "[ELEVATOR FAULT CASE: CASE-SYNTH-ELEV-003]\nSubsystem: hydraulic_system\nFault Code: E-HYD-108\nVerification: unverified (Synthetic Benchmark | Origin: synthetic_illustrative)\nSource Document: Illustrative Engineering Benchmark: Hydraulic Releveling Creep (Ref: FAULT-SENSE-SYNTH-BENCH-2024-03)\nObserved Symptoms: Car sinks 35mm below landing floor during extended 15-minute passenger loading; Releveling pump motor cycles on every 4 minutes while idle; Minor hydraulic fluid smell noted in elevator pit machine room\nTelemetry Summary: jack_seal_leakage_rate_ml_hr=28.0, manifold_pressure_psi=420.0, oil_temperature_c=52.4, releveling_frequency_per_hour=14\nConfirmed Root Cause: Thermal degradation and extrusion of check valve bypass O-ring seal inside main valve manifold, permitting internal pressure bypass back to oil reservoir.\nCorrective Action Taken: Isolated hydraulic system, depressurized accumulator, replaced bypass check valve elastomer O-rings, and verified pressure holding for 60 minutes.\nRecorded Timestamp: 2024-10-12T11:20:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   },
   {
     "vector_id": 4,
@@ -72,7 +72,7 @@
     "corrective_action": "Replaced both left and right sealed brake monitoring microswitches, calibrated air gap to 0.40mm per specifications, and performed manual emergency stop drop test.",
     "is_synthetic": true,
     "document_text": "[ELEVATOR FAULT CASE: CASE-SYNTH-ELEV-004]\nSubsystem: braking_system\nFault Code: E-BRK-302\nVerification: unverified (Synthetic Benchmark | Origin: synthetic_illustrative)\nSource Document: Illustrative Engineering Benchmark: Brake Switch Contact Discrepancy (Ref: FAULT-SENSE-SYNTH-BENCH-2024-04)\nObserved Symptoms: Controller locks out elevator on start command; Fault indicator displays dual-channel brake monitor discrepancy; Mechanical brake lift confirmed audibly on one side only\nTelemetry Summary: brake_coil_resistance_ohms=24.3, brake_lift_current_a=12.1, left_brake_switch_state=1, right_brake_switch_state=0\nConfirmed Root Cause: Oxidized microswitch contacts on right brake shoe actuator lever failing to close circuit despite physical mechanical shoe retraction.\nCorrective Action Taken: Replaced both left and right sealed brake monitoring microswitches, calibrated air gap to 0.40mm per specifications, and performed manual emergency stop drop test.\nRecorded Timestamp: 2024-10-13T09:05:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   },
   {
     "vector_id": 5,
@@ -87,6 +87,6 @@
     "corrective_action": "Re-terminated CAN bus riser wiring, torqued screw terminals to 0.6 Nm, verified 60-ohm parallel termination resistance across bus, and confirmed error-free packet telemetry.",
     "is_synthetic": true,
     "document_text": "[ELEVATOR FAULT CASE: CASE-SYNTH-ELEV-005]\nSubsystem: controller_electronics\nFault Code: E-CAN-512\nVerification: unverified (Synthetic Benchmark | Origin: synthetic_illustrative)\nSource Document: Illustrative Engineering Benchmark: CAN Bus Hall Call Node Timeout (Ref: FAULT-SENSE-SYNTH-BENCH-2024-05)\nObserved Symptoms: Floors 4, 5, and 6 landing call buttons do not illuminate when pressed; Main controller event log registers recurring node heartbeat timeout; Car bypasses landing calls on intermediate floors while answering car calls\nTelemetry Summary: bus_voltage_diff_v=1.2, can_bus_error_passive_count=342, packet_drop_rate_pct=28.5, terminal_resistor_measured_ohms=185.0\nConfirmed Root Cause: Loose screw terminal on 120-ohm CAN bus terminating resistor board at floor 6 landing riser, causing high line impedance and reflective signal distortion.\nCorrective Action Taken: Re-terminated CAN bus riser wiring, torqued screw terminals to 0.6 Nm, verified 60-ohm parallel termination resistance across bus, and confirmed error-free packet telemetry.\nRecorded Timestamp: 2024-10-14T16:30:00+00:00",
-    "indexed_at": "2026-10-24T11:08:19.630564+00:00"
+    "indexed_at": "2026-10-25T07:14:45.816996+00:00"
   }
 ]

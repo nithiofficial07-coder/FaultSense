@@ -86,6 +86,35 @@ class VerificationCheck:
 
 
 @dataclass
+class TroubleshootingStep:
+    """A detailed manual troubleshooting step adhering to ASME A17.1 engineering protocols."""
+    step_number: int
+    title: str
+    step_type: str  # "Diagnostic Inspection" vs "Corrective Action"
+    purpose: str
+    required_tools: str
+    inspection_measurement: str
+    expected_criterion: str
+    interpretation: str
+    next_action: str
+    safety_precautions: str
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "step_number": self.step_number,
+            "title": self.title,
+            "step_type": self.step_type,
+            "purpose": self.purpose,
+            "required_tools": self.required_tools,
+            "inspection_measurement": self.inspection_measurement,
+            "expected_criterion": self.expected_criterion,
+            "interpretation": self.interpretation,
+            "next_action": self.next_action,
+            "safety_precautions": self.safety_precautions,
+        }
+
+
+@dataclass
 class DiagnosticDossier:
     """Comprehensive 18-point diagnostic dossier fulfilling Phase 4 & Phase 5 requirements."""
     investigation_id: str
@@ -115,6 +144,16 @@ class DiagnosticDossier:
     recommended_next_action: str
     confidence_score: float
     is_verified: bool
+    manufacturer: str = "Unspecified / Generic"
+    equipment_model: str = "Unspecified"
+    problem_description: str = ""
+    operating_conditions: str = "Standard Operational Range"
+    severity: str = "Medium"
+    evidence_based_status: str = "Requires Technician Verification"
+    troubleshooting_manual: List[TroubleshootingStep] = field(default_factory=list)
+    alternative_causes: List[Dict[str, Any]] = field(default_factory=list)
+    evidence_gaps: List[str] = field(default_factory=list)
+    recommended_diagnostic_checks: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -145,6 +184,16 @@ class DiagnosticDossier:
             "recommended_next_action": self.recommended_next_action,
             "confidence_score": self.confidence_score,
             "is_verified": self.is_verified,
+            "manufacturer": self.manufacturer,
+            "equipment_model": self.equipment_model,
+            "problem_description": self.problem_description,
+            "operating_conditions": self.operating_conditions,
+            "severity": self.severity,
+            "evidence_based_status": self.evidence_based_status,
+            "troubleshooting_manual": [t.to_dict() for t in self.troubleshooting_manual],
+            "alternative_causes": self.alternative_causes,
+            "evidence_gaps": self.evidence_gaps,
+            "recommended_diagnostic_checks": self.recommended_diagnostic_checks,
         }
 
 
@@ -438,6 +487,46 @@ class DiagnosticEnricher:
 
         summary = f"Fault isolation analysis for Elevator {elv_id} ({subsystem.replace('_', ' ').title()}). Primary root-cause: {root_cause}."
 
+        # 15. Equipment and intake context
+        manufacturer = inv_data.get("manufacturer") or "Unspecified / Generic"
+        equipment_model = inv_data.get("equipment_model") or "Unspecified"
+        problem_desc = inv_data.get("problem_description") or (symptoms[0] if symptoms else "Reported elevator operational malfunction")
+        operating_conditions = inv_data.get("operating_conditions") or "Standard Operational Range"
+        severity = inv_data.get("severity") or "Medium"
+
+        # 16. Evidence-based status label
+        has_dtc = bool(fault_code and fault_code.strip())
+        has_telemetry = bool(telemetry_items)
+        has_symp = len(symptoms) >= 1
+
+        if is_verified and sufficiency_level.lower() == "high" and has_dtc:
+            evidence_based_status = "Verified Against Documented Criteria"
+        elif not has_symp or (not has_dtc and not has_telemetry and len(symptoms) < 2):
+            evidence_based_status = "Awaiting Additional Information"
+        elif not has_telemetry or not has_dtc:
+            evidence_based_status = "Analysis Completed — Evidence Limited"
+        elif is_verified:
+            evidence_based_status = "Requires Technician Verification"
+        else:
+            evidence_based_status = "Root-Cause Hypothesis"
+
+        # 17. Alternative causes (Rank 2+)
+        alternative_causes = [c for c in ranked_causes if c.get("rank", 1) > 1]
+        if not alternative_causes and len(ranked_causes) > 1:
+            alternative_causes = ranked_causes[1:]
+
+        # 18. Evidence gaps
+        evidence_gaps = list(missing_evidence)
+        if not has_dtc:
+            evidence_gaps.append("OEM fault code not registered; diagnostic analysis relies strictly on symptom and kinetic signatures.")
+        if not has_telemetry:
+            evidence_gaps.append("Quantitative controller sensor logs omitted; mechanical/electrical limits cannot be evaluated mathematically.")
+        if manufacturer == "Unspecified / Generic":
+            evidence_gaps.append("Specific OEM manufacturer unrecorded; exact electrical pinouts and torque values must be referenced on jobsite.")
+
+        # 19. Troubleshooting manual tailored to fault
+        troubleshooting_manual = cls._get_troubleshooting_manual(subsystem, root_cause, fault_code, tools)
+
         return DiagnosticDossier(
             investigation_id=inv_id,
             incident_summary=summary,
@@ -466,6 +555,16 @@ class DiagnosticEnricher:
             recommended_next_action=next_action,
             confidence_score=conf_score,
             is_verified=is_verified,
+            manufacturer=manufacturer,
+            equipment_model=equipment_model,
+            problem_description=problem_desc,
+            operating_conditions=operating_conditions,
+            severity=severity,
+            evidence_based_status=evidence_based_status,
+            troubleshooting_manual=troubleshooting_manual,
+            alternative_causes=alternative_causes,
+            evidence_gaps=evidence_gaps,
+            recommended_diagnostic_checks=list(inspection_steps),
         )
 
     @classmethod
@@ -707,3 +806,458 @@ class DiagnosticEnricher:
                 safety_advisory="Execute dynamic brake stop from inspection speed."
             ),
         ]
+
+    @classmethod
+    def _get_troubleshooting_manual(
+        cls,
+        subsystem: str,
+        root_cause: str,
+        fault_code: Optional[str],
+        tools: List[ToolRequirement],
+    ) -> List[TroubleshootingStep]:
+        """Generates ordered, practical manual troubleshooting procedures tailored to diagnosed fault."""
+        mm_tool = next((t.name for t in tools if "Multimeter" in t.name or "meter" in t.name.lower()), "Digital Multimeter (CAT III 600V)")
+        mech_tool = next((t.name for t in tools if "Gauge" in t.name or "Caliper" in t.name or "Rule" in t.name), "Precision Feeler Gauge Set")
+
+        if subsystem == "door_system":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Door Sill Track & Mechanical Obstruction Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Identify foreign matter, metal filings, or mechanical deflection in car and landing door sill grooves.",
+                    required_tools="Inspection Flashlight & Track Feeler Gauge",
+                    inspection_measurement="Visual sweep and feeler gauge measurement along full car door travel width (nominal sill groove clearance 2.0 mm - 3.0 mm).",
+                    expected_criterion="Guide track clean and devoid of debris; bottom gibs slide freely without binding or excessive lateral play (< 1.5 mm).",
+                    interpretation="Grit or bent sill teeth cause intermittent mechanical drag and premature optical curtain re-open triggers.",
+                    next_action="If debris or binding observed, proceed to Step 4 for vacuum cleaning and gib adjustment; otherwise advance to Step 2.",
+                    safety_precautions="Mechanically lock doors open; elevator car must be parked level at floor landing with car station in STOP mode."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="Optical Light Curtain Voltage Supply & Receiver Attenuation Test",
+                    step_type="Diagnostic Inspection",
+                    purpose="Quantify optical curtain array alignment, emitter power, and receiver signal attenuation.",
+                    required_tools=f"{mm_tool} & Optical Attenuation Sensor",
+                    inspection_measurement="Measure DC supply voltage at curtain transmitter/receiver terminal block (pins 1 & 2), and signal attenuation in closed/open positions.",
+                    expected_criterion="Supply voltage 24.0 V DC (±10%); attenuation < 5.0 dB. If manufacturer threshold unavailable, verify clean optic lenses without scratches.",
+                    interpretation="Attenuation > 5.5 dB confirms dirty lenses, misaligned transmitter/receiver brackets, or internal photodiode degradation.",
+                    next_action="If voltage abnormal, inspect door operator power supply rail. If attenuation elevated, clean optical lenses with isopropyl alcohol wipe.",
+                    safety_precautions="Keep hands and clothing clear of door operator belt drive and moving sheaves during open/close cycles."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Door Interlock Contact Make & Safety Circuit Continuity Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Verify mechanical wipe and electrical continuity across car door gate switch and hoistway interlock beaks.",
+                    required_tools=f"{mm_tool} (low-resistance ohms mode)",
+                    inspection_measurement="Measure contact resistance across closed gate switch contacts and verify physical wipe depth.",
+                    expected_criterion="Contact wipe minimum 3/8 inch (9.5 mm) per ASME A17.1 Rule 2.12.2.4; closed contact resistance < 0.5 ohms.",
+                    interpretation="Pitted silver contacts or shallow engagement causes vibration-induced micro-interruptions during car movement.",
+                    next_action="If contacts exhibit pitting or resistance > 1.0 ohm, dress contacts with burnishing tool or replace contact block.",
+                    safety_precautions="Mainline disconnect MUST be locked open (LOTO); verify zero energy with multimeter before probing contacts."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Sill Track Cleaning, Gib Realignment & Lubrication",
+                    step_type="Corrective Action",
+                    purpose="Remove accumulated debris, calibrate door guide shoes, and align curtain mounting brackets.",
+                    required_tools="Industrial HEPA Vacuum, Brass Wire Brush, Guide Alignment Jig",
+                    inspection_measurement="Vacuum full length of landing and car sills; re-torque guide gib mounting fasteners to OEM specification.",
+                    expected_criterion="Door panel moves smoothly with < 15 N manual force when decoupled from operator belt.",
+                    interpretation="Eliminates mechanical drag that triggers door operator current limit overloads.",
+                    next_action="Reconnect operator drive belt and verify smooth mechanical cycling under low-speed test mode.",
+                    safety_precautions="Wear safety goggles and dust mask; do NOT apply wet oil or grease directly into sill guide grooves (attracts dust)."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Door Kinetic Energy & Closing Force Verification Test",
+                    step_type="Corrective Action",
+                    purpose="Verify closing force and kinetic energy comply with safety code prior to passenger release.",
+                    required_tools="Kinetic Energy Force Gauge & Stopwatch",
+                    inspection_measurement="Place force gauge at 1/3 and 2/3 door travel span; measure stall closing force and reversal response time.",
+                    expected_criterion="Peak closing force < 30 lbf (133 N) per ASME A17.1 Rule 2.13.4.2; kinetic energy < 10 J (7.37 ft-lbf); reversal < 150 ms upon curtain beam break.",
+                    interpretation="Ensures passenger protection while preventing false nuisance reopening during normal passenger transit.",
+                    next_action="If force exceeds 30 lbf, reduce operator closing torque potentiometer or VFD parameter. If compliant, proceed to verification sign-off.",
+                    safety_precautions="Stand outside car entrance line during closing force measurement; keep hands clear of leading edges."
+                ),
+            ]
+        elif subsystem == "traction_drive":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Machine Room Visual & Ambient Thermal Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Check drive enclosure cooling, braking resistor cage temperature, and motor ventilation ducts.",
+                    required_tools="Infrared Non-Contact Thermometer & Inspection Light",
+                    inspection_measurement="Measure ambient machine room temperature, VFD heatsink temperature, and dynamic braking resistor (DBR) surface temperature.",
+                    expected_criterion="Machine room ambient < 40°C; VFD heatsink < 75°C; braking resistor within manufacturer thermal envelope.",
+                    interpretation="Overheated machine room or clogged VFD fan filters trigger regenerative overvoltage and thermal foldback.",
+                    next_action="If ambient elevated, check machine room HVAC and clean VFD heatsink filter grilles before electrical tests.",
+                    safety_precautions="Observe hot surface warnings; maintain safe clearance from high-voltage DC bus enclosures."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="VFD DC Bus & Dynamic Braking Resistor Resistance Test",
+                    step_type="Diagnostic Inspection",
+                    purpose="Verify dynamic braking chopper circuit and resistor bank continuity to isolate regenerative overvoltage.",
+                    required_tools=f"{mm_tool} & Insulated Probe Leads",
+                    inspection_measurement="Measure resistance across DBR terminals (B+ and B-) with drive de-energized, and measure DC bus voltage during deceleration.",
+                    expected_criterion="DBR resistance matching cabinet schematic nameplate (±5%); DC bus voltage < 750 V DC during peak deceleration.",
+                    interpretation="Open or high-resistance DBR bank prevents energy dissipation during full-load downward express decelerations.",
+                    next_action="If DBR open circuit, replace dynamic braking resistor bank. If DBR intact but voltage spikes, test chopper IGBT module.",
+                    safety_precautions="LOTO mainline disconnect; WAIT minimum 10 minutes for DC bus discharge capacitors to drain below 50V DC; verify with multimeter."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Motor Insulation Resistance (Megohmmeter) Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Assess stator winding dielectric health and motor feeder cable insulation to earth ground.",
+                    required_tools="500V/1000V Digital Insulation Tester (Megohmmeter)",
+                    inspection_measurement="Disconnect motor leads from drive output terminals; apply 500V DC test voltage phase-to-phase and phase-to-ground for 60 seconds.",
+                    expected_criterion="Insulation resistance > 50 Megohms (absolute minimum acceptable threshold: 5.0 Megohms per IEEE 43).",
+                    interpretation="Resistance < 5 Megohms indicates moisture ingress, carbon tracking, or stator insulation breakdown.",
+                    next_action="If insulation < 5 Megohms, escalate to Lead Motor Specialist for winding dry-out or rewind; do NOT re-energize drive.",
+                    safety_precautions="Ensure all motor terminals isolated from electronic drive boards before applying megohmmeter voltage."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Braking Chopper & Resistor Terminal Torquing",
+                    step_type="Corrective Action",
+                    purpose="Eliminate high-resistance loose connections on power resistor harness and chopper gate drive.",
+                    required_tools="Insulated Calibrated Torque Screwdriver",
+                    inspection_measurement="Verify fastener torque on power terminals against manufacturer specification (typically 2.5 - 3.5 N-m).",
+                    expected_criterion="All power lug fasteners seated firmly to OEM torque rating without thermal discoloration on copper lugs.",
+                    interpretation="Loose connections create thermal hotspots and intermittent overvoltage trip signals.",
+                    next_action="Re-torque loose connections; clean oxidized lug terminals with contact cleaner.",
+                    safety_precautions="Strict LOTO with lockout padlock applied; confirm zero DC bus voltage."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Full-Speed Empty & Balanced Load Deceleration Trial",
+                    step_type="Corrective Action",
+                    purpose="Validate DC bus regulation and brake deceleration profile during contract speed run.",
+                    required_tools=f"{mm_tool} with Min/Max voltage capture",
+                    inspection_measurement="Execute contract speed express runs from top to bottom terminal landings while logging peak DC bus voltage.",
+                    expected_criterion="Smooth deceleration without motor hunting or overvoltage fault trips; peak DC bus remains < 720 V DC.",
+                    interpretation="Confirms dynamic braking chopper dissipates regenerative energy smoothly under field duty.",
+                    next_action="If stable, sign off inspection and restore car to automatic dispatch service.",
+                    safety_precautions="Perform test runs under technician inspection supervision before enabling public passenger calls."
+                ),
+            ]
+        elif subsystem == "braking_system":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Brake Shoe Mechanical Air Gap Measurement",
+                    step_type="Diagnostic Inspection",
+                    purpose="Measure physical air gap between brake friction linings and brake wheel drum across 4 quadrants.",
+                    required_tools=f"{mech_tool} (0.05 mm - 1.0 mm blades)",
+                    inspection_measurement="Insert feeler gauge at top, bottom, left, and right quadrants of both brake arms while brake energized.",
+                    expected_criterion="Air gap uniformly within OEM specification (typically 0.15 mm - 0.25 mm / 0.006 - 0.010 in). Consult OEM manual for exact model limits.",
+                    interpretation="Air gap > 0.35 mm causes delayed lifting and loud slamming; air gap < 0.10 mm causes shoe drag and friction lining overheating.",
+                    next_action="If air gap out of tolerance, proceed to Step 4 for mechanical shoe stop adjustment; otherwise check coil resistance in Step 2.",
+                    safety_precautions="Car must be empty and balanced; do NOT place fingers between brake shoe and rotating drum."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="Brake Solenoid Coil Electrical Resistance & Temperature Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Check solenoid coil winding resistance and measure thermal rise to detect shorted turns.",
+                    required_tools=f"{mm_tool} & Surface Thermocouple Probe",
+                    inspection_measurement="Measure cold/hot DC coil resistance across coil leads (compare with nameplate value, typically 40 - 120 ohms).",
+                    expected_criterion="Coil resistance within ±5% of manufacturer baseline; operating temperature < 85°C after 1 hour continuous cycling.",
+                    interpretation="Drop in resistance > 10% indicates inter-turn shorting that reduces electromagnetic lifting force.",
+                    next_action="If coil resistance abnormal or coil housing burning hot, replace solenoid coil assembly; do not attempt rewinding in field.",
+                    safety_precautions="De-energize brake circuit; observe hot coil housing precautions."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Friction Lining Thickness & Drum Surface Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Inspect brake shoe friction material wear, oil contamination, and drum surface scoring.",
+                    required_tools="Digital Vernier Caliper & Inspection Mirror",
+                    inspection_measurement="Measure remaining lining thickness above rivet heads or bonding base; inspect drum for glazing or heat cracks.",
+                    expected_criterion="Lining thickness > OEM minimum discard threshold (typically > 3.0 mm above rivets); drum surface smooth and dry.",
+                    interpretation="Glazed or oil-soaked linings reduce friction coefficient; worn linings risk catastrophic metal-to-metal contact.",
+                    next_action="If contaminated with oil or worn below discard limit, replace both brake shoes as a matched set; clean drum with brake degreaser.",
+                    safety_precautions="Wear dust particulate respirator when inspecting friction material; do not use compressed air to blow brake dust."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Brake Core Plunger Adjustment & Air Gap Calibration",
+                    step_type="Corrective Action",
+                    purpose="Adjust core stop screws and spring preload to re-establish nominal air gap and synchronized lifting.",
+                    required_tools="Open-End Spanners, Hex Wrenches, Feeler Gauge",
+                    inspection_measurement="Adjust core gap adjusting nuts in 1/8-turn increments until feeler gauge reveals uniform 0.20 mm clearance.",
+                    expected_criterion="Both brake arms lift simultaneously within 50 ms of run command without cocking or mechanical chatter.",
+                    interpretation="Restores balanced mechanical brake application and eliminates shoe drag.",
+                    next_action="Tighten locknuts securely; re-verify clearance with feeler gauge after torquing locknuts.",
+                    safety_precautions="Lock mainline disconnect open before making mechanical wrench adjustments."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="125% Rated Load Dynamic Brake Hold & Stop Test",
+                    step_type="Corrective Action",
+                    purpose="Validate compliance with ASME A17.1 Rule 2.24.8.2 dynamic braking and static holding capability.",
+                    required_tools="Certified Test Weights / Load Verification Kit & Marking Gauge",
+                    inspection_measurement="Park car at lowest landing; simulate emergency stop from inspection speed; verify deceleration without slip.",
+                    expected_criterion="Brake independently holds 125% of rated load without rotational slip; car stops smoothly within rated slide distance.",
+                    interpretation="Confirms elevator mechanical braking system is fully capable of arresting car under maximum emergency load.",
+                    next_action="Record test results in machine room logbook; remove test weights; sign off inspection dossier.",
+                    safety_precautions="Strictly prohibit unauthorized personnel inside hoistway or car during heavy-load braking verification."
+                ),
+            ]
+        elif subsystem == "hoistway_signaling":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Encoder Cable Shielding & Ground Continuity Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Check position feedback cable shield termination and ground bond to prevent electrical noise coupling.",
+                    required_tools=f"{mm_tool} (low-resistance ohms mode)",
+                    inspection_measurement="Measure resistance between encoder cable drain wire and machine room main earth ground busbar.",
+                    expected_criterion="Resistance to earth < 0.2 ohms; shield grounded at controller cabinet end ONLY (no ground loops).",
+                    interpretation="Ground loop or broken shield introduces spurious high-frequency noise spikes into position count registers.",
+                    next_action="If shield ungrounded or grounded at both ends, correct bonding to single-point star ground.",
+                    safety_precautions="De-energize controller low-voltage supply before checking internal cabinet shield terminations."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="Dual-Channel Quadrature Pulse (A/B Phase) Waveform Test",
+                    step_type="Diagnostic Inspection",
+                    purpose="Examine pulse symmetry, signal amplitude, and 90° quadrature phase shift during car transit.",
+                    required_tools="Dual-Channel Portable Digital Storage Oscilloscope",
+                    inspection_measurement="Probe Channel A and Channel B test points at controller position input card during car leveling transit.",
+                    expected_criterion="Clean square wave 0V - 5V (or 24V HTL); 50% duty cycle; exact 90° electrical phase offset without ringing.",
+                    interpretation="Missing pulses or phase jitter confirms damaged encoder disc, loose shaft coupling, or optical sensor failure.",
+                    next_action="If pulses missing or distorted, check encoder shaft mechanical set-screws; replace encoder if internal disc cracked.",
+                    safety_precautions="Use 10:1 insulated oscilloscope probes; avoid shorting adjacent IC pins."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Hoistway Tape Reader / Vane Sensor Alignment Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Inspect physical gap and vertical plumbness of magnetic or optical car-top leveling sensors.",
+                    required_tools="Non-Magnetic Feeler Gauge & Brass Alignment Rule",
+                    inspection_measurement="Measure air gap between car-top reader heads and hoistway perforated steel tape or door zone vanes.",
+                    expected_criterion="Air gap centered within OEM tolerance (typically 6.0 mm ± 1.5 mm); no rub marks on guide shoes.",
+                    interpretation="Misaligned tape guide rollers cause intermittent missed floor count triggers during high-speed travel.",
+                    next_action="If misaligned, adjust car-top sensor bracket mounting bolts; replace worn guide rollers.",
+                    safety_precautions="Operate strictly from car-top inspection station; keep safety harness tethered to certified anchor."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Encoder Shaft Coupling Torquing & Lens Cleaning",
+                    step_type="Corrective Action",
+                    purpose="Secure flexible mechanical coupling and clean optical reader head lenses.",
+                    required_tools="Metric Hex Keys & Isopropyl Alcohol Optical Swabs",
+                    inspection_measurement="Verify torque on motor shaft set-screws; clean tape reader optical sensor lenses.",
+                    expected_criterion="Zero backlash or rotational slip between motor shaft and encoder spindle; clean optical emitter windows.",
+                    interpretation="Eliminates positioning count discrepancies between motor encoder and hoistway tape.",
+                    next_action="Cycle elevator on inspection control from bottom to top terminal landing to recalibrate absolute position.",
+                    safety_precautions="Keep hands away from moving drive sheaves and governor ropes during car motion."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Floor Leveling Accuracy & Floor Arrival Calibration Audit",
+                    step_type="Corrective Action",
+                    purpose="Verify car floor stops level with landing sill across all intermediate and terminal landings.",
+                    required_tools="Precision Digital Level & Steel Rule",
+                    inspection_measurement="Run car to each floor under automatic dispatch; measure vertical step height between car sill and landing sill.",
+                    expected_criterion="Car sill levels within ±1/4 inch (±6 mm) of landing sill per ASME A17.1 Rule 2.26.1.6.",
+                    interpretation="Confirms hoistway position detection system is fully calibrated and stable.",
+                    next_action="If all floors level within tolerance, close investigation and record leveling metrics.",
+                    safety_precautions="Ensure hallway landing is barricaded with safety cones during leveling measurements."
+                ),
+            ]
+        elif subsystem == "hydraulic_system":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Hydraulic Fluid Level, Oil Temperature & Viscosity Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Check fluid reservoir volume, oil operating temperature, and contamination index.",
+                    required_tools="Fluid Level Dipstick, Infrared Thermometer & Oil Test Kit",
+                    inspection_measurement="Measure reservoir level with car on buffer stands; check oil temperature in power unit tank.",
+                    expected_criterion="Oil level at FULL mark; operating temperature 35°C - 55°C (never exceed 60°C); clear amber fluid without burnt odor.",
+                    interpretation="Low or degraded oil causes pump cavitation, foaming, valve spool binding, and irregular car descent speeds.",
+                    next_action="If oil burnt or dark, take 100 mL sample for laboratory patch test; top off or replace hydraulic fluid.",
+                    safety_precautions="Wear nitrile chemical-resistant gloves and safety glasses; hydraulic fluid may be hot."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="System Working & Static Pressure Gauge Test",
+                    step_type="Diagnostic Inspection",
+                    purpose="Measure static holding pressure, running up-pressure, and bypass relief valve tripping pressure.",
+                    required_tools="Calibrated Hydraulic Pressure Gauge (0-3000 PSI / 0-200 Bar)",
+                    inspection_measurement="Connect gauge to power unit quick-disconnect test port; record static pressure, full-load up-pressure, and bypass pressure.",
+                    expected_criterion="Working pressure within machine nameplate range (typically 400 - 1200 PSI); relief valve opens at 125% - 150% working pressure.",
+                    interpretation="Pressure drop during static hold confirms internal cylinder packing leak, check valve leakage, or down-valve bypass.",
+                    next_action="If static pressure decays > 10 PSI/minute, isolate down-valve spool and inspect cylinder seal gland.",
+                    safety_precautions="Relieve all reservoir pressure before connecting/disconnecting gauge fittings; never exceed gauge working pressure."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Proportional Down-Valve Spool & Solenoid Coil Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Inspect valve block electrical solenoids and check for mechanical spool sticking.",
+                    required_tools=f"{mm_tool} & Valve Manual Override Tool",
+                    inspection_measurement="Measure solenoid coil resistance; depress manual override pin to check smooth spool return spring travel.",
+                    expected_criterion="Coil resistance within OEM specification (typically 20 - 50 ohms); spool slides freely without sticking.",
+                    interpretation="Debris in proportional valve orifice causes jerky deceleration, leveling creep, or car stall.",
+                    next_action="If spool sticky, proceed to Step 4 for valve block flush and filter replacement.",
+                    safety_precautions="LOTO mainline disconnect; ensure car is resting securely on mechanical buffer stands."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Valve Block Orifice Cleaning & Fluid Return Filter Replacement",
+                    step_type="Corrective Action",
+                    purpose="Flush valve manifold contamination, replace return-line filter cartridge, and clean tank strainer.",
+                    required_tools="Filter Wrench, Lint-Free Shop Rags, New OEM Filter Cartridge",
+                    inspection_measurement="Remove return filter element; inspect pleated paper for metal particulates; install new OEM 10-micron element.",
+                    expected_criterion="Filter housing torqued to spec; zero oil weepage around O-ring seal; filter indicator in green zone.",
+                    interpretation="Eliminates particulate contamination that jams precision proportional valve spools.",
+                    next_action="Purge air from hydraulic cylinder and valve manifold through bleed petcock.",
+                    safety_precautions="Catch spilled fluid in approved collection pan; dispose of hazardous waste per local regulations."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Crawl Speed & Top Terminal Anti-Creep Verification Test",
+                    step_type="Corrective Action",
+                    purpose="Confirm anti-creep leveling system and down-speed control meet ASME A17.1 Rule 2.26.1.6.",
+                    required_tools="Stopwatch, Precision Level & Pyrometer",
+                    inspection_measurement="Park car at top terminal landing; simulate cooling fluid contraction; observe automatic anti-creep releveling.",
+                    expected_criterion="Car automatically re-levels upward if car drops > 1 inch (25 mm) below landing within 15 minutes.",
+                    interpretation="Confirms hydraulic safety anti-creep circuit operates reliably to prevent unlevel passenger tripping hazards.",
+                    next_action="If compliant, sign off return-to-service checklist and record fluid temperature baseline.",
+                    safety_precautions="Verify hoistway pit is cleared of personnel before running down-direction trial."
+                ),
+            ]
+        elif subsystem == "safety_gear":
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Governor Flyweight & Electrical Switch Trip Speed Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Validate electrical overspeed switch trip point before mechanical jaw engagement.",
+                    required_tools="Digital Optical Tachometer & Variable Speed Governor Test Motor",
+                    inspection_measurement="Drive governor sheave and record RPM at which electrical overspeed contact opens.",
+                    expected_criterion="Electrical switch trips at not more than 90% of mechanical tripping speed per ASME A17.1 Rule 2.18.4.",
+                    interpretation="Premature or non-tripping electrical switch causes either nuisance trips or failure to de-energize drive prior to safety application.",
+                    next_action="If trip speed deviates > 5%, calibrate flyweight spring tension or replace governor switch assembly.",
+                    safety_precautions="Car must be parked with hoistway cleared of all personnel; apply inspection STOP switch."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="Safety Plank Linkage & Mechanical Wedge Clearance Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Check safety gear wedges or rollers on bottom car safety plank for equal clearance from guide rails.",
+                    required_tools="Precision Feeler Gauge & Calibrated Scale",
+                    inspection_measurement="Measure clearance between left and right safety wedges and guide rail blades (nominal 2.5 mm - 4.0 mm).",
+                    expected_criterion="Symmetrical clearance on both rail blades; safety pull-rod linkages move freely without rust binding.",
+                    interpretation="Unequal clearance or seized linkages cause uneven wedge bite that twists guide rails during safety application.",
+                    next_action="If clearances uneven, adjust safety plank connecting rods; lubricate pivot joints with light synthetic machine oil.",
+                    safety_precautions="Work strictly from hoistway pit or car-top inspection platform with fall protection harness anchored."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Governor Tension Sheave & Rope Condition Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Inspect governor steel wire rope for broken wires, diameter reduction, and pit tension weight clearance.",
+                    required_tools="Wire Rope Diameter Caliper & Inspection Flashlight",
+                    inspection_measurement="Measure governor rope diameter along high-wear zones; check pit tension sheave floating clearance above pit floor.",
+                    expected_criterion="Rope diameter within discard threshold (< 6% reduction); pit tension weight suspended minimum 2 inches above stops.",
+                    interpretation="Rope stretch that allows pit tension weight to bottom out reduces governor rope traction, preventing wedge lift.",
+                    next_action="If tension weight grounded, shorten and re-shackle governor rope; replace rope if wire breaks exceed code.",
+                    safety_precautions="Lock out elevator mainline disconnect before entering hoistway pit."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Safety Gear Wedge Rail Mark Depth Measurement",
+                    step_type="Corrective Action",
+                    purpose="Examine rail surfaces following safety activation to verify progressive wedge bite depth.",
+                    required_tools="Rail Blade Caliper & Depth Micrometer",
+                    inspection_measurement="Measure serrated wedge bite indentations on both left and right guide rail blades.",
+                    expected_criterion="Identical bite depth on both rail faces; no rail fracture, gouging, or guide rail alignment deformation.",
+                    interpretation="Verifies progressive deceleration without exceeding structural stress limits of elevator guide rails.",
+                    next_action="File down high-spot burrs on guide rails using fine mill bastard file; clean and re-lubricate rail surfaces.",
+                    safety_precautions="Secure car with hoisting tackle or buffer stands before dressing guide rails."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Slow-Speed Manual Safety Pull-Up Verification Test",
+                    step_type="Corrective Action",
+                    purpose="Confirm safety gear wedges release cleanly when elevator is hoisted upward.",
+                    required_tools="Inspection Control Station & Visual Watch",
+                    inspection_measurement="Hoist car upward on inspection control; observe both safety wedges drop freely back into reset position.",
+                    expected_criterion="Safety wedges fully retract; safety plank electrical switch automatically resets or latches per code; zero rail drag.",
+                    interpretation="Ensures car does not drag released safety gear during subsequent normal passenger runs.",
+                    next_action="If compliant, perform full-speed empty trial run and sign return-to-service acceptance log.",
+                    safety_precautions="Ensure all tools and personnel are removed from car top and pit before moving car."
+                ),
+            ]
+        else:
+            return [
+                TroubleshootingStep(
+                    step_number=1,
+                    title="Initial Lockout/Tagout & Visual Inspection",
+                    step_type="Diagnostic Inspection",
+                    purpose="Establish safe work boundary and inspect subsystem assembly for visible physical anomalies.",
+                    required_tools="Inspection Flashlight & Multimeter",
+                    inspection_measurement="Apply LOTO to mainline disconnect; verify zero electrical energy; inspect mechanical linkages.",
+                    expected_criterion="Subsystem components securely mounted, free of physical binding, oil contamination, or thermal burning.",
+                    interpretation="Identifies blatant physical or mechanical failures before commencing detailed instrumentation testing.",
+                    next_action="If mechanical damage visible, document part replacement requirements; otherwise proceed to Step 2.",
+                    safety_precautions="Adhere strictly to ASME A17.1 LOTO protocols; verify zero voltage on all incoming phases."
+                ),
+                TroubleshootingStep(
+                    step_number=2,
+                    title="Electrical Circuit & Safety Interlock Continuity Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Verify electrical circuit integrity, supply voltages, and safety switch loop continuity.",
+                    required_tools=f"{mm_tool} (CAT III 600V)",
+                    inspection_measurement="Measure supply bus voltage and point-to-point contact resistance across subsystem safety circuit switches.",
+                    expected_criterion="Voltage within ±10% rated supply; closed contact resistance < 0.5 ohms.",
+                    interpretation="High resistance or voltage drop indicates oxidized contacts, loose terminal screws, or wiring harness fatigue.",
+                    next_action="If wiring loose, re-torque terminal screws; if voltage low, inspect control transformer and fuses.",
+                    safety_precautions="Never place temporary bypass jumpers across safety interlock contacts during live troubleshooting."
+                ),
+                TroubleshootingStep(
+                    step_number=3,
+                    title="Mechanical Clearances & Dynamic Alignment Audit",
+                    step_type="Diagnostic Inspection",
+                    purpose="Measure mechanical operating clearances, gaps, and guide alignments against OEM tolerances.",
+                    required_tools=f"{mech_tool} & Metric Calipers",
+                    inspection_measurement="Measure operating gaps and verify alignment with OEM engineering drawings. If undocumented, do not guess thresholds; consult OEM.",
+                    expected_criterion="Clearances comply with equipment technical manual; smooth movement without binding across full travel.",
+                    interpretation="Misalignment causes mechanical drag, premature wear, and intermittent fault code registrations.",
+                    next_action="If out of tolerance, perform mechanical realignment in Step 4; otherwise test under inspection power.",
+                    safety_precautions="Maintain safe clearance from rotating machinery and pinch points."
+                ),
+                TroubleshootingStep(
+                    step_number=4,
+                    title="Targeted Cleaning, Calibration & Fastener Torquing",
+                    step_type="Corrective Action",
+                    purpose="Clean foreign debris, re-torque fasteners to OEM specifications, and calibrate sensor alignment.",
+                    required_tools="Torque Wrench & Contact Cleaner",
+                    inspection_measurement="Clean contact surfaces and re-torque mounting fasteners to manufacturer specifications.",
+                    expected_criterion="Fasteners torqued to spec; contacts clean; sensor alignment marks aligned.",
+                    interpretation="Restores optimal mechanical and electrical operating baseline.",
+                    next_action="Remove LOTO locks, restore power under technician supervision, and execute single-floor trial run.",
+                    safety_precautions="Verify all personnel clear of hoistway and car before restoring mainline electrical power."
+                ),
+                TroubleshootingStep(
+                    step_number=5,
+                    title="Return-to-Service Functional Acceptance Run",
+                    step_type="Corrective Action",
+                    purpose="Validate complete operational restoration through trial runs across all landings.",
+                    required_tools="Technician Observation & Controller Event Log Viewer",
+                    inspection_measurement="Execute round-trip transit; monitor controller event log for recurrence of diagnostic trouble codes.",
+                    expected_criterion="Zero error codes logged; car accelerates, cruises, decelerates, and levels within code tolerances.",
+                    interpretation="Confirms suspected fault has been eliminated and elevator is ready for return to public passenger service.",
+                    next_action="Sign off Return-to-Service Checklist, record technician certification details, and close investigation.",
+                    safety_precautions="Complete technician manual sign-off before unlocking car dispatch for public passengers."
+                ),
+            ]
+

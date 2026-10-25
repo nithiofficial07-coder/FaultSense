@@ -17,6 +17,11 @@ class DiagnosisRequest:
     telemetry: Dict[str, Any] = field(default_factory=dict)
     building_id: Optional[str] = None
     technician_notes: Optional[str] = None
+    manufacturer: Optional[str] = None
+    equipment_model: Optional[str] = None
+    problem_description: Optional[str] = None
+    operating_conditions: Optional[str] = None
+    severity: Optional[str] = None
 
 
 @dataclass

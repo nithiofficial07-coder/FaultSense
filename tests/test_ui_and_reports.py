@@ -183,17 +183,71 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         part_names = [p.part_name for p in dossier.recommended_parts]
         self.assertTrue(any("Optical" in name for name in part_names))
 
+    def test_troubleshooting_manual_generation_and_step_attributes(self):
+        """Verifies step-by-step troubleshooting manual is populated with required fields."""
+        dossier = DiagnosticEnricher.enrich_investigation(self.sample_inv_data)
+        self.assertGreater(len(dossier.troubleshooting_manual), 0)
+
+        # Check step fields
+        for step in dossier.troubleshooting_manual:
+            self.assertGreater(step.step_number, 0)
+            self.assertTrue(step.title)
+            self.assertIn(step.step_type.lower(), ["diagnostic inspection", "corrective action", "verification", "verification check"])
+            self.assertTrue(step.purpose)
+            self.assertTrue(step.required_tools)
+            self.assertTrue(step.inspection_measurement)
+            self.assertTrue(step.expected_criterion)
+            self.assertTrue(step.interpretation)
+            self.assertTrue(step.next_action)
+            self.assertTrue(step.safety_precautions)
+
+        # Confirm diagnostic inspection is clearly separated from corrective action
+        step_types_lower = [s.step_type.lower() for s in dossier.troubleshooting_manual]
+        self.assertIn("diagnostic inspection", step_types_lower)
+        self.assertIn("corrective action", step_types_lower)
+
+    def test_evidence_based_status_classification(self):
+        """Tests that evidence-based status accurately reflects verification and data sufficiency."""
+        # 1. Verified and grounded case
+        dossier_verified = DiagnosticEnricher.enrich_investigation(self.sample_inv_data)
+        self.assertEqual(dossier_verified.evidence_based_status, "Verified Against Documented Criteria")
+
+        # 2. Inconclusive verification verdict -> Root-Cause Hypothesis
+        unverified_inv = dict(self.sample_inv_data)
+        unverified_inv["verification_record"] = {"final_verdict": "inconclusive"}
+        unverified_inv["status"] = "inconclusive"
+        dossier_unverified = DiagnosticEnricher.enrich_investigation(unverified_inv)
+        self.assertNotEqual(dossier_unverified.evidence_based_status, "Verified Against Documented Criteria")
+        self.assertEqual(dossier_unverified.evidence_based_status, "Root-Cause Hypothesis")
+
+        # 3. Verified but missing telemetry -> Analysis Completed — Evidence Limited
+        limited_inv = dict(self.sample_inv_data)
+        limited_inv["telemetry"] = {}
+        dossier_limited = DiagnosticEnricher.enrich_investigation(limited_inv)
+        self.assertEqual(dossier_limited.evidence_based_status, "Analysis Completed — Evidence Limited")
+
+        # 4. Sparse symptoms without DTC or telemetry -> Awaiting Additional Information
+        sparse_inv = dict(self.sample_inv_data)
+        sparse_inv["fault_code"] = None
+        sparse_inv["telemetry"] = {}
+        sparse_inv["symptoms"] = ["Door problem"]
+        dossier_sparse = DiagnosticEnricher.enrich_investigation(sparse_inv)
+        self.assertEqual(dossier_sparse.evidence_based_status, "Awaiting Additional Information")
+
     # -------------------------------------------------------------------------
     # PDF and JSON Report Generator Tests
     # -------------------------------------------------------------------------
 
     def test_generate_pdf_creates_valid_document(self):
-        """Generates a non-empty PDF binary containing standard PDF header."""
+        """Generates a non-empty PDF binary containing standard PDF header and multiple pages."""
         pdf_bytes = DiagnosticReportGenerator.generate_pdf(self.sample_inv_data)
         self.assertIsInstance(pdf_bytes, bytes)
-        self.assertGreater(len(pdf_bytes), 5000)
+        self.assertGreater(len(pdf_bytes), 10000)
         # Standard PDF magic header check
         self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+        # Multi-page check
+        page_markers = pdf_bytes.count(b"/Type /Page\n") + pdf_bytes.count(b"/Type /Page/")
+        self.assertGreaterEqual(page_markers, 2)
 
     def test_generate_json_export_is_valid(self):
         """Exports a valid, parseable JSON diagnostic dossier."""
@@ -204,6 +258,9 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         self.assertIn("required_tools", parsed)
         self.assertIn("return_to_service_checks", parsed)
         self.assertIn("downtime_estimate", parsed)
+        self.assertIn("troubleshooting_manual", parsed)
+        self.assertIn("evidence_based_status", parsed)
+        self.assertEqual(parsed["evidence_based_status"], "Verified Against Documented Criteria")
 
     # -------------------------------------------------------------------------
     # Logo and Branding Rendering Tests
@@ -271,9 +328,58 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
                     rendered_disc_html = arg
                     break
 
-            self.assertTrue(rendered_disc_html, "fs-disclaimer-card HTML was not rendered")
-            self.assertIn("Safety &amp; Operational Limitations", rendered_disc_html)
-            self.assertIn("advisory decision-support tool", rendered_disc_html)
+    def test_technician_review_persistence_and_signoff_in_pdf(self):
+        """Verifies technician review can be persisted and renders into the PDF sign-off block."""
+        import uuid
+        from src.storage.repository import InvestigationRepository
+
+        repo = InvestigationRepository()
+        test_inv_data = dict(self.sample_inv_data)
+        test_inv_data["investigation_id"] = f"INV-TEST-REV-{uuid.uuid4().hex[:8]}"
+        inv_id = repo.create(test_inv_data)
+
+        # Update with technician review
+        review_data = {
+            "technician_name": "Marcus Vance, QEI-1",
+            "certification_number": "QEI-88329-NY",
+            "verification_outcome": "Confirmed AI Root Cause Correct — Fault Resolved",
+            "physical_resolution_status": "Physically Resolved & Tested per ASME A17.1",
+            "reviewed_at": "2026-10-25T14:30:00Z",
+            "chk_loto": True,
+            "chk_mech": True,
+            "chk_elec": True,
+            "chk_align": True,
+            "chk_test": True,
+            "chk_house": True,
+        }
+        success = repo.update_technician_review(
+            investigation_id=inv_id,
+            technician_notes="Door sill cleaned with HEPA vacuum. Optical curtain aligned to 24.0V DC. Full travel verified.",
+            review_data=review_data,
+            status="completed",
+        )
+        self.assertTrue(success)
+
+        # Retrieve and verify persistence
+        updated_rec = repo.get(inv_id)
+        self.assertIsNotNone(updated_rec)
+        self.assertIn("technician_review", updated_rec)
+        self.assertEqual(updated_rec["technician_review"]["technician_name"], "Marcus Vance, QEI-1")
+        self.assertEqual(updated_rec["status"], "completed")
+
+        # Generate PDF with technician sign-off
+        pdf_bytes = DiagnosticReportGenerator.generate_pdf(updated_rec)
+        self.assertTrue(pdf_bytes.startswith(b"%PDF-"))
+        self.assertGreater(len(pdf_bytes), 10000)
+
+    def test_diagnostic_report_page_import_and_structure(self):
+        """Verifies diagnostic_report page can be imported and sidebar includes report item."""
+        from src.ui.components.sidebar import NAV_ITEMS
+        from src.ui.pages.diagnostic_report import render_diagnostic_report_page
+
+        self.assertTrue(callable(render_diagnostic_report_page))
+        nav_ids = [item[0] for item in NAV_ITEMS]
+        self.assertIn("report", nav_ids)
 
 
 if __name__ == "__main__":

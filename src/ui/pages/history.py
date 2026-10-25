@@ -72,8 +72,11 @@ def render_history_page() -> None:
             searchable_blob = (
                 f"{r.get('investigation_id', '')} "
                 f"{r.get('elevator_id', '')} "
+                f"{r.get('manufacturer', '')} "
+                f"{r.get('equipment_model', '')} "
                 f"{r.get('fault_code', '')} "
                 f"{r.get('subsystem', '')} "
+                f"{r.get('severity', '')} "
                 f"{r.get('root_cause_hypothesis', '')} "
                 f"{' '.join(r.get('symptoms', []))}"
             ).lower()
@@ -94,34 +97,52 @@ def render_history_page() -> None:
     for rec in filtered:
         inv_id = rec.get("investigation_id", "Unknown")
         elv_id = rec.get("elevator_id", "Unknown")
+        mfg = rec.get("manufacturer") or "Generic OEM"
+        model = rec.get("equipment_model") or "Standard"
         sub = str(rec.get("subsystem", "")).replace("_", " ").title()
         conf = int(float(rec.get("confidence_score", 0.0)) * 100)
         status = rec.get("status", "open")
+        sev = str(rec.get("severity", "medium")).capitalize()
         ts = rec.get("created_at", "")[:19].replace("T", " ")
         retries = rec.get("retry_count", 0)
 
-        # Verification badge
-        verif_rec = rec.get("verification_record") or {}
-        final_verdict = verif_rec.get("final_verdict", "sufficient" if status == "completed" else "inconclusive")
-        is_verified = (final_verdict == "sufficient" or status == "completed")
-        badge_color = "#34D399" if is_verified else "#F59E0B"
-        badge_text = "VERIFIED GROUNDED" if is_verified else "INCONCLUSIVE"
+        # Evidence-based status
+        ev_status = rec.get("evidence_based_status")
+        if not ev_status:
+            verif_rec = rec.get("verification_record") or {}
+            final_verdict = verif_rec.get("final_verdict", "sufficient" if status == "completed" else "inconclusive")
+            if final_verdict == "sufficient" or status == "completed":
+                ev_status = "Requires Technician Verification"
+            else:
+                ev_status = "Root-Cause Hypothesis"
 
-        header = f"**{inv_id}** — Elevator: `{elv_id}` [{sub}] | Confidence: {conf}% | {ts}"
+        if "Verified Against" in ev_status:
+            badge_color = "#34D399"
+        elif "Requires Technician" in ev_status:
+            badge_color = "#38BDF8"
+        elif "Hypothesis" in ev_status:
+            badge_color = "#F59E0B"
+        else:
+            badge_color = "#94A3B8"
+
+        header = f"**{inv_id}** — Unit: `{elv_id}` ({mfg} {model}) [{sub}] | {sev} | {ts}"
 
         with st.expander(header):
             c1, c2 = st.columns([2.5, 1.5])
             with c1:
                 st.markdown(f"**Synthesized Root Cause**:\n{rec.get('root_cause_hypothesis', 'N/A')}")
+                if rec.get("problem_description"):
+                    st.caption(f"**Reported Problem**: {rec.get('problem_description')}")
                 st.markdown(f"**Documented Corrective Actions**:\n{rec.get('recommended_actions', 'N/A')}")
                 if rec.get("symptoms"):
                     st.caption(f"Reported Symptoms: {', '.join(rec.get('symptoms'))}")
 
             with c2:
+                st.markdown(f"**Equipment**: {mfg} {model}")
                 st.markdown(f"**Building**: {rec.get('building_id') or 'N/A'}")
                 st.markdown(f"**Fault Code**: `{rec.get('fault_code') or 'None'}`")
-                st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● {badge_text}</span>", unsafe_allow_html=True)
-                st.caption(f"Verification Retries: {retries}")
+                st.markdown(f"<span style='color: {badge_color}; font-weight: 700;'>● {ev_status}</span>", unsafe_allow_html=True)
+                st.caption(f"Advisory Confidence: {conf}% | Retries: {retries}")
                 if rec.get("technician_notes"):
                     st.markdown(f"**Field Notes**: {rec.get('technician_notes')}")
 
@@ -147,7 +168,7 @@ def render_history_page() -> None:
                     st.download_button(
                         label="📄 Download PDF Report",
                         data=pdf_data,
-                        file_name=f"{inv_id}_FaultSense_Report.pdf",
+                        file_name=f"FaultSense_Report_{inv_id}.pdf",
                         mime="application/pdf",
                         key=f"hist_pdf_{inv_id}",
                         use_container_width=True,
@@ -160,7 +181,7 @@ def render_history_page() -> None:
                     st.download_button(
                         label="📦 Export JSON",
                         data=json_data,
-                        file_name=f"{inv_id}_data.json",
+                        file_name=f"FaultSense_Data_{inv_id}.json",
                         mime="application/json",
                         key=f"hist_json_{inv_id}",
                         use_container_width=True,

@@ -9,6 +9,7 @@ from config.settings import get_settings
 from src.ui.components.header import render_header
 from src.ui.components.sidebar import render_sidebar
 from src.ui.pages.assistant_page import render_assistant_page
+from src.ui.pages.diagnostic_report import render_diagnostic_report_page
 from src.ui.pages.diagnostic_results import render_diagnostic_results_page
 from src.ui.pages.evaluation import render_evaluation_page
 from src.ui.pages.history import render_history_page
@@ -51,6 +52,8 @@ def main() -> None:
         render_new_investigation_page()
     elif selected_page == "results":
         render_diagnostic_results_page()
+    elif selected_page == "report":
+        render_diagnostic_report_page()
     elif selected_page == "assistant":
         render_assistant_page()
     elif selected_page == "knowledge_base":

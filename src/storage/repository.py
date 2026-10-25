@@ -53,8 +53,9 @@ class InvestigationRepository:
                     recommended_actions, confidence_score, matched_case_ids,
                     status, technician_notes, verification_record, retry_count,
                     diagnostic_report, evidence_package,
+                    manufacturer, equipment_model, severity, operating_conditions, problem_description,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
                 (
                     inv_id,
@@ -74,6 +75,11 @@ class InvestigationRepository:
                     int(session_data.get("retry_count", 0)),
                     diag_rep,
                     evid_pkg,
+                    session_data.get("manufacturer", ""),
+                    session_data.get("equipment_model", ""),
+                    session_data.get("severity", "Medium"),
+                    session_data.get("operating_conditions", ""),
+                    session_data.get("problem_description", ""),
                     now_iso,
                     now_iso,
                 ),
@@ -110,6 +116,11 @@ class InvestigationRepository:
                         d["evidence_package"] = json.loads(d["evidence_package"])
                     except Exception:
                         pass
+                if d.get("technician_review"):
+                    try:
+                        d["technician_review"] = json.loads(d["technician_review"])
+                    except Exception:
+                        pass
                 results.append(d)
             return results
 
@@ -143,7 +154,44 @@ class InvestigationRepository:
                     d["evidence_package"] = json.loads(d["evidence_package"])
                 except Exception:
                     pass
+            if d.get("technician_review"):
+                try:
+                    d["technician_review"] = json.loads(d["technician_review"])
+                except Exception:
+                    pass
             return d
+
+    def update_technician_review(
+        self,
+        investigation_id: str,
+        technician_notes: str,
+        review_data: Optional[Dict[str, Any]] = None,
+        status: Optional[str] = None,
+    ) -> bool:
+        """Updates technician notes, verification review checklist, and status."""
+        now_iso = datetime.now(timezone.utc).isoformat()
+        review_json = json.dumps(review_data) if review_data else None
+        with self.db.get_connection() as conn:
+            if status:
+                conn.execute(
+                    """
+                    UPDATE investigations
+                    SET technician_notes = ?, technician_review = ?, status = ?, updated_at = ?
+                    WHERE investigation_id = ?
+                    """,
+                    (technician_notes, review_json, status, now_iso, investigation_id.strip()),
+                )
+            else:
+                conn.execute(
+                    """
+                    UPDATE investigations
+                    SET technician_notes = ?, technician_review = ?, updated_at = ?
+                    WHERE investigation_id = ?
+                    """,
+                    (technician_notes, review_json, now_iso, investigation_id.strip()),
+                )
+            logger.info("Updated technician review for investigation: %s", investigation_id)
+            return True
 
 
 __all__ = ["FaultCaseRepository", "InvestigationRepository", "DuplicateCaseError"]

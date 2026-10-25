@@ -16,6 +16,7 @@ NAV_ITEMS = [
     ("overview", "Overview", "📊", "System status & metrics"),
     ("new_investigation", "New Investigation", "🔍", "Symptom & telemetry intake"),
     ("results", "Diagnostic Results", "🎯", "Root cause & verification"),
+    ("report", "Diagnostic Report", "📄", "Download PDF & technician review"),
     ("assistant", "Conversational Assistant", "💬", "Grounded technician Q&A"),
     ("knowledge_base", "Knowledge Base", "📚", "OEM cases & vector store"),
     ("history", "Investigation History", "📋", "Audit trail & past records"),
@@ -179,10 +180,13 @@ def render_sidebar() -> str:
                 f'</div>',
                 unsafe_allow_html=True,
             )
-            c_res, c_chat = st.columns(2)
+            c_res, c_rep, c_chat = st.columns(3)
             with c_res:
                 if st.button("🎯 Results", key="side_act_res", use_container_width=True):
                     navigate_to("results", active_inv)
+            with c_rep:
+                if st.button("📄 Report", key="side_act_rep", use_container_width=True):
+                    navigate_to("report", active_inv)
             with c_chat:
                 if st.button("💬 Chat", key="side_act_chat", use_container_width=True):
                     navigate_to("assistant", active_inv)

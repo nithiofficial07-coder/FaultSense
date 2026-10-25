@@ -110,6 +110,12 @@ class DatabaseManager:
                     retry_count INTEGER DEFAULT 0,
                     diagnostic_report TEXT,
                     evidence_package TEXT,
+                    manufacturer TEXT,
+                    equipment_model TEXT,
+                    severity TEXT,
+                    operating_conditions TEXT,
+                    problem_description TEXT,
+                    technician_review TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
                 );
@@ -130,6 +136,30 @@ class DatabaseManager:
                 pass
             try:
                 conn.execute("ALTER TABLE investigations ADD COLUMN evidence_package TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN manufacturer TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN equipment_model TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN severity TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN operating_conditions TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN problem_description TEXT;")
+            except sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE investigations ADD COLUMN technician_review TEXT;")
             except sqlite3.OperationalError:
                 pass
 

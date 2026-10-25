@@ -62,31 +62,34 @@ def render_diagnostic_results_page() -> None:
 
     # Metadata Overview Banner
     ts_str = inv_data.get("created_at", "")[:19].replace("T", " ")
-    verif_badge_color = "#34D399" if dossier.is_verified else "#F59E0B"
-    verif_status_text = "VERIFIED GROUNDED" if dossier.is_verified else "INCONCLUSIVE ADVISORY"
+    status_text = dossier.evidence_based_status.upper()
+    verif_badge_color = "#34D399" if "VERIFIED" in status_text else "#F59E0B"
+    if "LIMITED" in status_text or "AWAITING" in status_text:
+        verif_badge_color = "#EF4444"
 
     st.markdown(
         f"""
         <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 4px solid #06B6D4;
-                    border-radius: 8px; padding: 14px 18px; margin: 10px 0 16px 0;">
+                    border-radius: 8px; padding: 14px 18px; margin: 10px 0 12px 0;">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
                     <span style="font-size: 0.72rem; font-weight: 700; color: #06B6D4; text-transform: uppercase; letter-spacing: 0.8px;">
-                        INVESTIGATION DOSSIER
+                        INVESTIGATION DOSSIER &amp; TECHNICAL AUDIT
                     </span>
                     <h3 style="margin: 2px 0; color: #F8FAFC; font-size: 1.35rem;">{selected_inv_id}</h3>
                     <div style="color: #94A3B8; font-size: 0.85rem;">
-                        Elevator Unit: <b style="color: #F1F5F9;">{dossier.elevator_id}</b> |
+                        Unit: <b style="color: #F1F5F9;">{dossier.elevator_id}</b> |
+                        OEM / Model: <b style="color: #F1F5F9;">{dossier.manufacturer} ({dossier.equipment_model})</b> |
                         Subsystem: <b style="color: #F1F5F9;">{dossier.subsystem.replace('_', ' ').title()}</b> |
-                        DTC Code: <code style="color: #38BDF8;">{dossier.fault_code or 'None'}</code> |
-                        Site: <b style="color: #F1F5F9;">{dossier.building_id}</b>
+                        DTC: <code style="color: #38BDF8;">{dossier.fault_code or 'None'}</code> |
+                        Severity: <b style="color: #F1F5F9;">{dossier.severity}</b>
                     </div>
                 </div>
                 <div style="text-align: right;">
                     <span style="background-color: rgba(6, 182, 212, 0.1); color: {verif_badge_color};
                                  border: 1px solid {verif_badge_color}; padding: 3px 10px; border-radius: 6px;
                                  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px;">
-                        ● {verif_status_text}
+                        ● {status_text}
                     </span>
                     <div style="font-size: 0.75rem; color: #64748B; margin-top: 5px;">Recorded: {ts_str} UTC</div>
                 </div>
@@ -96,6 +99,47 @@ def render_diagnostic_results_page() -> None:
         unsafe_allow_html=True,
     )
 
+    # Top-Level Prominent Report Download Bar
+    top_c1, top_c2, top_c3, top_c4 = st.columns([1.5, 1.1, 1.2, 1.2])
+    with top_c1:
+        try:
+            top_pdf_bytes = DiagnosticReportGenerator.generate_pdf(inv_data, kb_manager=kb_manager)
+            st.download_button(
+                label="📄 Download Report (PDF)",
+                data=top_pdf_bytes,
+                file_name=f"FaultSense_Report_{selected_inv_id}.pdf",
+                mime="application/pdf",
+                type="primary",
+                use_container_width=True,
+                key=f"top_dl_pdf_{selected_inv_id}",
+            )
+        except Exception as exc:
+            st.error(f"Error compiling PDF: {exc}")
+
+    with top_c2:
+        try:
+            top_json_str = DiagnosticReportGenerator.generate_json(inv_data, kb_manager=kb_manager)
+            st.download_button(
+                label="📦 Export JSON",
+                data=top_json_str,
+                file_name=f"FaultSense_Data_{selected_inv_id}.json",
+                mime="application/json",
+                type="secondary",
+                use_container_width=True,
+                key=f"top_dl_json_{selected_inv_id}",
+            )
+        except Exception:
+            pass
+
+    with top_c3:
+        if st.button("📝 Report & Review Page", key=f"top_btn_report_{selected_inv_id}", type="secondary", use_container_width=True):
+            navigate_to("report", selected_inv_id)
+
+    with top_c4:
+        st.caption(f"Status: **{dossier.evidence_based_status}**\nAdvisory Match: **{int(dossier.confidence_score * 100)}%**")
+
+    st.markdown("<hr style='margin: 8px 0 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+
     # 8-Tab Detailed Results Interface
     tab_summary, tab_rca, tab_evidence, tab_telemetry, tab_tools, tab_steps, tab_safety, tab_report = st.tabs([
         "📋 Executive Summary",
@@ -103,10 +147,11 @@ def render_diagnostic_results_page() -> None:
         "📚 Evidence & Precedents",
         "📡 Telemetry Analysis",
         "🔧 Required Tools",
-        "🛠️ Inspection Procedure",
+        "🛠️ Troubleshooting Manual",
         "🛡️ Safety & Verification",
         "📥 Downloadable Report",
     ])
+
 
     # =========================================================================
     # Tab 1: Executive Summary
@@ -288,13 +333,52 @@ def render_diagnostic_results_page() -> None:
             )
 
     # =========================================================================
-    # Tab 6: Inspection Procedure & Parts
+    # Tab 6: Troubleshooting Manual & Parts
     # =========================================================================
     with tab_steps:
-        st.markdown("### 🛠️ Recommended Step-by-Step Inspection Procedure")
+        st.markdown("### 🛠️ Step-by-Step Manual Troubleshooting Procedure")
+        st.caption(
+            "Ordered engineering checklist adhering to ASME A17.1 / EN 81 safety protocols. "
+            "Diagnostic inspections must be completed prior to performing corrective actions."
+        )
 
-        for idx, step in enumerate(dossier.inspection_steps, 1):
-            st.markdown(f"**Step {idx}**: {step}")
+        for step in dossier.troubleshooting_manual:
+            type_badge_color = "#38BDF8" if step.step_type == "Diagnostic Inspection" else "#06B6D4"
+            st.markdown(
+                f"""
+                <div style="background-color: #131F37; border: 1px solid #1E293B; border-left: 4px solid {type_badge_color};
+                            border-radius: 8px; padding: 14px 18px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 1.0rem; font-weight: 700; color: #F8FAFC;">
+                            Step {step.step_number}: {step.title}
+                        </span>
+                        <span style="background-color: rgba(6, 182, 212, 0.12); color: {type_badge_color};
+                                     border: 1px solid {type_badge_color}; padding: 2px 8px; border-radius: 4px;
+                                     font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">
+                            {step.step_type}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.84rem; color: #94A3B8; margin-bottom: 4px;">
+                        <b>Purpose</b>: {step.purpose}
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; font-size: 0.82rem;">
+                        <div>
+                            <div style="color: #E2E8F0;"><b>Tools Required</b>: <code style="color: #38BDF8;">{step.required_tools}</code></div>
+                            <div style="color: #E2E8F0; margin-top: 4px;"><b>Inspection / Measurement</b>: {step.inspection_measurement}</div>
+                        </div>
+                        <div>
+                            <div style="color: #34D399;"><b>Expected Criterion</b>: {step.expected_criterion}</div>
+                            <div style="color: #CBD5E1; margin-top: 4px;"><b>Result Interpretation</b>: {step.interpretation}</div>
+                            <div style="color: #38BDF8; margin-top: 4px;"><b>Next Action</b>: {step.next_action}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; padding: 6px 10px; background-color: rgba(239, 68, 68, 0.08); border-left: 2px solid #EF4444; border-radius: 4px; font-size: 0.78rem; color: #FCA5A5;">
+                        ⚠️ <b>Safety Warning &amp; Stop Condition</b>: {step.safety_precautions}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         st.markdown("---")
         st.markdown("### 🔩 Recommended Replacement Parts (Grounded in Evidence)")
@@ -397,37 +481,37 @@ def render_diagnostic_results_page() -> None:
             json_str = json.dumps(inv_data, indent=2)
             has_pdf = False
 
-        c_pdf, c_json, c_md = st.columns(3)
+        c_pdf, c_json, c_md, c_page = st.columns([1.5, 1.1, 1.1, 1.3])
 
         with c_pdf:
             if has_pdf:
                 st.download_button(
-                    label="📄 Download Diagnostic Report (PDF)",
+                    label="📄 Download Report (PDF)",
                     data=pdf_bytes,
-                    file_name=f"{selected_inv_id}_FaultSense_Report.pdf",
+                    file_name=f"FaultSense_Report_{selected_inv_id}.pdf",
                     mime="application/pdf",
                     type="primary",
                     use_container_width=True,
                     key=f"dl_pdf_{selected_inv_id}",
                 )
-                st.caption(f"PDF size: {len(pdf_bytes) / 1024:.1f} KB. Includes vector branding & ASME A17.1 checklist.")
+                st.caption(f"PDF size: {len(pdf_bytes) / 1024:.1f} KB. Includes 14 formal engineering sections.")
 
         with c_json:
             st.download_button(
-                label="📦 Download Full JSON (.json)",
+                label="📦 Export JSON (.json)",
                 data=json_str,
-                file_name=f"{selected_inv_id}_diagnostic_data.json",
+                file_name=f"FaultSense_Data_{selected_inv_id}.json",
                 mime="application/json",
                 type="secondary",
                 use_container_width=True,
                 key=f"dl_json_{selected_inv_id}",
             )
-            st.caption("Complete 18-point structured dossier with evidence citations and raw telemetry.")
+            st.caption("Complete 18-point structured dossier.")
 
         with c_md:
             md_text = f"""# FaultSense Diagnostic Report: {selected_inv_id}
-**Elevator Unit**: {dossier.elevator_id} | **Subsystem**: {dossier.subsystem} | **DTC**: {dossier.fault_code}
-**Verification Status**: {dossier.verification_status} | **Confidence**: {int(dossier.confidence_score * 100)}%
+**Elevator Unit**: {dossier.elevator_id} | **OEM / Model**: {dossier.manufacturer} ({dossier.equipment_model}) | **Subsystem**: {dossier.subsystem} | **DTC**: {dossier.fault_code}
+**Diagnostic Status**: {dossier.evidence_based_status} | **Confidence**: {int(dossier.confidence_score * 100)}%
 
 ## 1. Primary Root Cause
 {dossier.primary_root_cause}
@@ -435,39 +519,48 @@ def render_diagnostic_results_page() -> None:
 ## 2. Recommended Next Action
 {dossier.recommended_next_action}
 
-## 3. Reported Symptoms
+## 3. Problem Description & Observed Symptoms
+{dossier.problem_description}
 {chr(10).join(f"- {s}" for s in dossier.symptoms)}
 
 ## 4. Telemetry Summary
 {json.dumps(dossier.telemetry_readings, indent=2)}
 """
             st.download_button(
-                label="📝 Download Markdown (.md)",
+                label="📝 Export Markdown (.md)",
                 data=md_text,
-                file_name=f"{selected_inv_id}_report.md",
+                file_name=f"FaultSense_Summary_{selected_inv_id}.md",
                 mime="text/markdown",
                 type="secondary",
                 use_container_width=True,
                 key=f"dl_md_{selected_inv_id}",
             )
-            st.caption("Lightweight plain text Markdown summary.")
+            st.caption("Plain text summary.")
+
+        with c_page:
+            if st.button("🛠️ Technician Sign-Off Page", type="secondary", use_container_width=True, key=f"tab8_btn_rep_{selected_inv_id}"):
+                navigate_to("report", selected_inv_id)
+            st.caption("Record field measurements & sign-off.")
 
         st.markdown("---")
-        st.markdown("##### 📄 PDF Document Structure Preview")
-        st.caption("Sections compiled in the downloaded PDF:")
+        st.markdown("##### 📄 PDF Engineering Dossier Structure")
+        st.caption("The 14 formal sections compiled into the downloaded PDF document:")
         doc_sections = [
-            "1. Header Banner & Vector Branding (Report ID, Timestamp, ASME A17.1 / EN 81-20)",
-            "2. Executive Summary & Verification Card (Unit, DTC, Verdict, Confidence, Sufficiency)",
-            "3. Primary Root Cause Synthesis & Immediate Recommended Action",
-            "4. Reported Symptoms & Physical Sensor Telemetry Table",
-            "5. Ranked Probable Causes & Traceable Historical Evidence Citations Table",
-            "6. Required Diagnostic Tools, Equipment & Safety Measures Table",
-            "7. Step-by-Step Inspection Procedure & Component Wear Replacement Table",
-            "8. Defensible Service Downtime & Effort Duration Estimate",
-            "9. Mandatory Safety Precautions & Escalation Protocols",
-            "10. Return-to-Service Acceptance Checklist with Technician Sign-Off Boxes",
-            "11. Known Limitations, Missing Data & Regulatory Advisory Disclaimer",
-            "12. Dynamic Numbered Canvas Running Footer ('Page X of Y')",
+            "1. FaultSense Report Title and Branding",
+            "2. Investigation ID, Date, and Equipment Details",
+            "3. Executive Summary & Diagnostic Status",
+            "4. Reported Problem, Observed Symptoms, and Error Codes",
+            "5. Telemetry & Data-Quality Analysis",
+            "6. Suspected Root Cause and Alternative Hypotheses",
+            "7. Supporting Evidence and Historical Case References",
+            "8. Required Diagnostic Tools, Instruments, and PPE",
+            "9. Detailed Numbered Manual Troubleshooting Procedure",
+            "10. Recommended Corrective Actions Supported by Evidence",
+            "11. Safety Instructions and Critical Stop Conditions",
+            "12. Verification Checklist and Acceptance Criteria (with Sign-Off Block)",
+            "13. Unresolved Issues, Outstanding Risks, and Recommended Next Steps",
+            "14. Sources, Limitations, and Regulatory Safety Disclaimer (ASME A17.1)",
         ]
         for sec in doc_sections:
             st.markdown(f"- 📑 {sec}")
+

@@ -268,6 +268,11 @@ class DiagnosisEngine:
                 "retry_count": retry_count,
                 "diagnostic_report": report.to_dict() if report else None,
                 "evidence_package": evidence_dict,
+                "manufacturer": getattr(request, "manufacturer", None) or "Not Specified",
+                "equipment_model": getattr(request, "equipment_model", None) or "Not Specified",
+                "problem_description": getattr(request, "problem_description", None) or (request.symptoms[0] if request.symptoms else "Reported elevator operational malfunction"),
+                "operating_conditions": getattr(request, "operating_conditions", None) or "Standard Duty Cycle",
+                "severity": getattr(request, "severity", None) or "Medium",
             })
         except Exception as exc:
             logger.warning("Could not persist investigation session: %s", exc)

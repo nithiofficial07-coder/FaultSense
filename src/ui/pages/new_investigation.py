@@ -21,8 +21,11 @@ from fault_sense.schema import SubsystemType
 from src.diagnosis.diagnostic_enricher import DiagnosticEnricher
 from src.diagnosis.engine import DiagnosisEngine
 from src.diagnosis.session import DiagnosisRequest
+from src.knowledge_base.manager import KnowledgeBaseManager
+from src.storage.repository import InvestigationRepository
 from src.ui.components.sidebar import navigate_to
 from src.utils.logger import get_logger
+from src.utils.report_generator import DiagnosticReportGenerator
 
 logger = get_logger(__name__)
 
@@ -262,7 +265,7 @@ def render_new_investigation_page() -> None:
     # Section 1: Equipment & Incident Identification
     # =========================================================================
     st.markdown("### 1. Equipment & Incident Identification")
-    st.caption("Identify the affected vertical transportation asset and operating environment.")
+    st.caption("Identify the affected vertical transportation asset, manufacturer, model, and operating conditions.")
 
     c1, c2, c3 = st.columns(3)
     with c1:
@@ -273,29 +276,44 @@ def render_new_investigation_page() -> None:
             help="Automatically generated unique field ticket identifier.",
         )
         elevator_id = st.text_input(
-            "Elevator Unit Identifier *",
+            "Elevator Unit Identifier",
             value=st.session_state.get("saved_elv_id", "ELV-CAR-04"),
-            placeholder="e.g. ELV-CAR-04, CAR-NORTH-02",
-            help="Mandatory unique equipment ID assigned by building management or OEM.",
+            placeholder="e.g. ELV-CAR-04, UNIT-B (optional / if available)",
+            help="Unique equipment ID assigned by building management or OEM (defaults to ELV-UNSPECIFIED if left blank).",
         )
 
     with c2:
-        elevator_model = st.text_input(
-            "Elevator Model / Drive Type (Optional)",
-            value="Geared Traction VVVF Passenger",
-            placeholder="e.g. Gearless High-Rise, Hydraulic Freight",
-            help="Optional vertical transportation system specification.",
+        mfg_options = [
+            "Otis Elevator Company",
+            "Schindler Group",
+            "KONE Corporation",
+            "TK Elevator (Thyssenkrupp)",
+            "Mitsubishi Electric",
+            "Fujitec",
+            "Generic / Other Manufacturer",
+        ]
+        manufacturer = st.selectbox(
+            "Elevator Manufacturer (if known)",
+            options=mfg_options,
+            index=0,
+            help="OEM manufacturer specification helps contextualize schematics and code limits.",
         )
-        building_id = st.text_input(
-            "Building / Job Site ID (Optional)",
-            value="Commercial Plaza Tower B",
-            placeholder="e.g. Metropolitan Medical Center",
-            help="Building name, campus, or physical facility location.",
+        elevator_model = st.text_input(
+            "Elevator Model / Drive Type (if known)",
+            value="Geared Traction VVVF Passenger (Gen2)",
+            placeholder="e.g. 3300 MRL, MonoSpace, TAC32",
+            help="Controller family or drive architecture.",
         )
 
     with c3:
+        building_id = st.text_input(
+            "Building / Job Site ID",
+            value="Commercial Plaza Tower B",
+            placeholder="e.g. Metropolitan Medical Center",
+            help="Facility name, campus, or physical site location.",
+        )
         severity = st.selectbox(
-            "Incident Severity Classification (Optional)",
+            "Incident Severity & Urgency Assessment",
             options=[
                 "High — Service Interruption / Out of Service",
                 "Critical — Safety Circuit Trip / Passenger Entrapment",
@@ -304,12 +322,13 @@ def render_new_investigation_page() -> None:
             ],
             index=0,
         )
-        operating_conditions = st.text_input(
-            "Ambient / Traffic Conditions (Optional)",
-            value="Morning peak dispatch; high ambient humidity (82%)",
-            placeholder="e.g. Extreme summer heat, construction dust in hoistway",
-            help="Environmental factors that may accelerate electrical or mechanical wear.",
-        )
+
+    operating_conditions = st.text_input(
+        "Operating & Environmental Conditions (Optional)",
+        value="Morning peak dispatch; high ambient machine room humidity (82%), 31°C",
+        placeholder="e.g. Post-thunderstorm power dip, construction dust in hoistway, cold weather start",
+        help="Operating context that may explain electrical or mechanical drift.",
+    )
 
     st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
 
@@ -317,7 +336,7 @@ def render_new_investigation_page() -> None:
     # Section 2: Fault Indicators & Observed Symptoms
     # =========================================================================
     st.markdown("### 2. Fault Indicators & Observed Symptoms")
-    st.caption("Specify the suspected elevator subsystem, controller diagnostic trouble codes (DTC), and technician observations.")
+    st.caption("Specify the affected subsystem, narrative problem description, controller DTC error codes, and technician observations.")
 
     s_col1, s_col2 = st.columns([1, 1.4])
     with s_col1:
@@ -334,22 +353,30 @@ def render_new_investigation_page() -> None:
         )
 
         fault_code = st.text_input(
-            "OEM Controller Fault Code (DTC) (Optional)",
+            "OEM Controller Fault Code (DTC) (if registered)",
             value=st.session_state.get("fault_code_input", "E-DR-201"),
-            placeholder="e.g. E-DR-201, E-VFD-404, FLT-12",
+            placeholder="e.g. E-DR-201, E-VFD-404, FLT-12 (leave blank if none)",
             key="fault_code_field",
-            help="Exact diagnostic error code logged in controller fault history buffer.",
+            help="Diagnostic trouble code logged in controller fault history buffer.",
         )
 
         technician_notes = st.text_area(
-            "Technician Field Observations (Optional)",
+            "Technician Field Observations & Notes (Optional)",
             value=st.session_state.get("notes_input", "Initial visual check performed on landing sills. No large physical obstruction visible."),
             height=78,
             key="notes_field",
-            help="Prior service history, tactile observations, or multimeter spot-checks.",
+            help="Multimeter spot-checks, tactile observations, or recent maintenance history.",
         )
 
     with s_col2:
+        problem_description = st.text_area(
+            "Problem Description / Incident Narrative *",
+            value="Elevator car doors cycling open and closed repeatedly at Floor 4 without passenger obstruction, preventing departure.",
+            height=75,
+            key="problem_desc_field",
+            help="Plain-language description of the problem reported by building staff or observed on arrival.",
+        )
+
         default_syms = st.session_state.get(
             "symptoms_input",
             "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer expires causing nudging buzzer activation\nIntermittent reopening at intermediate floors",
@@ -357,9 +384,28 @@ def render_new_investigation_page() -> None:
         symptoms_input = st.text_area(
             "Observed Operational Symptoms * (One per line or semicolon-separated)",
             value=default_syms,
-            height=205,
+            height=100,
             key="symptoms_field",
-            help="Accurately describe abnormal movements, noises, optical behavior, or leveling errors.",
+            help="Specific physical anomalies: e.g. door bounce, shudder, leveling drift, abnormal acoustic pitch.",
+        )
+
+    # Missing Information Assessment Callout
+    missing_items = []
+    if not fault_code.strip():
+        missing_items.append("OEM Fault Code (DTC) is missing (will rely on symptom matching)")
+    if "Generic" in manufacturer:
+        missing_items.append("Manufacturer/Model is generic (schematic pinouts must be verified on-site)")
+    if not elevator_id.strip():
+        missing_items.append("Unit ID is blank (will default to ELV-UNSPECIFIED)")
+
+    if missing_items:
+        st.markdown(
+            f"""
+            <div style="background-color: #1E293B; border-left: 3px solid #F59E0B; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-size: 0.8rem; color: #FCD34D;">
+                <b>ℹ️ Diagnostic Precision Advisory</b>: {'; '.join(missing_items)}. FaultSense will analyze available data without fabricating missing specifications.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
@@ -532,28 +578,33 @@ def render_new_investigation_page() -> None:
     )
 
     if run_submitted:
-        # Mandatory validation
-        if not elevator_id.strip():
-            st.error("Validation Error: Please specify the Elevator Unit Identifier.", icon="🚨")
-            return
+        # Normalize elevator ID (default if blank)
+        effective_elv_id = elevator_id.strip() if elevator_id.strip() else "ELV-UNSPECIFIED"
 
         symptoms = [s.strip() for s in symptoms_input.replace(";", "\n").splitlines() if s.strip()]
         if not symptoms:
             st.error("Validation Error: At least one observed symptom must be provided.", icon="🚨")
             return
 
-        # Build formal diagnosis request
+        # Build formal diagnosis request with all equipment & operating context
         request = DiagnosisRequest(
-            elevator_id=elevator_id.strip(),
+            elevator_id=effective_elv_id,
             building_id=building_id.strip() if building_id else None,
             subsystem=subsystem,
             fault_code=fault_code.strip() if fault_code else None,
             symptoms=symptoms,
             telemetry=active_telemetry,
             technician_notes=technician_notes.strip() if technician_notes else None,
+            manufacturer=manufacturer,
+            equipment_model=elevator_model.strip() if elevator_model else "Generic / Unspecified",
+            problem_description=problem_description.strip() if problem_description else (symptoms[0] if symptoms else "Elevator operational fault"),
+            operating_conditions=operating_conditions.strip() if operating_conditions else "Normal Operating Conditions",
+            severity=severity,
         )
 
         engine = DiagnosisEngine(enable_verification=True)
+        repo = InvestigationRepository()
+        kb_manager = KnowledgeBaseManager()
 
         try:
             with st.spinner("Retrieving historical evidence, evaluating candidate causes, and executing verification loop..."):
@@ -562,20 +613,24 @@ def render_new_investigation_page() -> None:
             # Persist session state
             st.session_state["current_investigation_id"] = result.investigation_id
             st.session_state["current_result"] = result
-            st.session_state["saved_elv_id"] = elevator_id.strip()
+            st.session_state["saved_elv_id"] = effective_elv_id
 
             st.success(
                 f"Diagnostic Session **{result.investigation_id}** completed and saved to persistent audit database!",
                 icon="✅",
             )
 
-            # Executive Results Banner
-            verif_badge = "✅ Verified Grounded" if result.is_verified else "⚠️ Inconclusive Advisory"
+            # Fetch enriched record from database
+            saved_rec = repo.get(result.investigation_id) or result.to_dict()
+            dossier = DiagnosticEnricher.enrich_investigation(saved_rec, kb_manager=kb_manager)
+
+            # Executive Results Banner with Evidence-Based Status
+            verif_badge = dossier.evidence_based_status
             c_score, c_verif, c_retry, c_cases = st.columns(4)
             with c_score:
                 st.metric("Advisory Confidence", f"{int(result.confidence_score * 100)}%")
             with c_verif:
-                st.metric("Verification Status", verif_badge)
+                st.metric("Diagnostic Status", verif_badge)
             with c_retry:
                 st.metric("Verification Retries", f"{result.retry_count} / 2")
             with c_cases:
@@ -597,14 +652,57 @@ def render_new_investigation_page() -> None:
                 unsafe_allow_html=True,
             )
 
+            # Prominent PDF Download & JSON Export Block
+            st.markdown("##### 📄 Download Official Investigation Artifacts")
+            dl_col1, dl_col2 = st.columns([1.6, 1.2])
+
+            with dl_col1:
+                try:
+                    pdf_bytes = DiagnosticReportGenerator.generate_pdf(saved_rec, kb_manager=kb_manager)
+                    st.download_button(
+                        label="📄 Download Complete Diagnostic Report (PDF)",
+                        data=pdf_bytes,
+                        file_name=f"FaultSense_Report_{result.investigation_id}.pdf",
+                        mime="application/pdf",
+                        type="primary",
+                        use_container_width=True,
+                        key=f"new_inv_pdf_{result.investigation_id}",
+                    )
+                    st.caption(f"Publication-grade multi-page PDF ready ({len(pdf_bytes) / 1024:.1f} KB). Includes 8 formal engineering sections.")
+                except Exception as p_err:
+                    logger.error("PDF generation on new_investigation failed: %s", p_err)
+                    st.error(f"PDF generation error: {p_err}. You can retry or download from Diagnostic Results tab.")
+
+            with dl_col2:
+                try:
+                    json_str = DiagnosticReportGenerator.generate_json(saved_rec, kb_manager=kb_manager)
+                    st.download_button(
+                        label="📦 Export Structured JSON Data",
+                        data=json_str,
+                        file_name=f"FaultSense_Data_{result.investigation_id}.json",
+                        mime="application/json",
+                        type="secondary",
+                        use_container_width=True,
+                        key=f"new_inv_json_{result.investigation_id}",
+                    )
+                    st.caption("Complete 18-point machine-readable JSON dossier.")
+                except Exception:
+                    pass
+
+            st.markdown("<hr style='margin: 12px 0; border: 0; border-top: 1px solid #1E293B;'>", unsafe_allow_html=True)
+
             # Direct Navigation Actions
-            act_col1, act_col2 = st.columns(2)
+            act_col1, act_col2, act_col3 = st.columns([1.4, 1.2, 1.2])
             with act_col1:
-                if st.button("👉 View Full Diagnostic Report & Verification Audit", key="btn_goto_res", type="primary", use_container_width=True):
-                    navigate_to("results", result.investigation_id)
+                if st.button("📄 Dedicated Report Page", key="btn_goto_rep", type="primary", use_container_width=True):
+                    navigate_to("report", result.investigation_id)
 
             with act_col2:
-                if st.button("💬 Consult Diagnostic Assistant with this Session", key="btn_goto_chat", type="secondary", use_container_width=True):
+                if st.button("👉 View Full Audit Dossier", key="btn_goto_res", type="secondary", use_container_width=True):
+                    navigate_to("results", result.investigation_id)
+
+            with act_col3:
+                if st.button("💬 Consult Assistant", key="btn_goto_chat", type="secondary", use_container_width=True):
                     navigate_to("assistant", result.investigation_id)
 
         except Exception as exc:
