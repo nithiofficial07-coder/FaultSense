@@ -272,7 +272,8 @@ def apply_custom_styles() -> None:
                 }
             }
 
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[data-testid="stBaseButton-primary"] {
                 background-color: #E6EEFA !important;
                 border: 1px solid #C4D7F0 !important;
                 color: #27364B !important;
@@ -283,7 +284,8 @@ def apply_custom_styles() -> None:
             }
 
             /* Active item left accent indicator (4px width) */
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]::before {
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]::before,
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[data-testid="stBaseButton-primary"]::before {
                 content: '' !important;
                 position: absolute !important;
                 left: 0 !important;
@@ -296,7 +298,8 @@ def apply_custom_styles() -> None:
                 display: block !important;
             }
 
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover {
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"]:hover,
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[data-testid="stBaseButton-primary"]:hover {
                 background-color: #DEE9F8 !important;
                 border-color: #B8D2F4 !important;
                 color: #27364B !important;
@@ -304,7 +307,9 @@ def apply_custom_styles() -> None:
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span[data-testid="stIconMaterial"],
-            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span.material-symbols-rounded {
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[data-testid="stBaseButton-primary"] span[data-testid="stIconMaterial"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] span.material-symbols-rounded,
+            section[data-testid="stSidebar"] div[data-testid="stButton"] > button[data-testid="stBaseButton-primary"] span.material-symbols-rounded {
                 color: #4169A8 !important;
                 font-weight: 600 !important;
             }
