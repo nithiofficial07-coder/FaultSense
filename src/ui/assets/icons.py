@@ -190,12 +190,12 @@ def get_icon_svg(
 def icon_badge(name: str, label: str, variant: str = "neutral") -> str:
     """Returns a styled HTML badge paired with a Lucide icon."""
     variants = {
-        "primary": ("#EFF6FF", "#1D4ED8", "#BFDBFE"),
-        "success": ("#F0FDF4", "#15803D", "#BBF7D0"),
-        "warning": ("#FFFBEB", "#B45309", "#FDE68A"),
-        "error": ("#FEF2F2", "#B91C1C", "#FECACA"),
-        "info": ("#F0F9FF", "#0369A1", "#BAE6FD"),
-        "neutral": ("#F8FAFC", "#475569", "#E2E8F0"),
+        "primary": ("#EAF1FA", "#4169A8", "#CADDF5"),
+        "success": ("#EFF7F2", "#3F7D62", "#C6E2D3"),
+        "warning": ("#FDF8EE", "#A8752B", "#EED8B4"),
+        "error": ("#FDF2F2", "#B84C4C", "#ECC4C4"),
+        "info": ("#EDF4F9", "#477AA5", "#C8DFEF"),
+        "neutral": ("#F8FAFC", "#68778D", "#E2E8F0"),
     }
     bg, fg, border = variants.get(variant, variants["neutral"])
     icon_svg = get_icon_svg(name, size=14, color=fg, stroke_width=2.0)

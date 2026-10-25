@@ -117,13 +117,13 @@ def render_history_page() -> None:
                 ev_status = "Review Required"
 
         if "Supported" in ev_status or "Verified" in ev_status:
-            badge_color = "#15803D"
+            badge_color = "#3F7D62"
         elif "Review" in ev_status or "Technician" in ev_status:
-            badge_color = "#2563EB"
+            badge_color = "#4169A8"
         elif "Insufficient" in ev_status:
-            badge_color = "#64748B"
+            badge_color = "#68778D"
         else:
-            badge_color = "#B45309"
+            badge_color = "#A8752B"
 
         header = f"**{inv_id}** — Unit: `{elv_id}` ({mfg} {model}) [{sub}] | {sev} | {ts}"
 
@@ -149,7 +149,7 @@ def render_history_page() -> None:
             # Evidence citations
             matched_cases = rec.get("matched_case_ids", [])
             if matched_cases:
-                cites_html = " ".join(f"<code style='color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1px 4px; border-radius: 4px;'>{cid}</code>" for cid in matched_cases)
+                cites_html = " ".join(f"<code style='color: #4169A8; background: #EAF1FA; border: 1px solid #CADDF5; padding: 1px 4px; border-radius: 4px;'>{cid}</code>" for cid in matched_cases)
                 st.markdown(f"**Evidence Citations**: {cites_html}", unsafe_allow_html=True)
 
             st.markdown("<hr style='margin: 8px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)

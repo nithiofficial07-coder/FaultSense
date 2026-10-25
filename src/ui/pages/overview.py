@@ -61,9 +61,9 @@ def render_overview_page() -> None:
     col_act1, col_act2 = st.columns([3, 1])
     with col_act1:
         st.markdown(
-            '<div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px 18px; margin: 8px 0 16px 0;">'
-            '<div style="font-weight: 700; color: #1E40AF; font-size: 1.02rem;">Ready to troubleshoot an elevator anomaly?</div>'
-            '<div style="color: #475569; font-size: 0.88rem; margin-top: 4px;">Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.</div>'
+            '<div style="background: #EAF1FA; border: 1px solid #CADDF5; border-radius: 10px; padding: 16px 20px; margin: 8px 0 16px 0;">'
+            '<div style="font-weight: 700; color: #243F6C; font-size: 1.05rem;">Ready to troubleshoot an elevator anomaly?</div>'
+            '<div style="color: #55657E; font-size: 0.88rem; margin-top: 4px;">Submit observed symptoms, error codes, and telemetry to trigger evidence retrieval and self-verification.</div>'
             '</div>',
             unsafe_allow_html=True,
         )
@@ -112,7 +112,7 @@ def render_overview_page() -> None:
             status = inv.get("status", "open")
             ts = inv.get("created_at", "")[:19].replace("T", " ")
 
-            badge_color = "#15803D" if status == "completed" else "#B45309"
+            badge_color = "#3F7D62" if status == "completed" else "#A8752B"
             with st.expander(f"**{inv_id}** — Unit: `{elv_id}` [{sub}] | Confidence: {conf}% | {ts}"):
                 c_info1, c_info2 = st.columns([3, 1.2])
                 with c_info1:

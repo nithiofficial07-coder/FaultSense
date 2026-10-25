@@ -52,26 +52,26 @@ def render_settings_page() -> None:
         health = HealthChecker.run_all_checks()
 
         if health.overall_status == "healthy":
-            overall_bg = "#F0FDF4"
-            overall_color = "#15803D"
-            overall_border = "#BBF7D0"
+            overall_bg = "#EFF7F2"
+            overall_color = "#3F7D62"
+            overall_border = "#C6E2D3"
         elif health.overall_status == "degraded":
-            overall_bg = "#FFFBEB"
-            overall_color = "#B45309"
-            overall_border = "#FDE68A"
+            overall_bg = "#FDF8EE"
+            overall_color = "#A8752B"
+            overall_border = "#EED8B4"
         else:
-            overall_bg = "#FEF2F2"
-            overall_color = "#B91C1C"
-            overall_border = "#FECACA"
+            overall_bg = "#FDF2F2"
+            overall_color = "#B84C4C"
+            overall_border = "#ECC4C4"
 
         st.markdown(
             f"""
             <div style="background-color: {overall_bg}; border: 1px solid {overall_border}; border-left: 4px solid {overall_color};
-                        padding: 12px 18px; border-radius: 8px; margin-bottom: 16px;">
+                        padding: 14px 20px; border-radius: 10px; margin-bottom: 16px;">
                 <span style="font-size: 1.05rem; font-weight: 700; color: {overall_color};">
                     ● Overall System Health: {health.overall_status.upper()}
                 </span>
-                <span style="font-size: 0.85rem; color: #64748B; margin-left: 14px;">
+                <span style="font-size: 0.85rem; color: #68778D; margin-left: 14px;">
                     Timestamp: {health.timestamp[:19].replace('T', ' ')} UTC
                 </span>
             </div>
@@ -80,7 +80,7 @@ def render_settings_page() -> None:
         )
 
         for comp_name, comp_status in health.components.items():
-            st_color = "#15803D" if comp_status.status == "healthy" else ("#B45309" if comp_status.status == "degraded" else "#B91C1C")
+            st_color = "#3F7D62" if comp_status.status == "healthy" else ("#A8752B" if comp_status.status == "degraded" else "#B84C4C")
             with st.expander(f"**{comp_name.title()}**: {comp_status.status.upper()} — {comp_status.message}"):
                 st.markdown(f"**Status**: <span style='color: {st_color}; font-weight: 700;'>{comp_status.status.upper()}</span>", unsafe_allow_html=True)
                 st.markdown(f"**Message**: {comp_status.message}")

@@ -58,15 +58,15 @@ def render_assistant_page() -> None:
 
     st.markdown(
         f"""
-        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB;
-                    border-radius: 6px; padding: 10px 16px; margin: 8px 0 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-            <div style="font-size: 0.75rem; color: #2563EB; font-weight: 700; text-transform: uppercase;">
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #4169A8;
+                    border-radius: 10px; padding: 12px 18px; margin: 8px 0 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 0.75rem; color: #4169A8; font-weight: 700; text-transform: uppercase;">
                 Active Investigation Scope
             </div>
-            <div style="font-size: 0.95rem; color: #1F2937; margin-top: 2px;">
+            <div style="font-size: 0.95rem; color: #243247; margin-top: 2px;">
                 Unit <b>{elv_id}</b> | Subsystem: <b>{subsystem}</b> | Code: <code>{fault_code}</code>
             </div>
-            <div style="font-size: 0.82rem; color: #64748B; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+            <div style="font-size: 0.82rem; color: #68778D; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                 Primary Hypothesis: {rc_summary}
             </div>
         </div>
@@ -90,7 +90,7 @@ def render_assistant_page() -> None:
         ]
 
     # Quick Suggestion Chips
-    st.markdown("<div style='font-size: 0.78rem; font-weight: 600; color: #64748B; margin-bottom: 4px;'>QUICK DIAGNOSTIC PROMPTS</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size: 0.78rem; font-weight: 600; color: #68778D; margin-bottom: 4px;'>QUICK DIAGNOSTIC PROMPTS</div>", unsafe_allow_html=True)
     q_col1, q_col2, q_col3, q_col4 = st.columns(4)
     suggested_prompt = None
 

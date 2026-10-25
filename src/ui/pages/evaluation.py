@@ -52,14 +52,14 @@ def render_evaluation_page() -> None:
     report: ComparativeEvaluationReport = st.session_state.get("benchmark_report")
 
     if not report:
-        icon_chart = get_icon_svg("activity", size=32, color="#2563EB")
+        icon_chart = get_icon_svg("activity", size=32, color="#4169A8")
         st.markdown(
             f"""
-            <div style="background-color: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 8px;
-                        padding: 30px; text-align: center; margin: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="background-color: #FFFFFF; border: 1px dashed #CBD5E1; border-radius: 10px;
+                        padding: 30px; text-align: center; margin: 24px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
                 <div>{icon_chart}</div>
-                <h4 style="color: #1F2937; margin: 10px 0 4px 0;">No Active Benchmark Evaluation Data</h4>
-                <p style="color: #64748B; font-size: 0.9rem; max-width: 500px; margin: 0 auto 16px auto;">
+                <h4 style="color: #243247; margin: 10px 0 4px 0;">No Active Benchmark Evaluation Data</h4>
+                <p style="color: #68778D; font-size: 0.9rem; max-width: 500px; margin: 0 auto 16px auto;">
                     Metrics are currently unavailable for this session. Click the button above to run the automated
                     evaluation harness comparing Baseline vs Self-Verifying RAG.
                 </p>

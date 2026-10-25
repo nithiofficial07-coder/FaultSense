@@ -36,9 +36,9 @@ def render_header() -> None:
             f'<div style="display: flex; align-items: center; gap: 14px; margin-bottom: 2px;">'
             f'<div style="flex-shrink: 0; display: flex; align-items: center;">{logo_html}</div>'
             f'<div style="min-width: 0; flex: 1;">'
-            f'<div style="font-size: 0.72rem; color: #2563EB; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; line-height: 1.2;">{category_tag}</div>'
-            f'<h1 style="margin: 0; font-size: 1.55rem; font-weight: 700; color: #1F2937; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;">{page_title}</h1>'
-            f'<p style="margin: 2px 0 0 0; font-size: 0.82rem; color: #64748B; line-height: 1.2;">{page_subtitle}</p>'
+            f'<div style="font-size: 0.72rem; color: #4169A8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; line-height: 1.2;">{category_tag}</div>'
+            f'<h1 style="margin: 0; font-size: 1.55rem; font-weight: 700; color: #243247; letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.25;">{page_title}</h1>'
+            f'<p style="margin: 2px 0 0 0; font-size: 0.82rem; color: #68778D; line-height: 1.2;">{page_subtitle}</p>'
             f'</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -46,14 +46,14 @@ def render_header() -> None:
 
     with col_status:
         if settings.is_demo_mode:
-            mode_bg = "#FEF3C7"
-            mode_fg = "#92400E"
-            mode_border = "#FDE68A"
+            mode_bg = "#FDF8EE"
+            mode_fg = "#A8752B"
+            mode_border = "#EED8B4"
             mode_label = "Demo / Offline Mode"
         else:
-            mode_bg = "#DCFCE7"
-            mode_fg = "#166534"
-            mode_border = "#BBF7D0"
+            mode_bg = "#EFF7F2"
+            mode_fg = "#3F7D62"
+            mode_border = "#C6E2D3"
             mode_label = "Production LLM Active"
 
         active_inv = st.session_state.get("current_investigation_id", "None")
@@ -61,7 +61,7 @@ def render_header() -> None:
         st.markdown(
             f'<div style="text-align: right; padding-top: 4px;">'
             f'<span style="background-color: {mode_bg}; color: {mode_fg}; border: 1px solid {mode_border}; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.3px; white-space: nowrap;">● {mode_label}</span>'
-            f'<div style="font-size: 0.72rem; color: #64748B; margin-top: 5px; white-space: nowrap;">v{settings.app_version} | Session: <code style="color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1px 4px; border-radius: 4px; font-size: 0.72rem;">{active_inv}</code></div>'
+            f'<div style="font-size: 0.72rem; color: #68778D; margin-top: 5px; white-space: nowrap;">v{settings.app_version} | Session: <code style="color: #4169A8; background: #EAF1FA; border: 1px solid #CADDF5; padding: 1px 4px; border-radius: 4px; font-size: 0.72rem;">{active_inv}</code></div>'
             f'</div>',
             unsafe_allow_html=True,
         )

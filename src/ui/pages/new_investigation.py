@@ -448,7 +448,7 @@ def render_new_investigation_page() -> None:
     if missing_items:
         st.markdown(
             f"""
-            <div style="background-color: #FFFBEB; border: 1px solid #FDE68A; border-left: 3px solid #B45309; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px; font-size: 0.8rem; color: #92400E;">
+            <div style="background-color: #FDF8EE; border: 1px solid #EED8B4; border-left: 3px solid #A8752B; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 0.8rem; color: #7D561F;">
                 <b>Diagnostic Precision Advisory</b>: {'; '.join(missing_items)}. FaultSense will analyze available data without fabricating missing specifications.
             </div>
             """,
@@ -462,7 +462,7 @@ def render_new_investigation_page() -> None:
     # =========================================================================
     st.markdown("### 3. Physical Telemetry & Sensor Readings")
     st.markdown(
-        "<div style='color: #64748B; font-size: 0.85rem; margin-bottom: 10px;'>"
+        "<div style='color: #68778D; font-size: 0.85rem; margin-bottom: 10px;'>"
         "Provide controller telemetry data through either an <b>uploaded data file</b> or the <b>structured JSON editor</b>. "
         "Telemetry enables grounding against quantitative sensor thresholds."
         "</div>",
@@ -570,10 +570,10 @@ def render_new_investigation_page() -> None:
                 if parsed_manual:
                     st.markdown(
                         f"""
-                        <div style="background-color: #F0FDF4; border: 1px solid #BBF7D0; border-left: 3px solid #15803D;
-                                    border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                            <span style="color: #15803D; font-weight: 700; font-size: 0.85rem;">Valid JSON Structure</span>
-                            <div style="font-size: 0.8rem; color: #166534; margin-top: 2px;">
+                        <div style="background-color: #EFF7F2; border: 1px solid #C6E2D3; border-left: 3px solid #3F7D62;
+                                    border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                            <span style="color: #3F7D62; font-weight: 700; font-size: 0.85rem;">Valid JSON Structure</span>
+                            <div style="font-size: 0.8rem; color: #2D5845; margin-top: 2px;">
                                 Detected <b>{len(parsed_manual)}</b> sensor parameters ready for diagnostic evaluation.
                             </div>
                         </div>
@@ -586,10 +586,10 @@ def render_new_investigation_page() -> None:
             else:
                 st.markdown(
                     f"""
-                    <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-left: 3px solid #B91C1C;
-                                border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                        <span style="color: #B91C1C; font-weight: 700; font-size: 0.85rem;">JSON Syntax Invalid</span>
-                        <div style="font-size: 0.78rem; color: #991B1B; margin-top: 2px;">{json_err}</div>
+                    <div style="background-color: #FDF2F2; border: 1px solid #ECC4C4; border-left: 3px solid #B84C4C;
+                                border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                        <span style="color: #B84C4C; font-weight: 700; font-size: 0.85rem;">JSON Syntax Invalid</span>
+                        <div style="font-size: 0.78rem; color: #8C2F2F; margin-top: 2px;">{json_err}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -724,12 +724,12 @@ def render_new_investigation_page() -> None:
             # Primary Root Cause Card
             st.markdown(
                 f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #2563EB;
-                            padding: 16px 20px; border-radius: 8px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="font-size: 0.75rem; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.6px;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #4169A8;
+                            padding: 16px 20px; border-radius: 10px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #4169A8; text-transform: uppercase; letter-spacing: 0.6px;">
                         Synthesized Primary Root Cause Hypothesis
                     </div>
-                    <div style="font-size: 1.15rem; color: #1F2937; margin-top: 6px; font-weight: 700; line-height: 1.4;">
+                    <div style="font-size: 1.15rem; color: #243247; margin-top: 6px; font-weight: 700; line-height: 1.4;">
                         {result.root_cause_hypothesis}
                     </div>
                 </div>

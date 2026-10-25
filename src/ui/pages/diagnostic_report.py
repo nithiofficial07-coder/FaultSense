@@ -22,26 +22,26 @@ def render_diagnostic_report_page() -> None:
     # 1. Workflow Progress Stepper Banner
     st.markdown(
         """
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 1</span>
-                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Submit Problem</span>
+                    <span style="background: #EFF7F2; color: #3F7D62; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #C6E2D3;">STEP 1</span>
+                    <span style="color: #68778D; font-size: 0.82rem; font-weight: 600;">Submit Problem</span>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.8rem;">→</div>
+                <div style="color: #A6B7CC; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 2</span>
-                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Analyze Evidence</span>
+                    <span style="background: #EFF7F2; color: #3F7D62; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #C6E2D3;">STEP 2</span>
+                    <span style="color: #68778D; font-size: 0.82rem; font-weight: 600;">Analyze Evidence</span>
                 </div>
-                <div style="color: #94A3B8; font-size: 0.8rem;">→</div>
+                <div style="color: #A6B7CC; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: #F0FDF4; color: #15803D; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #BBF7D0;">STEP 3</span>
-                    <span style="color: #475569; font-size: 0.82rem; font-weight: 600;">Generate PDF</span>
+                    <span style="background: #EFF7F2; color: #3F7D62; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 6px; border: 1px solid #C6E2D3;">STEP 3</span>
+                    <span style="color: #68778D; font-size: 0.82rem; font-weight: 600;">Generate PDF</span>
                 </div>
-                <div style="color: #2563EB; font-size: 0.8rem;">→</div>
+                <div style="color: #4169A8; font-size: 0.8rem;">→</div>
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="background: #EFF6FF; color: #1D4ED8; font-weight: 800; font-size: 0.75rem; padding: 3px 9px; border-radius: 6px; border: 1px solid #BFDBFE;">STEP 4 (ACTIVE)</span>
-                    <span style="color: #1F2937; font-size: 0.88rem; font-weight: 700;">Download &amp; Technician Review</span>
+                    <span style="background: #EAF1FA; color: #4169A8; font-weight: 800; font-size: 0.75rem; padding: 3px 9px; border-radius: 6px; border: 1px solid #CADDF5;">STEP 4 (ACTIVE)</span>
+                    <span style="color: #243247; font-size: 0.88rem; font-weight: 700;">Download &amp; Technician Review</span>
                 </div>
             </div>
         </div>
@@ -105,40 +105,40 @@ def render_diagnostic_report_page() -> None:
     # 3. Investigation Summary Card & PDF Status Badge
     ev_status = dossier.evidence_based_status
     if "Supported" in ev_status or "Verified" in ev_status:
-        badge_color = "#15803D"
+        badge_color = "#3F7D62"
     elif "Review" in ev_status:
-        badge_color = "#2563EB"
+        badge_color = "#4169A8"
     elif "Insufficient" in ev_status:
-        badge_color = "#64748B"
+        badge_color = "#68778D"
     else:
-        badge_color = "#B45309"
+        badge_color = "#A8752B"
 
     st.markdown(
         f"""
-        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; margin-bottom: 12px;">
                 <div>
-                    <div style="font-size: 0.72rem; color: #64748B; text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px;">Diagnostic Report Summary</div>
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #1F2937; margin-top: 2px;">{dossier.investigation_id}</div>
+                    <div style="font-size: 0.72rem; color: #68778D; text-transform: uppercase; font-weight: 700; letter-spacing: 0.8px;">Diagnostic Report Summary</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #243247; margin-top: 2px;">{dossier.investigation_id}</div>
                 </div>
                 <div style="text-align: right;">
-                    <span style="background: #F0FDF4; color: #15803D; border: 1px solid #BBF7D0; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
+                    <span style="background: #EFF7F2; color: #3F7D62; border: 1px solid #C6E2D3; padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;">
                         ● PDF REPORT GENERATED &amp; READY
                     </span>
-                    <div style="font-size: 0.72rem; color: #64748B; margin-top: 4px;">Standard: ASME A17.1 / EN 81-20</div>
+                    <div style="font-size: 0.72rem; color: #68778D; margin-top: 4px;">Standard: ASME A17.1 / EN 81-20</div>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; padding: 12px 14px; background: #F8FAFC; border-radius: 8px; border: 1px solid #E2E8F0;">
-                <div><span style="color: #64748B; font-size: 0.75rem;">Elevator Unit:</span><br/><b style="color: #1F2937;">{dossier.elevator_id}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">OEM / Model:</span><br/><b style="color: #1F2937;">{dossier.manufacturer} {dossier.equipment_model}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">Affected Subsystem:</span><br/><b style="color: #2563EB;">{dossier.subsystem.replace('_', ' ').title()}</b></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">OEM DTC Code:</span><br/><code style="color: #2563EB;">{dossier.fault_code or 'None'}</code></div>
-                <div><span style="color: #64748B; font-size: 0.75rem;">Operating Severity:</span><br/><b style="color: #1F2937;">{dossier.severity}</b></div>
+                <div><span style="color: #68778D; font-size: 0.75rem;">Elevator Unit:</span><br/><b style="color: #243247;">{dossier.elevator_id}</b></div>
+                <div><span style="color: #68778D; font-size: 0.75rem;">OEM / Model:</span><br/><b style="color: #243247;">{dossier.manufacturer} {dossier.equipment_model}</b></div>
+                <div><span style="color: #68778D; font-size: 0.75rem;">Affected Subsystem:</span><br/><b style="color: #4169A8;">{dossier.subsystem.replace('_', ' ').title()}</b></div>
+                <div><span style="color: #68778D; font-size: 0.75rem;">OEM DTC Code:</span><br/><code style="color: #4169A8;">{dossier.fault_code or 'None'}</code></div>
+                <div><span style="color: #68778D; font-size: 0.75rem;">Operating Severity:</span><br/><b style="color: #243247;">{dossier.severity}</b></div>
             </div>
             <div style="margin-top: 10px;">
-                <span style="color: #64748B; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Evidence-Based Status:</span>
+                <span style="color: #68778D; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;">Evidence-Based Status:</span>
                 <span style="color: {badge_color}; font-weight: 700; margin-left: 6px;">● {ev_status}</span>
-                <p style="margin: 6px 0 0 0; color: #1F2937; font-size: 0.88rem; line-height: 1.4;">
+                <p style="margin: 6px 0 0 0; color: #243247; font-size: 0.88rem; line-height: 1.4;">
                     <b>Synthesized Primary Root Cause</b>: {dossier.primary_root_cause}
                 </p>
             </div>

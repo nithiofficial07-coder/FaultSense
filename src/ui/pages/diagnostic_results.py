@@ -64,38 +64,38 @@ def render_diagnostic_results_page() -> None:
     ts_str = inv_data.get("created_at", "")[:19].replace("T", " ")
     status_text = dossier.evidence_based_status.upper()
     if "SUPPORTED" in status_text or "VERIFIED" in status_text:
-        verif_bg = "#F0FDF4"
-        verif_fg = "#15803D"
-        verif_border = "#BBF7D0"
+        verif_bg = "#EFF7F2"
+        verif_fg = "#3F7D62"
+        verif_border = "#C6E2D3"
     elif "CONFLICTING" in status_text or "FAILED" in status_text:
-        verif_bg = "#FEF2F2"
-        verif_fg = "#B91C1C"
-        verif_border = "#FECACA"
+        verif_bg = "#FDF2F2"
+        verif_fg = "#B84C4C"
+        verif_border = "#ECC4C4"
     elif "INSUFFICIENT" in status_text:
         verif_bg = "#F8FAFC"
-        verif_fg = "#64748B"
+        verif_fg = "#68778D"
         verif_border = "#E2E8F0"
     else:
-        verif_bg = "#FFFBEB"
-        verif_fg = "#B45309"
-        verif_border = "#FDE68A"
+        verif_bg = "#FDF8EE"
+        verif_fg = "#A8752B"
+        verif_border = "#EED8B4"
 
     st.markdown(
         f"""
-        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #2563EB;
-                    border-radius: 8px; padding: 14px 18px; margin: 10px 0 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #4169A8;
+                    border-radius: 10px; padding: 16px 20px; margin: 10px 0 14px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <span style="font-size: 0.72rem; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.8px;">
+                    <span style="font-size: 0.72rem; font-weight: 700; color: #4169A8; text-transform: uppercase; letter-spacing: 0.8px;">
                         INVESTIGATION DOSSIER &amp; TECHNICAL AUDIT
                     </span>
-                    <h3 style="margin: 2px 0; color: #1F2937; font-size: 1.35rem;">{selected_inv_id}</h3>
-                    <div style="color: #64748B; font-size: 0.85rem;">
-                        Unit: <b style="color: #1F2937;">{dossier.elevator_id}</b> |
-                        OEM / Model: <b style="color: #1F2937;">{dossier.manufacturer} ({dossier.equipment_model})</b> |
-                        Subsystem: <b style="color: #1F2937;">{dossier.subsystem.replace('_', ' ').title()}</b> |
-                        DTC: <code style="color: #2563EB; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 1px 4px; border-radius: 4px;">{dossier.fault_code or 'None'}</code> |
-                        Severity: <b style="color: #1F2937;">{dossier.severity}</b>
+                    <h3 style="margin: 2px 0; color: #243247; font-size: 1.35rem;">{selected_inv_id}</h3>
+                    <div style="color: #68778D; font-size: 0.85rem;">
+                        Unit: <b style="color: #243247;">{dossier.elevator_id}</b> |
+                        OEM / Model: <b style="color: #243247;">{dossier.manufacturer} ({dossier.equipment_model})</b> |
+                        Subsystem: <b style="color: #243247;">{dossier.subsystem.replace('_', ' ').title()}</b> |
+                        DTC: <code style="color: #4169A8; background: #EAF1FA; border: 1px solid #CADDF5; padding: 1px 4px; border-radius: 4px;">{dossier.fault_code or 'None'}</code> |
+                        Severity: <b style="color: #243247;">{dossier.severity}</b>
                     </div>
                 </div>
                 <div style="text-align: right;">
@@ -104,7 +104,7 @@ def render_diagnostic_results_page() -> None:
                                  font-size: 0.78rem; font-weight: 700; letter-spacing: 0.5px;">
                         ● {status_text}
                     </span>
-                    <div style="font-size: 0.75rem; color: #64748B; margin-top: 5px;">Recorded: {ts_str} UTC</div>
+                    <div style="font-size: 0.75rem; color: #68778D; margin-top: 5px;">Recorded: {ts_str} UTC</div>
                 </div>
             </div>
         </div>
@@ -232,12 +232,12 @@ def render_diagnostic_results_page() -> None:
         # Primary Hypothesis
         st.markdown(
             f"""
-            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #2563EB;
-                        padding: 16px 20px; border-radius: 8px; margin: 12px 0 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                <div style="font-size: 0.75rem; font-weight: 700; color: #2563EB; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #4169A8;
+                        padding: 16px 20px; border-radius: 10px; margin: 12px 0 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #4169A8; text-transform: uppercase; letter-spacing: 0.5px;">
                     Synthesized Primary Root-Cause Hypothesis
                 </div>
-                <div style="font-size: 1.15rem; color: #1F2937; margin-top: 6px; font-weight: 700; line-height: 1.4;">
+                <div style="font-size: 1.15rem; color: #243247; margin-top: 6px; font-weight: 700; line-height: 1.4;">
                     {dossier.primary_root_cause}
                 </div>
             </div>
@@ -248,12 +248,12 @@ def render_diagnostic_results_page() -> None:
         # Recommended immediate action
         st.markdown(
             f"""
-            <div style="background: #EFF6FF; border: 1px solid #BFDBFE;
-                        padding: 14px 18px; border-radius: 8px; margin-bottom: 14px;">
-                <div style="font-size: 0.75rem; font-weight: 700; color: #1E40AF; text-transform: uppercase;">
+            <div style="background: #EAF1FA; border: 1px solid #CADDF5;
+                        padding: 14px 18px; border-radius: 10px; margin-bottom: 14px;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #243F6C; text-transform: uppercase;">
                     Recommended Immediate Action
                 </div>
-                <div style="font-size: 0.95rem; color: #1E293B; margin-top: 4px; font-weight: 500;">
+                <div style="font-size: 0.95rem; color: #243247; margin-top: 4px; font-weight: 500;">
                     {dossier.recommended_next_action}
                 </div>
             </div>
@@ -316,7 +316,7 @@ def render_diagnostic_results_page() -> None:
         else:
             for ev in dossier.supporting_evidence:
                 prov_badge = "Synthetic Benchmark Case" if ev.get("is_synthetic") else "Verified Field Incident"
-                prov_color = "#2563EB" if ev.get("is_synthetic") else "#15803D"
+                prov_color = "#4169A8" if ev.get("is_synthetic") else "#3F7D62"
 
                 with st.expander(f"**{ev['case_id']}** — {ev['source_title']} ({prov_badge})"):
                     e1, e2 = st.columns(2)
@@ -365,16 +365,16 @@ def render_diagnostic_results_page() -> None:
         for t in dossier.required_tools:
             st.markdown(
                 f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB;
-                            border-radius: 8px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #4169A8;
+                            border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <span style="font-size: 1.05rem; font-weight: 700; color: #1F2937;">{t.name}</span>
-                        <span style="font-size: 0.72rem; color: #2563EB; font-weight: 700; text-transform: uppercase;">MANDATORY INSTRUMENT</span>
+                        <span style="font-size: 1.05rem; font-weight: 700; color: #243247;">{t.name}</span>
+                        <span style="font-size: 0.72rem; color: #4169A8; font-weight: 700; text-transform: uppercase;">MANDATORY INSTRUMENT</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #475569; margin-top: 4px;"><b>Purpose</b>: {t.purpose}</div>
-                    <div style="font-size: 0.85rem; color: #1F2937; margin-top: 4px;"><b>Why Needed for this Fault</b>: {t.why_needed}</div>
-                    <div style="font-size: 0.82rem; color: #2563EB; margin-top: 4px;"><b>Inspection Protocol</b>: {t.inspection_step}</div>
-                    <div style="font-size: 0.8rem; color: #B91C1C; margin-top: 4px;"><b>Safety Precaution</b>: {t.safety_precautions}</div>
+                    <div style="font-size: 0.85rem; color: #68778D; margin-top: 4px;"><b>Purpose</b>: {t.purpose}</div>
+                    <div style="font-size: 0.85rem; color: #243247; margin-top: 4px;"><b>Why Needed for this Fault</b>: {t.why_needed}</div>
+                    <div style="font-size: 0.82rem; color: #4169A8; margin-top: 4px;"><b>Inspection Protocol</b>: {t.inspection_step}</div>
+                    <div style="font-size: 0.8rem; color: #B84C4C; margin-top: 4px;"><b>Safety Precaution</b>: {t.safety_precautions}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -392,16 +392,16 @@ def render_diagnostic_results_page() -> None:
 
         for step in dossier.troubleshooting_manual:
             is_insp = (step.step_type == "Diagnostic Inspection")
-            type_bg = "#EFF6FF" if is_insp else "#F0FDF4"
-            type_fg = "#1D4ED8" if is_insp else "#15803D"
-            type_border = "#BFDBFE" if is_insp else "#BBF7D0"
+            type_bg = "#EAF1FA" if is_insp else "#EFF7F2"
+            type_fg = "#4169A8" if is_insp else "#3F7D62"
+            type_border = "#CADDF5" if is_insp else "#C6E2D3"
 
             st.markdown(
                 f"""
                 <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid {type_fg};
-                            border-radius: 8px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                            border-radius: 10px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                        <span style="font-size: 1.0rem; font-weight: 700; color: #1F2937;">
+                        <span style="font-size: 1.0rem; font-weight: 700; color: #243247;">
                             Step {step.step_number}: {step.title}
                         </span>
                         <span style="background-color: {type_bg}; color: {type_fg};
@@ -410,21 +410,21 @@ def render_diagnostic_results_page() -> None:
                             {step.step_type}
                         </span>
                     </div>
-                    <div style="font-size: 0.84rem; color: #475569; margin-bottom: 4px;">
+                    <div style="font-size: 0.84rem; color: #68778D; margin-bottom: 4px;">
                         <b>Purpose</b>: {step.purpose}
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; font-size: 0.82rem;">
                         <div>
-                            <div style="color: #1F2937;"><b>Tools Required</b>: <code style="color: #2563EB;">{step.required_tools}</code></div>
-                            <div style="color: #1F2937; margin-top: 4px;"><b>Inspection / Measurement</b>: {step.inspection_measurement}</div>
+                            <div style="color: #243247;"><b>Tools Required</b>: <code style="color: #4169A8;">{step.required_tools}</code></div>
+                            <div style="color: #243247; margin-top: 4px;"><b>Inspection / Measurement</b>: {step.inspection_measurement}</div>
                         </div>
                         <div>
-                            <div style="color: #15803D;"><b>Expected Criterion</b>: {step.expected_criterion}</div>
-                            <div style="color: #475569; margin-top: 4px;"><b>Result Interpretation</b>: {step.interpretation}</div>
-                            <div style="color: #2563EB; margin-top: 4px;"><b>Next Action</b>: {step.next_action}</div>
+                            <div style="color: #3F7D62;"><b>Expected Criterion</b>: {step.expected_criterion}</div>
+                            <div style="color: #68778D; margin-top: 4px;"><b>Result Interpretation</b>: {step.interpretation}</div>
+                            <div style="color: #4169A8; margin-top: 4px;"><b>Next Action</b>: {step.next_action}</div>
                         </div>
                     </div>
-                    <div style="margin-top: 8px; padding: 6px 10px; background-color: #FEF2F2; border-left: 2px solid #B91C1C; border-radius: 4px; font-size: 0.78rem; color: #991B1B;">
+                    <div style="margin-top: 8px; padding: 6px 10px; background-color: #FDF2F2; border-left: 2px solid #B84C4C; border-radius: 4px; font-size: 0.78rem; color: #8C2F2F;">
                         <b>Safety Warning &amp; Stop Condition</b>: {step.safety_precautions}
                     </div>
                 </div>
@@ -438,11 +438,11 @@ def render_diagnostic_results_page() -> None:
             for p in dossier.recommended_parts:
                 st.markdown(
                     f"""
-                    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB;
-                                border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                        <div style="font-weight: 700; color: #1F2937;">{p.part_name} <span style="font-size: 0.75rem; color: #64748B;">({p.part_type})</span></div>
-                        <div style="font-size: 0.82rem; color: #475569; margin-top: 2px;"><b>Justification</b>: {p.justification}</div>
-                        <div style="font-size: 0.78rem; color: #2563EB; margin-top: 2px;"><b>Evidence Basis</b>: {p.evidence_basis}</div>
+                    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #4169A8;
+                                border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                        <div style="font-weight: 700; color: #243247;">{p.part_name} <span style="font-size: 0.75rem; color: #68778D;">({p.part_type})</span></div>
+                        <div style="font-size: 0.82rem; color: #68778D; margin-top: 2px;"><b>Justification</b>: {p.justification}</div>
+                        <div style="font-size: 0.78rem; color: #4169A8; margin-top: 2px;"><b>Evidence Basis</b>: {p.evidence_basis}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -479,14 +479,14 @@ def render_diagnostic_results_page() -> None:
         for chk in dossier.return_to_service_checks:
             st.markdown(
                 f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 6px; padding: 10px 14px; margin-bottom: 8px;">
-                    <div style="font-weight: 700; color: #1F2937;">
-                        Step {chk.step_number}: {chk.title} <span style="color: #2563EB; font-size: 0.78rem;">[{chk.applicable_code}]</span>
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 12px 16px; margin-bottom: 8px;">
+                    <div style="font-weight: 700; color: #243247;">
+                        Step {chk.step_number}: {chk.title} <span style="color: #4169A8; font-size: 0.78rem;">[{chk.applicable_code}]</span>
                     </div>
-                    <div style="font-size: 0.85rem; color: #475569; margin-top: 3px;">
+                    <div style="font-size: 0.85rem; color: #68778D; margin-top: 3px;">
                         <b>Acceptance Criterion</b>: {chk.acceptance_criterion}
                     </div>
-                    <div style="font-size: 0.78rem; color: #64748B; margin-top: 2px;">
+                    <div style="font-size: 0.78rem; color: #68778D; margin-top: 2px;">
                         <b>Safety Advisory</b>: {chk.safety_advisory}
                     </div>
                 </div>

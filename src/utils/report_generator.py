@@ -81,18 +81,18 @@ class DiagnosticReportGenerator:
     """Generates downloadable publication-grade PDF and JSON artifacts from investigation records."""
 
     # Industrial color tokens
-    PRIMARY_NAVY = colors.HexColor("#0A1120")
-    DARK_CARD = colors.HexColor("#131F37")
-    CYAN_ACCENT = colors.HexColor("#06B6D4")
-    SKY_BLUE = colors.HexColor("#0284C7")
-    BORDER_COLOR = colors.HexColor("#CBD5E1")
-    LIGHT_BG = colors.HexColor("#F8FAFC")
-    ALT_BG = colors.HexColor("#F1F5F9")
-    TEXT_MAIN = colors.HexColor("#0F172A")
-    TEXT_MUTED = colors.HexColor("#475569")
-    VERIFIED_GREEN = colors.HexColor("#047857")
-    AMBER_WARN = colors.HexColor("#B45309")
-    RED_ALERT = colors.HexColor("#B91C1C")
+    PRIMARY_NAVY = colors.HexColor("#243247")
+    DARK_CARD = colors.HexColor("#1A2638")
+    CYAN_ACCENT = colors.HexColor("#4169A8")
+    SKY_BLUE = colors.HexColor("#4169A8")
+    BORDER_COLOR = colors.HexColor("#E2E8F0")
+    LIGHT_BG = colors.HexColor("#F6F8FB")
+    ALT_BG = colors.HexColor("#F0F4F9")
+    TEXT_MAIN = colors.HexColor("#243247")
+    TEXT_MUTED = colors.HexColor("#68778D")
+    VERIFIED_GREEN = colors.HexColor("#3F7D62")
+    AMBER_WARN = colors.HexColor("#A8752B")
+    RED_ALERT = colors.HexColor("#B84C4C")
 
     @classmethod
     def generate_pdf(

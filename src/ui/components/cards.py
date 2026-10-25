@@ -9,16 +9,16 @@ from src.ui.assets.icons import get_icon_svg, icon_badge
 def render_metric_card(
     label: str, value: str, subtext: Optional[str] = None, delta_color: str = "normal"
 ) -> None:
-    """Renders a styled enterprise metric card with white background and blue accent."""
+    """Renders a styled enterprise metric card with white background and muted blue accent."""
     subtext_html = (
-        f"<div style='font-size: 0.78rem; color: #64748B; margin-top: 4px;'>{subtext}</div>"
+        f"<div style='font-size: 0.78rem; color: #68778D; margin-top: 4px;'>{subtext}</div>"
         if subtext
         else ""
     )
     st.markdown(
-        f'<div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">'
-        f'<div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #64748B; letter-spacing: 0.6px;">{label}</div>'
-        f'<div style="font-size: 1.85rem; font-weight: 700; color: #1F2937; margin-top: 4px; line-height: 1.2;">{value}</div>'
+        f'<div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #4169A8; border-radius: 10px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">'
+        f'<div style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #68778D; letter-spacing: 0.6px;">{label}</div>'
+        f'<div style="font-size: 1.85rem; font-weight: 700; color: #243247; margin-top: 4px; line-height: 1.2;">{value}</div>'
         f'{subtext_html}'
         f'</div>',
         unsafe_allow_html=True,

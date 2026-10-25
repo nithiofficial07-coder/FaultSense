@@ -79,7 +79,7 @@ def render_knowledge_base_page() -> None:
         else:
             for c in cases:
                 prov_badge = "Synthetic Benchmark" if c.is_synthetic else "Verified Incident"
-                prov_color = "#2563EB" if c.is_synthetic else "#15803D"
+                prov_color = "#4169A8" if c.is_synthetic else "#3F7D62"
 
                 header_text = f"**{c.case_id}** — {c.source_title} [{c.subsystem.replace('_', ' ').title()} | {c.fault_code}]"
 

@@ -14,13 +14,13 @@ def get_faultsense_svg(
     dark_mode: bool = False,
 ) -> str:
     """Returns a minified, single-line SVG string of the FaultSense brand logo."""
-    text_color = "#F8FAFC" if dark_mode else "#1F2937"
-    accent_color = "#38BDF8" if dark_mode else "#2563EB"
-    sub_color = "#94A3B8" if dark_mode else "#64748B"
-    car_bg = "#0F172A" if dark_mode else "#EFF6FF"
-    car_stroke = "#06B6D4" if dark_mode else "#2563EB"
+    text_color = "#F8FAFC" if dark_mode else "#243247"
+    accent_color = "#60A5FA" if dark_mode else "#4169A8"
+    sub_color = "#94A3B8" if dark_mode else "#68778D"
+    car_bg = "#0F172A" if dark_mode else "#EAF1FA"
+    car_stroke = "#38BDF8" if dark_mode else "#4169A8"
     border_color = "#1E293B" if dark_mode else "#E2E8F0"
-    rail_start = "#334155" if dark_mode else "#64748B"
+    rail_start = "#334155" if dark_mode else "#68778D"
     rail_mid = "#64748B" if dark_mode else "#94A3B8"
 
     text_group = ""
@@ -41,7 +41,7 @@ def get_faultsense_svg(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}">'
         f'<defs>'
         f'<linearGradient id="fs_brand_grad" x1="0%" y1="0%" x2="100%" y2="100%">'
-        f'<stop offset="0%" stop-color="{accent_color}" /><stop offset="100%" stop-color="#1D4ED8" />'
+        f'<stop offset="0%" stop-color="{accent_color}" /><stop offset="100%" stop-color="#34558B" />'
         f'</linearGradient>'
         f'<linearGradient id="fs_rail_grad" x1="0%" y1="0%" x2="0%" y2="100%">'
         f'<stop offset="0%" stop-color="{rail_start}" /><stop offset="50%" stop-color="{rail_mid}" /><stop offset="100%" stop-color="{rail_start}" />'
