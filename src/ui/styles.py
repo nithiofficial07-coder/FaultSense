@@ -128,32 +128,53 @@ def apply_custom_styles() -> None:
                 background-color: #F4F7FC !important;
             }
 
-            /* Sidebar compact vertical spacing */
+            /* Sidebar compact vertical spacing with guaranteed clearance */
             section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] > div[data-testid="element-container"] {
-                margin-bottom: 0 !important;
-                gap: 0 !important;
+                margin-bottom: 0.12rem !important;
+                min-height: auto !important;
+                overflow: visible !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stVerticalBlock"] {
-                gap: 0 !important;
+                gap: 0.22rem !important;
             }
             section[data-testid="stSidebar"] div[data-testid="stButton"] {
-                margin-bottom: 7px !important;
+                margin-bottom: 6px !important;
                 margin-top: 0 !important;
             }
 
-            /* Navigation section heading: aligned precisely with button icons at 14px */
+            /* Navigation section heading: padded box, immune to margin collapse or overlapping */
             .fs-nav-heading {
+                display: block !important;
+                width: 100% !important;
                 font-size: 0.72rem !important;
                 text-transform: uppercase !important;
                 font-weight: 700 !important;
                 color: #718096 !important;
                 letter-spacing: 0.08em !important;
-                padding: 0 14px !important;
-                margin-top: 6px !important;
-                margin-bottom: 8px !important;
-                line-height: 1.2 !important;
-                display: flex !important;
-                align-items: center !important;
+                padding: 12px 14px 6px 14px !important;
+                margin: 0 !important;
+                line-height: 1.4 !important;
+                box-sizing: border-box !important;
+                clear: both !important;
+            }
+
+            /* Explicit cursor: pointer on sidebar navigation buttons and all child nodes */
+            section[data-testid="stSidebar"] div[data-testid="stButton"],
+            section[data-testid="stSidebar"] div[data-testid="stButton"] button,
+            section[data-testid="stSidebar"] div[data-testid="stButton"] * {
+                cursor: pointer !important;
+            }
+
+            /* Professional entrance micro-animation for sidebar navigation items */
+            @keyframes fs-nav-item-enter {
+                0% {
+                    opacity: 0.6;
+                    transform: translateY(3px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             /* Sidebar navigation button item styling (standard 46px height, precision left-aligned) */
@@ -177,10 +198,11 @@ def apply_custom_styles() -> None:
                 font-weight: 500 !important;
                 font-size: 0.88rem !important;
                 box-shadow: 0 1px 2px rgba(36, 50, 71, 0.04) !important;
-                transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease !important;
+                transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
                 position: relative !important;
                 overflow: hidden !important;
                 cursor: pointer !important;
+                animation: fs-nav-item-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
             }
 
             /* Subtle animated pointer highlight on hover */
@@ -188,22 +210,22 @@ def apply_custom_styles() -> None:
                 content: '' !important;
                 position: absolute !important;
                 left: 0 !important;
-                top: 25% !important;
-                height: 50% !important;
+                top: 50% !important;
+                height: 0% !important;
                 width: 3px !important;
                 background: #8BADE8 !important;
                 border-radius: 0 3px 3px 0 !important;
                 opacity: 0 !important;
-                transition: opacity 160ms ease, height 160ms ease, top 160ms ease !important;
+                transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
 
-            /* Navigation button hover state */
+            /* Navigation button hover state with smooth micro-interaction */
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover {
                 background-color: #EDF3FC !important;
                 border-color: #CBDDF5 !important;
                 color: #4169A8 !important;
-                transform: translateX(2px) !important;
-                box-shadow: 0 2px 5px rgba(65, 105, 168, 0.08) !important;
+                transform: translateX(3px) !important;
+                box-shadow: 0 3px 8px rgba(65, 105, 168, 0.12) !important;
             }
 
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover::before {
@@ -215,15 +237,26 @@ def apply_custom_styles() -> None:
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span[data-testid="stIconMaterial"],
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button:hover span.material-symbols-rounded {
                 color: #4169A8 !important;
+                transform: scale(1.1) !important;
+                transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease !important;
             }
 
-            /* Active navigation item styling: IDENTICAL dimensions & padding to inactive */
+            /* Active navigation item styling with gentle breathing glow */
+            @keyframes fs-active-pulse {
+                0%, 100% {
+                    box-shadow: 0 1px 3px rgba(65, 105, 168, 0.1);
+                }
+                50% {
+                    box-shadow: 0 2px 7px rgba(65, 105, 168, 0.22);
+                }
+            }
+
             section[data-testid="stSidebar"] div[data-testid="stButton"] > button[kind="primary"] {
                 background-color: #E4EDFA !important;
                 border: 1px solid #C2D7F2 !important;
                 color: #27364B !important;
                 font-weight: 600 !important;
-                box-shadow: 0 1px 3px rgba(65, 105, 168, 0.08) !important;
+                animation: fs-active-pulse 3.5s ease-in-out infinite !important;
                 transform: none !important;
                 padding: 0 14px !important;
             }

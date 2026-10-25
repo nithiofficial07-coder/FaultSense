@@ -38,7 +38,7 @@ def navigate_to(page_id: str, investigation_id: Optional[str] = None) -> None:
 def render_subsystem_status(settings) -> None:
     """Renders real-time subsystem status panel with pulsing animated indicators."""
     st.markdown(
-        "<div class='fs-nav-heading' style='margin-top: 10px; margin-bottom: 6px;'>Subsystem Status</div>",
+        "<div class='fs-nav-heading'>Subsystem Status</div>",
         unsafe_allow_html=True,
     )
 
@@ -262,7 +262,7 @@ def render_sidebar() -> str:
     with st.sidebar:
         # 1. Compact Custom SVG Branding
         st.markdown(
-            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #DFE7F1; margin-bottom: 12px; text-align: center;">{get_logo_html(width=172, height=42, show_text=True, dark_mode=False)}</div>',
+            f'<div style="padding: 4px 0 10px 0; border-bottom: 1px solid #DFE7F1; margin-bottom: 12px; text-align: center;">{get_logo_html(width=196, height=44, show_text=True, dark_mode=False)}</div>',
             unsafe_allow_html=True,
         )
 
