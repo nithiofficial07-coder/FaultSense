@@ -272,6 +272,131 @@ def apply_custom_styles() -> None:
                 padding: 16px;
                 margin-bottom: 14px;
             }
+
+            /* Subsystem Status Panel in Sidebar */
+            .fs-status-panel {
+                background-color: #0F172A;
+                border: 1px solid #1E293B;
+                border-radius: 8px;
+                padding: 8px 12px;
+                margin-bottom: 14px;
+                animation: fs-fadeIn 0.35s ease-out;
+            }
+            .fs-status-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 6px 0;
+                font-size: 0.77rem;
+                border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+                transition: background-color 0.15s ease;
+            }
+            .fs-status-row:last-child {
+                border-bottom: none;
+                padding-bottom: 2px;
+            }
+            .fs-status-row:first-child {
+                padding-top: 2px;
+            }
+            .fs-status-label {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                color: #94A3B8;
+                font-weight: 500;
+            }
+            .fs-status-icon {
+                font-size: 0.82rem;
+                line-height: 1;
+            }
+            .fs-status-value {
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.74rem;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 5px;
+            }
+
+            /* Animated Pulse Indicators */
+            @keyframes fs-pulse {
+                0% { opacity: 1; transform: scale(1); }
+                50% { opacity: 0.35; transform: scale(0.85); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+            .fs-pulse-dot {
+                display: inline-block;
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                animation: fs-pulse 2.2s ease-in-out infinite;
+            }
+            .fs-pulse-dot-amber {
+                background-color: #F59E0B;
+                box-shadow: 0 0 6px rgba(245, 158, 11, 0.55);
+            }
+            .fs-pulse-dot-green {
+                background-color: #10B981;
+                box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+            }
+            .fs-pulse-dot-red {
+                background-color: #EF4444;
+                box-shadow: 0 0 6px rgba(239, 68, 68, 0.55);
+            }
+
+            /* Professional Safety Disclaimer Card */
+            .fs-disclaimer-card {
+                background-color: rgba(245, 158, 11, 0.04);
+                border: 1px solid rgba(245, 158, 11, 0.22);
+                border-left: 3px solid #F59E0B;
+                border-radius: 8px;
+                padding: 12px 14px;
+                margin-top: 8px;
+                margin-bottom: 6px;
+                animation: fs-fadeIn 0.45s ease-out;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            }
+            .fs-disclaimer-card:hover {
+                border-color: rgba(245, 158, 11, 0.45);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            }
+            .fs-disclaimer-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 6px;
+            }
+            .fs-disclaimer-icon {
+                font-size: 0.95rem;
+                line-height: 1;
+            }
+            .fs-disclaimer-title {
+                font-size: 0.77rem;
+                font-weight: 700;
+                color: #FBBF24;
+                letter-spacing: 0.3px;
+                text-transform: uppercase;
+            }
+            .fs-disclaimer-body {
+                font-size: 0.77rem;
+                line-height: 1.45;
+                color: #CBD5E1;
+                margin: 0;
+            }
+
+            /* Reveal Animations & Reduced Motion */
+            @keyframes fs-fadeIn {
+                from { opacity: 0; transform: translateY(4px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .fs-pulse-dot,
+                .fs-status-panel,
+                .fs-disclaimer-card {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
         </style>
         """,
         unsafe_allow_html=True,

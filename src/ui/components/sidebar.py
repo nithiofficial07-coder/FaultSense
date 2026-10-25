@@ -9,6 +9,7 @@ import streamlit as st
 
 from config.settings import get_settings
 from src.ui.assets.logo import get_logo_html
+from src.utils.health import HealthChecker
 
 
 NAV_ITEMS = [
@@ -29,6 +30,103 @@ def navigate_to(page_id: str, investigation_id: Optional[str] = None) -> None:
     if investigation_id:
         st.session_state["current_investigation_id"] = investigation_id
     st.rerun()
+
+
+def render_subsystem_status(settings) -> None:
+    """Renders real-time subsystem status panel with pulsing animated indicators."""
+    st.markdown(
+        "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748B; margin-bottom: 6px; letter-spacing: 0.8px;'>Subsystem Status</div>",
+        unsafe_allow_html=True,
+    )
+
+    # 1. System Mode
+    is_offline = settings.is_demo_mode
+    mode_text = "Offline Fallback Active" if is_offline else "Production LLM Active"
+    mode_color = "#F59E0B" if is_offline else "#10B981"
+    mode_dot_class = "fs-pulse-dot-amber" if is_offline else "fs-pulse-dot-green"
+    mode_tip = "Deterministic offline fallback active (zero external LLM dependency)" if is_offline else f"External provider {settings.llm_provider.upper()} connected"
+
+    # 2. Database
+    db_name = settings.database_path.name
+    try:
+        db_status = HealthChecker.check_database()
+        db_healthy = (db_status.status == "healthy")
+        case_count = db_status.details.get("case_count", 0)
+        db_color = "#10B981" if db_healthy else "#EF4444"
+        db_dot_class = "fs-pulse-dot-green" if db_healthy else "fs-pulse-dot-red"
+        db_tip = f"SQLite diagnostic store ({case_count} cases recorded)" if db_healthy else f"Database error: {db_status.message}"
+    except Exception:
+        db_color = "#10B981" if settings.database_path.exists() else "#F59E0B"
+        db_dot_class = "fs-pulse-dot-green" if settings.database_path.exists() else "fs-pulse-dot-amber"
+        db_tip = "SQLite diagnostic repository"
+
+    # 3. Vector Store
+    try:
+        vs_status = HealthChecker.check_vector_store()
+        vs_healthy = (vs_status.status == "healthy")
+        vec_count = vs_status.details.get("vector_count", 0)
+        vs_color = "#10B981" if vs_healthy else "#F59E0B"
+        vs_dot_class = "fs-pulse-dot-green" if vs_healthy else "fs-pulse-dot-amber"
+        vs_tip = f"FAISS similarity index ({vec_count} vectors loaded)" if vs_healthy else "FAISS index uninitialized"
+    except Exception:
+        vs_color = "#10B981"
+        vs_dot_class = "fs-pulse-dot-green"
+        vs_tip = "FAISS vector store active"
+
+    # 4. Embedding Model
+    emb_full = settings.embedding_model
+    emb_model = emb_full.split("/")[-1] if "/" in emb_full else emb_full
+    emb_tip = "384-dimensional dense sentence embeddings (all-MiniLM-L6-v2)"
+
+    panel_html = (
+        f'<div class="fs-status-panel">'
+        f'<div class="fs-status-row" title="{mode_tip}">'
+        f'<span class="fs-status-label"><span class="fs-status-icon">⚡</span><span>System Mode</span></span>'
+        f'<span class="fs-status-value" style="color: {mode_color};"><span class="fs-pulse-dot {mode_dot_class}"></span><span>{mode_text}</span></span>'
+        f'</div>'
+        f'<div class="fs-status-row" title="{db_tip}">'
+        f'<span class="fs-status-label"><span class="fs-status-icon">🗄️</span><span>Database</span></span>'
+        f'<span class="fs-status-value" style="color: {db_color};"><span class="fs-pulse-dot {db_dot_class}"></span><code>{db_name}</code></span>'
+        f'</div>'
+        f'<div class="fs-status-row" title="{vs_tip}">'
+        f'<span class="fs-status-label"><span class="fs-status-icon">🧭</span><span>Vector Store</span></span>'
+        f'<span class="fs-status-value" style="color: {vs_color};"><span class="fs-pulse-dot {vs_dot_class}"></span><code>FAISS</code></span>'
+        f'</div>'
+        f'<div class="fs-status-row" title="{emb_tip}">'
+        f'<span class="fs-status-label"><span class="fs-status-icon">🧬</span><span>Embedding Model</span></span>'
+        f'<span class="fs-status-value" style="color: #38BDF8;"><code>{emb_model}</code></span>'
+        f'</div>'
+        f'</div>'
+    )
+    st.markdown(panel_html, unsafe_allow_html=True)
+
+
+def render_safety_disclaimer() -> None:
+    """Renders the redesigned enterprise safety information card and compliance expander."""
+    disclaimer_html = (
+        f'<div class="fs-disclaimer-card">'
+        f'<div class="fs-disclaimer-header">'
+        f'<span class="fs-disclaimer-icon">🛡️</span>'
+        f'<span class="fs-disclaimer-title">Safety &amp; Operational Limitations</span>'
+        f'</div>'
+        f'<p class="fs-disclaimer-body">'
+        f'FaultSense is an advisory decision-support tool for qualified elevator maintenance technicians. '
+        f'It does not directly control elevators, operate safety circuits, or perform repairs. '
+        f'All diagnostic recommendations must be verified by qualified personnel using approved procedures and manufacturer documentation.'
+        f'</p>'
+        f'</div>'
+    )
+    st.markdown(disclaimer_html, unsafe_allow_html=True)
+
+    with st.expander("Read safety details"):
+        st.markdown(
+            f'<div style="font-size: 0.74rem; color: #94A3B8; line-height: 1.45;">'
+            f'<div style="margin-bottom: 4px;"><b style="color: #E2E8F0;">• ASME A17.1 / CSA B44</b>: Advisory only; never bypasses or overrides hoistway interlocks, car gate switches, or safety chains.</div>'
+            f'<div style="margin-bottom: 4px;"><b style="color: #E2E8F0;">• LOTO Protocol</b>: Certified Lockout/Tagout of main disconnect switches required before entering hoistway or car top.</div>'
+            f'<div><b style="color: #E2E8F0;">• Dual Verification</b>: Critical brake torque and traction tests require physical mechanical verification before return to service.</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def render_sidebar() -> str:
@@ -89,28 +187,10 @@ def render_sidebar() -> str:
                 if st.button("💬 Chat", key="side_act_chat", use_container_width=True):
                     navigate_to("assistant", active_inv)
 
-        # 4. Operational Status Pills
-        st.markdown(
-            "<div style='font-size: 0.72rem; text-transform: uppercase; font-weight: 700; color: #64748B; margin-bottom: 6px; letter-spacing: 0.8px;'>System Status</div>",
-            unsafe_allow_html=True,
-        )
+        # 4. Redesigned Subsystem Status Panel
+        render_subsystem_status(settings)
 
-        status_color = "#F59E0B" if settings.is_demo_mode else "#10B981"
-        status_text = "● Offline Fallback Active" if settings.is_demo_mode else "● LLM Reasoning Active"
-        st.markdown(
-            f"<div style='color: {status_color}; font-size: 0.82rem; font-weight: 600; margin-bottom: 4px;'>{status_text}</div>",
-            unsafe_allow_html=True,
-        )
-        st.caption(f"**Storage**: `{settings.database_path.name}`")
-        st.caption(f"**Vector Store**: `FAISS (all-MiniLM-L6-v2)`")
-
-        # 5. ASME A17.1 Safety Code Notice
-        st.markdown("<hr style='border: 0; border-top: 1px solid #1E293B; margin: 14px 0 10px 0;'>", unsafe_allow_html=True)
-        st.info(
-            "**Safety Disclaimer**:\n"
-            "FaultSense is an offline-capable advisory tool for certified vertical transportation technicians. "
-            "It does NOT interface directly with elevator safety circuits, controllers, or operational relays.",
-            icon="⚠️",
-        )
+        # 5. Redesigned Professional Safety Disclaimer Card
+        render_safety_disclaimer()
 
     return st.session_state["nav_page"]

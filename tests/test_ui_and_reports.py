@@ -228,6 +228,53 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         self.assertIn("height=\"44\"", img_html)
         self.assertNotIn("\n", img_html)
 
+    # -------------------------------------------------------------------------
+    # Redesigned Sidebar Subsystem Status & Safety Disclaimer Tests
+    # -------------------------------------------------------------------------
+
+    def test_sidebar_status_panel_and_disclaimer(self):
+        """Verifies status panel and disclaimer functions execute and generate expected classes."""
+        from unittest.mock import MagicMock, patch
+        from config.settings import get_settings
+        from src.ui.components.sidebar import render_safety_disclaimer, render_subsystem_status
+
+        settings = get_settings()
+
+        with patch("streamlit.markdown") as mock_markdown:
+            render_subsystem_status(settings)
+            self.assertTrue(mock_markdown.called)
+            # Find the call with fs-status-panel
+            rendered_panel_html = ""
+            for call in mock_markdown.call_args_list:
+                arg = call[0][0] if call[0] else ""
+                if "fs-status-panel" in arg:
+                    rendered_panel_html = arg
+                    break
+
+            self.assertTrue(rendered_panel_html, "fs-status-panel HTML was not rendered")
+            self.assertIn("System Mode", rendered_panel_html)
+            self.assertIn("Database", rendered_panel_html)
+            self.assertIn("Vector Store", rendered_panel_html)
+            self.assertIn("Embedding Model", rendered_panel_html)
+            self.assertIn("fs-pulse-dot", rendered_panel_html)
+
+        with patch("streamlit.markdown") as mock_markdown, patch("streamlit.expander") as mock_expander:
+            mock_expander.return_value.__enter__ = MagicMock()
+            mock_expander.return_value.__exit__ = MagicMock()
+
+            render_safety_disclaimer()
+            self.assertTrue(mock_markdown.called)
+            rendered_disc_html = ""
+            for call in mock_markdown.call_args_list:
+                arg = call[0][0] if call[0] else ""
+                if "fs-disclaimer-card" in arg:
+                    rendered_disc_html = arg
+                    break
+
+            self.assertTrue(rendered_disc_html, "fs-disclaimer-card HTML was not rendered")
+            self.assertIn("Safety &amp; Operational Limitations", rendered_disc_html)
+            self.assertIn("advisory decision-support tool", rendered_disc_html)
+
 
 if __name__ == "__main__":
     unittest.main()
