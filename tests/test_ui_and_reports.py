@@ -386,6 +386,41 @@ class TestUIAndReportsUpgrade(unittest.TestCase):
         nav_ids = [item[0] for item in NAV_ITEMS]
         self.assertIn("report", nav_ids)
 
+    def test_new_diagnosis_page_header_and_structure(self):
+        """Verifies redesigned New Diagnosis header title, subtitle, and presets."""
+        from src.ui.components.header import PAGE_TITLES
+        from src.ui.pages.new_investigation import (
+            KNOWN_FAULT_CODES,
+            PRESET_DISPLAY_NAMES,
+            SYMPTOM_PRESETS,
+            render_new_investigation_page,
+        )
+
+        # Header title and subtitle alignment
+        title, subtitle = PAGE_TITLES.get("new_investigation", ("", ""))
+        self.assertEqual(title, "New Diagnosis")
+        self.assertEqual(subtitle, "Enter the fault code and symptoms to find the likely cause")
+
+        # Known fault codes coverage
+        self.assertGreaterEqual(len(KNOWN_FAULT_CODES), 5)
+        codes = [item[1] for item in KNOWN_FAULT_CODES if item[1]]
+        self.assertIn("E-DR-201", codes)
+        self.assertIn("E-VFD-404", codes)
+
+        # Scenario presets coverage
+        self.assertGreaterEqual(len(SYMPTOM_PRESETS), 5)
+        for preset_name, preset_data in SYMPTOM_PRESETS.items():
+            self.assertIn(preset_name, PRESET_DISPLAY_NAMES)
+            subsystem, code, symptoms, notes, desc, telem_json = preset_data
+            self.assertTrue(subsystem)
+            self.assertTrue(code)
+            self.assertTrue(symptoms)
+            # Verify telemetry JSON is valid
+            parsed_telem = json.loads(telem_json)
+            self.assertIsInstance(parsed_telem, dict)
+
+        self.assertTrue(callable(render_new_investigation_page))
+
     def test_st_text_area_parameters_are_valid(self):
         """Ensures that no UI file passes unsupported arguments like 'rows' to st.text_area."""
         import ast

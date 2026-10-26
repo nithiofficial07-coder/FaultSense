@@ -236,11 +236,37 @@ def validate_and_parse_telemetry_upload(
     return False, {}, f"Unsupported file extension for '{filename}'. Supported: .csv, .json", meta
 
 
+KNOWN_FAULT_CODES: List[Tuple[str, str, str]] = [
+    ("-- Select known code (or type above) --", "", ""),
+    ("E-DR-201 — Door Reopening (Door System)", "E-DR-201", "door_system"),
+    ("E-VFD-404 — VVVF Bus Overvoltage (Traction Drive)", "E-VFD-404", "traction_drive"),
+    ("E-BRK-302 — Brake Switch Contact Discrepancy (Braking System)", "E-BRK-302", "braking_system"),
+    ("E-BRK-102 — Brake Air-Gap Drag (Braking System)", "E-BRK-102", "braking_system"),
+    ("E-POS-305 — Hoistway Signaling Pulse Drop (Hoistway Signaling)", "E-POS-305", "hoistway_signaling"),
+    ("E-HYD-108 — Hydraulic Releveling Creep (Hydraulic System)", "E-HYD-108", "hydraulic_system"),
+    ("E-HYD-501 — Hydraulic Valve Contamination (Hydraulic System)", "E-HYD-501", "hydraulic_system"),
+    ("E-CAN-512 — CAN Bus Node Timeout (Controller Electronics)", "E-CAN-512", "controller_electronics"),
+    ("FLT-LCK-12 — Landing Lock Interlock Binding (Door System)", "FLT-LCK-12", "door_system"),
+]
+
+PRESET_DISPLAY_NAMES = {
+    "Door System — Reopening": "Door System — Reopening (E-DR-201: Optical curtain obstruction)",
+    "Traction Drive — Overvoltage": "Traction Drive — Overvoltage (E-VFD-404: Regenerative deceleration overvoltage)",
+    "Braking System — Air-Gap Drag": "Braking System — Air-Gap Drag (E-BRK-102: Brake shoe friction drag and overheating)",
+    "Hoistway Signaling — Pulse Drop": "Hoistway Signaling — Pulse Drop (E-POS-305: Optical encoder pulse drift during leveling)",
+    "Hydraulic System — Valve Contamination": "Hydraulic System — Valve Contamination (E-HYD-501: Valve bypass leak causing car creep)",
+}
+
+
 def render_new_investigation_page() -> None:
-    """Renders the comprehensive technician investigation workflow."""
+    """Renders the simplified technician diagnosis intake workflow."""
+    # Explanatory subtitle guidance matching reference design
     st.markdown(
-        "Initiate an evidence-grounded root-cause analysis by entering observed operational symptoms, "
-        "OEM diagnostic trouble codes, and physical controller telemetry."
+        "<div style='color: #64748B; font-size: 0.92rem; line-height: 1.5; margin-bottom: 14px;'>"
+        "Enter the fault code shown by the elevator and describe what is happening. FaultSense will evaluate "
+        "available records to identify the likely cause and recommended inspection steps."
+        "</div>",
+        unsafe_allow_html=True,
     )
 
     # Initialize investigation state containers
@@ -251,20 +277,63 @@ def render_new_investigation_page() -> None:
     if "manual_json_text" not in st.session_state:
         st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
     if "auto_incident_id" not in st.session_state:
-        st.session_state["auto_incident_id"] = f"INC-{datetime.now(timezone.utc).strftime('%Y%m%d')}-{int(time.time()) % 10000:04d}"
+        st.session_state["auto_incident_id"] = f"INV-{int(time.time()):010d}-{int(time.time() * 1000) % 10000:04d}"
 
-    # Preset Quick-Load Selector
-    with st.expander("Load Pre-configured Field Failure Scenario (Benchmark Presets)", expanded=False):
-        c_scen, c_load, c_reset = st.columns([2.5, 1.2, 1.2])
+    # Form state default values
+    if "widget_fault_code" not in st.session_state:
+        st.session_state["widget_fault_code"] = st.session_state.get("fault_code_input", "E-DR-201")
+    if "widget_known_code_idx" not in st.session_state:
+        cur_code = st.session_state.get("widget_fault_code", "E-DR-201").strip().upper()
+        found_idx = 0
+        for idx, (label, c, sub) in enumerate(KNOWN_FAULT_CODES):
+            if c and c.upper() == cur_code:
+                found_idx = idx
+                break
+        st.session_state["widget_known_code_idx"] = found_idx
+
+    if "widget_symptoms" not in st.session_state:
+        st.session_state["widget_symptoms"] = st.session_state.get(
+            "symptoms_input",
+            "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer buzzer sounding",
+        )
+
+    if "widget_elv_id" not in st.session_state:
+        st.session_state["widget_elv_id"] = st.session_state.get("saved_elv_id", "ELV-CAR-04")
+    if "widget_mfg" not in st.session_state:
+        st.session_state["widget_mfg"] = st.session_state.get("saved_mfg", "Otis Elevator Company")
+    if "widget_model" not in st.session_state:
+        st.session_state["widget_model"] = st.session_state.get("saved_model", "Geared Traction VVVF Passenger (Gen2)")
+    if "widget_bldg" not in st.session_state:
+        st.session_state["widget_bldg"] = st.session_state.get("saved_bldg_id", "Commercial Plaza Tower B")
+    if "widget_sev" not in st.session_state:
+        st.session_state["widget_sev"] = st.session_state.get("saved_severity", "High — Service Interruption / Out of Service")
+    if "widget_subsystem" not in st.session_state:
+        st.session_state["widget_subsystem"] = st.session_state.get("subsystem_picker", "door_system")
+    if "widget_op_cond" not in st.session_state:
+        st.session_state["widget_op_cond"] = st.session_state.get("saved_op_cond", "Morning peak dispatch; high ambient machine room humidity (82%), 31°C")
+    if "widget_extra_codes" not in st.session_state:
+        st.session_state["widget_extra_codes"] = st.session_state.get("saved_extra_codes", "")
+    if "widget_tech_notes" not in st.session_state:
+        st.session_state["widget_tech_notes"] = st.session_state.get("saved_tech_notes", "Initial visual check performed on landing sills. Optical curtain alignment tested.")
+    if "widget_addl_narrative" not in st.session_state:
+        st.session_state["widget_addl_narrative"] = st.session_state.get("saved_addl_narrative", "")
+
+    # =========================================================================
+    # Example Fault Scenarios Expander (Collapsed by default)
+    # =========================================================================
+    with st.expander("Example fault scenarios (click to test a preset)", expanded=False):
+        c_scen, c_load, c_reset = st.columns([2.6, 1.2, 1.2])
         with c_scen:
-            selected_preset_name = st.selectbox(
+            selected_preset_key = st.selectbox(
                 "Select Failure Scenario Benchmark",
                 options=list(SYMPTOM_PRESETS.keys()),
+                format_func=lambda k: PRESET_DISPLAY_NAMES.get(k, k),
+                key="preset_scenario_selector",
             )
         with c_load:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
             if st.button("Apply Scenario Preset", icon=":material/check:", use_container_width=True, key="btn_apply_preset"):
-                preset_data = SYMPTOM_PRESETS[selected_preset_name]
+                preset_data = SYMPTOM_PRESETS[selected_preset_key]
                 sub = preset_data[0]
                 code = preset_data[1]
                 syms = preset_data[2]
@@ -272,15 +341,34 @@ def render_new_investigation_page() -> None:
                 desc = preset_data[4] if len(preset_data) > 4 else syms.splitlines()[0]
                 telem_json = preset_data[5] if len(preset_data) > 5 else "{}"
 
+                st.session_state["widget_fault_code"] = code
+                st.session_state["fault_code_input"] = code
+                st.session_state["fault_code_field"] = code
+
+                matched_idx = 0
+                for idx, (label, c, s_sub) in enumerate(KNOWN_FAULT_CODES):
+                    if c and c.upper() == code.upper():
+                        matched_idx = idx
+                        break
+                st.session_state["widget_known_code_idx"] = matched_idx
+
+                st.session_state["widget_symptoms"] = syms
+                st.session_state["symptoms_input"] = syms
+                st.session_state["symptoms_field"] = syms
+
+                st.session_state["widget_subsystem"] = sub
                 st.session_state["subsystem_picker"] = sub
                 st.session_state["subsystem_select"] = sub
-                st.session_state["fault_code_field"] = code
-                st.session_state["fault_code_input"] = code
-                st.session_state["symptoms_field"] = syms
-                st.session_state["symptoms_input"] = syms
+
+                st.session_state["widget_tech_notes"] = notes
+                st.session_state["saved_tech_notes"] = notes
                 st.session_state["notes_field"] = notes
                 st.session_state["notes_input"] = notes
+
+                st.session_state["widget_addl_narrative"] = desc
+                st.session_state["saved_addl_narrative"] = desc
                 st.session_state["problem_desc_field"] = desc
+
                 st.session_state["manual_json_text"] = telem_json
                 try:
                     st.session_state["uploaded_telemetry_data"] = json.loads(telem_json)
@@ -291,369 +379,433 @@ def render_new_investigation_page() -> None:
         with c_reset:
             st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
             if st.button("Reset Form Fields", icon=":material/refresh:", use_container_width=True, key="btn_reset_form"):
+                st.session_state["widget_fault_code"] = ""
+                st.session_state["fault_code_input"] = ""
+                st.session_state["fault_code_field"] = ""
+                st.session_state["widget_known_code_idx"] = 0
+
+                st.session_state["widget_symptoms"] = ""
+                st.session_state["symptoms_input"] = ""
+                st.session_state["symptoms_field"] = ""
+
+                st.session_state["widget_subsystem"] = "door_system"
                 st.session_state["subsystem_picker"] = "door_system"
                 st.session_state["subsystem_select"] = "door_system"
-                st.session_state["fault_code_field"] = ""
-                st.session_state["fault_code_input"] = ""
-                st.session_state["symptoms_field"] = ""
-                st.session_state["symptoms_input"] = ""
+
+                st.session_state["widget_tech_notes"] = ""
+                st.session_state["saved_tech_notes"] = ""
                 st.session_state["notes_field"] = ""
                 st.session_state["notes_input"] = ""
+
+                st.session_state["widget_addl_narrative"] = ""
+                st.session_state["saved_addl_narrative"] = ""
                 st.session_state["problem_desc_field"] = ""
+
+                st.session_state["widget_extra_codes"] = ""
+                st.session_state["saved_extra_codes"] = ""
+
                 st.session_state["manual_json_text"] = "{}"
                 st.session_state["uploaded_telemetry_data"] = {}
                 st.session_state["current_result"] = None
                 st.rerun()
 
     # =========================================================================
-    # Section 1: Equipment & Incident Identification
+    # Section 1: FAULT INFORMATION (REQUIRED)
     # =========================================================================
-    st.markdown("### 1. Equipment & Incident Identification")
-    st.caption("Identify the affected vertical transportation asset, manufacturer, model, and operating conditions.")
+    st.markdown(
+        f"""
+        <div style="background-color: #FFFFFF; border: 1px solid #DCE5F1; border-radius: 8px; padding: 12px 18px; margin-top: 14px; margin-bottom: 14px;">
+            <span style="color: #2D58A6; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">
+                1. FAULT INFORMATION (REQUIRED)
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        incident_id = st.text_input(
-            "Incident / Work Order ID",
-            value=st.session_state.get("auto_incident_id"),
-            disabled=True,
-            help="Automatically generated unique field ticket identifier.",
-        )
-        elevator_id = st.text_input(
-            "Elevator Unit Identifier",
-            value=st.session_state.get("saved_elv_id", "ELV-CAR-04"),
-            placeholder="e.g. ELV-CAR-04, UNIT-B (optional / if available)",
-            help="Unique equipment ID assigned by building management or OEM (defaults to ELV-UNSPECIFIED if left blank).",
+    # Callbacks for seamless two-way synchronization between text input and dropdown
+    def _on_fault_code_text_change() -> None:
+        val = st.session_state.get("widget_fault_code", "").strip()
+        st.session_state["fault_code_input"] = val
+        st.session_state["fault_code_field"] = val
+        matched = 0
+        for idx, (label, c, sub) in enumerate(KNOWN_FAULT_CODES):
+            if c and c.upper() == val.upper():
+                matched = idx
+                if sub:
+                    st.session_state["widget_subsystem"] = sub
+                    st.session_state["subsystem_picker"] = sub
+                    st.session_state["subsystem_select"] = sub
+                break
+        st.session_state["widget_known_code_idx"] = matched
+
+    def _on_known_code_dropdown_change() -> None:
+        idx = st.session_state.get("widget_known_code_idx", 0)
+        if 0 < idx < len(KNOWN_FAULT_CODES):
+            c = KNOWN_FAULT_CODES[idx][1]
+            sub = KNOWN_FAULT_CODES[idx][2]
+            st.session_state["widget_fault_code"] = c
+            st.session_state["fault_code_input"] = c
+            st.session_state["fault_code_field"] = c
+            if sub:
+                st.session_state["widget_subsystem"] = sub
+                st.session_state["subsystem_picker"] = sub
+                st.session_state["subsystem_select"] = sub
+
+    col_code, col_select = st.columns([1, 1])
+    with col_code:
+        st.text_input(
+            "Fault code *",
+            placeholder="Enter the fault code shown by the elevator",
+            help="Enter the trouble code shown by the elevator controller (e.g. E-DR-201, E-VFD-404) or select from known codes.",
+            key="widget_fault_code",
+            on_change=_on_fault_code_text_change,
         )
 
-    with c2:
-        mfg_options = [
-            "Otis Elevator Company",
-            "Schindler Group",
-            "KONE Corporation",
-            "TK Elevator (Thyssenkrupp)",
-            "Mitsubishi Electric",
-            "Fujitec",
-            "Generic / Other Manufacturer",
-        ]
-        manufacturer = st.selectbox(
-            "Elevator Manufacturer (if known)",
-            options=mfg_options,
-            index=0,
-            help="OEM manufacturer specification helps contextualize schematics and code limits.",
-        )
-        elevator_model = st.text_input(
-            "Elevator Model / Drive Type (if known)",
-            value="Geared Traction VVVF Passenger (Gen2)",
-            placeholder="e.g. 3300 MRL, MonoSpace, TAC32",
-            help="Controller family or drive architecture.",
+    with col_select:
+        st.selectbox(
+            "Select known code (or type above)",
+            options=range(len(KNOWN_FAULT_CODES)),
+            format_func=lambda i: KNOWN_FAULT_CODES[i][0],
+            help="Choose a known diagnostic code from the knowledge base or enter manually on the left.",
+            key="widget_known_code_idx",
+            on_change=_on_known_code_dropdown_change,
         )
 
-    with c3:
-        building_id = st.text_input(
-            "Building / Job Site ID",
-            value="Commercial Plaza Tower B",
-            placeholder="e.g. Metropolitan Medical Center",
-            help="Facility name, campus, or physical site location.",
+    st.text_area(
+        "What is happening? *",
+        placeholder="Describe the problem in a few words",
+        height=110,
+        help="Describe observed operational symptoms or passenger reports in plain words.",
+        key="widget_symptoms",
+    )
+
+    # =========================================================================
+    # Additional Details (Optional) Expander
+    # =========================================================================
+    with st.expander("Additional details (optional)", expanded=False):
+        # ---------------------------------------------------------------------
+        # Group A: Equipment details
+        # ---------------------------------------------------------------------
+        st.markdown(
+            "<div style='font-size: 0.88rem; font-weight: 700; color: #243247; margin-top: 4px; margin-bottom: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;'>"
+            "Equipment details"
+            "</div>",
+            unsafe_allow_html=True,
         )
-        severity = st.selectbox(
-            "Incident Severity & Urgency Assessment",
-            options=[
+
+        eq_col1, eq_col2, eq_col3 = st.columns(3)
+        with eq_col1:
+            st.text_input(
+                "Elevator Unit Identifier",
+                placeholder="e.g. ELV-CAR-04, UNIT-B (optional)",
+                help="Unique equipment ID assigned by building management or OEM.",
+                key="widget_elv_id",
+            )
+            st.text_input(
+                "Building / Job Site Reference",
+                placeholder="e.g. Commercial Plaza Tower B",
+                help="Facility name, campus, or physical site location.",
+                key="widget_bldg",
+            )
+
+        with eq_col2:
+            mfg_options = [
+                "Otis Elevator Company",
+                "Schindler Group",
+                "KONE Corporation",
+                "TK Elevator (Thyssenkrupp)",
+                "Mitsubishi Electric",
+                "Fujitec",
+                "Generic / Other Manufacturer",
+            ]
+            st.selectbox(
+                "Elevator Manufacturer (if known)",
+                options=mfg_options,
+                help="OEM manufacturer specification helps contextualize schematics and code limits.",
+                key="widget_mfg",
+            )
+            sev_options = [
                 "High — Service Interruption / Out of Service",
                 "Critical — Safety Circuit Trip / Passenger Entrapment",
                 "Medium — Intermittent Fault / Degraded Ride",
                 "Low — Routine Preventive Maintenance Finding",
-            ],
-            index=0,
+            ]
+            st.selectbox(
+                "Incident Severity & Urgency Assessment",
+                options=sev_options,
+                key="widget_sev",
+            )
+
+        with eq_col3:
+            st.text_input(
+                "Elevator Model / Drive Type (if known)",
+                placeholder="e.g. 3300 MRL, MonoSpace, TAC32",
+                help="Controller family or drive architecture.",
+                key="widget_model",
+            )
+            subsystem_options = [s.value for s in SubsystemType]
+            st.selectbox(
+                "Affected Subsystem *",
+                options=subsystem_options,
+                format_func=lambda x: x.replace("_", " ").title(),
+                help="Primary physical subsystem exhibiting anomalous behavior.",
+                key="widget_subsystem",
+            )
+
+        st.text_input(
+            "Operating & Environmental Conditions (Optional)",
+            placeholder="e.g. Post-thunderstorm power dip, construction dust, high ambient humidity",
+            help="Operating context that may explain electrical or mechanical drift.",
+            key="widget_op_cond",
         )
 
-    operating_conditions = st.text_input(
-        "Operating & Environmental Conditions (Optional)",
-        value="Morning peak dispatch; high ambient machine room humidity (82%), 31°C",
-        placeholder="e.g. Post-thunderstorm power dip, construction dust in hoistway, cold weather start",
-        help="Operating context that may explain electrical or mechanical drift.",
-    )
-
-    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-
-    # =========================================================================
-    # Section 2: Fault Indicators & Observed Symptoms
-    # =========================================================================
-    st.markdown("### 2. Fault Indicators & Observed Symptoms")
-    st.caption("Specify the affected subsystem, narrative problem description, controller DTC error codes, and technician observations.")
-
-    s_col1, s_col2 = st.columns([1, 1.4])
-    with s_col1:
-        subsystem_options = [s.value for s in SubsystemType]
-        default_sub = st.session_state.get("subsystem_select", "door_system")
-        sub_idx = subsystem_options.index(default_sub) if default_sub in subsystem_options else 0
-        subsystem = st.selectbox(
-            "Affected Subsystem *",
-            options=subsystem_options,
-            format_func=lambda x: x.replace("_", " ").title(),
-            index=sub_idx,
-            key="subsystem_picker",
-            help="Primary physical subsystem exhibiting anomalous behavior.",
-        )
-
-        fault_code = st.text_input(
-            "OEM Controller Fault Code (DTC) (if registered)",
-            value=st.session_state.get("fault_code_field", st.session_state.get("fault_code_input", "E-DR-201")),
-            placeholder="e.g. E-DR-201, E-VFD-404, FLT-12 (leave blank if none)",
-            key="fault_code_field",
-            help="Diagnostic trouble code logged in controller fault history buffer.",
-        )
-
-        technician_notes = st.text_area(
-            "Technician Field Observations & Notes (Optional)",
-            value=st.session_state.get("notes_field", st.session_state.get("notes_input", "Initial visual check performed on landing sills. No large physical obstruction visible.")),
-            height=78,
-            key="notes_field",
-            help="Multimeter spot-checks, tactile observations, or recent maintenance history.",
-        )
-
-    with s_col2:
-        problem_description = st.text_area(
-            "Problem Description / Incident Narrative *",
-            value=st.session_state.get("problem_desc_field", "Elevator car doors cycling open and closed repeatedly at Floor 4 without passenger obstruction, preventing departure."),
-            height=75,
-            key="problem_desc_field",
-            help="Plain-language description of the problem reported by building staff or observed on arrival.",
-        )
-
-        default_syms = st.session_state.get(
-            "symptoms_field",
-            st.session_state.get(
-                "symptoms_input",
-                "Car door reopens repeatedly without passenger obstruction\nDoor dwell timer expires causing nudging buzzer activation\nIntermittent reopening at intermediate floors",
-            ),
-        )
-        symptoms_input = st.text_area(
-            "Observed Operational Symptoms * (One per line or semicolon-separated)",
-            value=default_syms,
-            height=100,
-            key="symptoms_field",
-            help="Specific physical anomalies: e.g. door bounce, shudder, leveling drift, abnormal acoustic pitch.",
-        )
-
-    # Missing Information Assessment Callout
-    missing_items = []
-    if not fault_code.strip():
-        missing_items.append("OEM Fault Code (DTC) is missing (will rely on symptom matching)")
-    if "Generic" in manufacturer:
-        missing_items.append("Manufacturer/Model is generic (schematic pinouts must be verified on-site)")
-    if not elevator_id.strip():
-        missing_items.append("Unit ID is blank (will default to ELV-UNSPECIFIED)")
-
-    if missing_items:
+        # ---------------------------------------------------------------------
+        # Group B: Fault and sensor data
+        # ---------------------------------------------------------------------
         st.markdown(
-            f"""
-            <div style="background-color: #FDF8EE; border: 1px solid #EED8B4; border-left: 3px solid #A8752B; padding: 10px 14px; border-radius: 8px; margin-bottom: 8px; font-size: 0.8rem; color: #7D561F;">
-                <b>Diagnostic Precision Advisory</b>: {'; '.join(missing_items)}. FaultSense will analyze available data without fabricating missing specifications.
-            </div>
-            """,
+            "<div style='font-size: 0.88rem; font-weight: 700; color: #243247; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;'>"
+            "Fault and sensor data"
+            "</div>",
             unsafe_allow_html=True,
         )
 
-    st.markdown("<hr style='margin: 14px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-
-    # =========================================================================
-    # Section 3: Physical Telemetry & Sensor Readings
-    # =========================================================================
-    st.markdown("### 3. Physical Telemetry & Sensor Readings")
-    st.markdown(
-        "<div style='color: #68778D; font-size: 0.85rem; margin-bottom: 10px;'>"
-        "Provide controller telemetry data through either an <b>uploaded data file</b> or the <b>structured JSON editor</b>. "
-        "Telemetry enables grounding against quantitative sensor thresholds."
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-    tab_upload, tab_editor = st.tabs(["Method A: Upload Telemetry File (CSV / JSON)", "Method B: Structured JSON Editor"])
-
-    active_telemetry: Dict[str, Any] = {}
-
-    with tab_upload:
-        st.markdown(
-            "Upload an exported CSV or JSON telemetry recording. Files are validated immediately upon selection."
+        st.text_input(
+            "Additional Fault Codes (Optional)",
+            placeholder="e.g. secondary DTCs: E-DR-202, FLT-14 (comma-separated)",
+            help="Any secondary or historical trouble codes logged during the same event.",
+            key="widget_extra_codes",
         )
-        up_col1, up_col2 = st.columns([1.8, 1.2])
 
-        with up_col1:
-            uploaded_file = st.file_uploader(
-                "Select Controller Log File",
-                type=["csv", "json"],
-                key="telemetry_uploader_widget",
-                help="Accepts CSV (tabular or key-value) and JSON (object) formats up to 10 MB.",
-            )
+        tab_upload, tab_editor = st.tabs(["Upload Telemetry File (CSV / JSON)", "Structured JSON Editor"])
 
-        with up_col2:
-            if uploaded_file is not None:
-                is_valid, parsed_data, err_msg, meta = validate_and_parse_telemetry_upload(uploaded_file)
-                if is_valid:
-                    st.session_state["uploaded_telemetry_data"] = parsed_data
-                    st.success(
-                        f"**{meta['filename']}** verified. Parsed **{meta['parsed_count']}** sensor readings "
-                        f"({meta['size_bytes']} bytes, {meta['format']})."
-                    )
-                else:
-                    st.session_state["uploaded_telemetry_data"] = {}
-                    st.error(f"**Upload Validation Failed**: {err_msg}")
-            else:
-                st.caption("No file currently uploaded. Drag and drop or browse for a controller telemetry log.")
-                if st.session_state.get("uploaded_telemetry_data"):
-                    if st.button("Clear Cached Uploaded Data", icon=":material/delete:"):
+        with tab_upload:
+            up_col1, up_col2 = st.columns([1.8, 1.2])
+            with up_col1:
+                uploaded_file = st.file_uploader(
+                    "Select Controller Log File",
+                    type=["csv", "json"],
+                    key="telemetry_uploader_widget",
+                    help="Accepts CSV (tabular or key-value) and JSON formats up to 10 MB.",
+                )
+            with up_col2:
+                if uploaded_file is not None:
+                    is_valid, parsed_data, err_msg, meta = validate_and_parse_telemetry_upload(uploaded_file)
+                    if is_valid:
+                        st.session_state["uploaded_telemetry_data"] = parsed_data
+                        st.success(f"**{meta['filename']}** verified. Parsed **{meta['parsed_count']}** sensor readings.")
+                    else:
                         st.session_state["uploaded_telemetry_data"] = {}
+                        st.error(f"**Upload Validation Failed**: {err_msg}")
+                else:
+                    st.caption("No file currently uploaded. Drag and drop or browse for a telemetry log.")
+                    if st.session_state.get("uploaded_telemetry_data"):
+                        if st.button("Clear Uploaded Data", icon=":material/delete:", key="btn_clear_uploaded_tel"):
+                            st.session_state["uploaded_telemetry_data"] = {}
+                            st.rerun()
+
+            cached_upload = st.session_state.get("uploaded_telemetry_data", {})
+            if cached_upload:
+                st.markdown("##### Uploaded Telemetry Preview")
+                df_tel = pd.DataFrame([
+                    {
+                        "Sensor Parameter": k.replace("_", " ").title(),
+                        "Raw Key": k,
+                        "Reading": v,
+                        "Inferred Unit": DiagnosticEnricher._infer_telemetry_unit(k)[0],
+                        "Nominal Range": DiagnosticEnricher._infer_telemetry_unit(k)[1],
+                        "Condition": DiagnosticEnricher._assess_telemetry_reading(k, v),
+                    }
+                    for k, v in cached_upload.items()
+                ])
+                st.dataframe(df_tel, hide_index=True, use_container_width=True)
+
+        with tab_editor:
+            ed_c1, ed_c2 = st.columns([1.5, 1.5])
+            with ed_c1:
+                raw_editor_text = st.text_area(
+                    "Telemetry JSON Structure",
+                    value=st.session_state.get("manual_json_text", DEFAULT_JSON_EXAMPLE),
+                    height=140,
+                    key="manual_json_input_widget",
+                    help="Key-value JSON object containing sensor readings and units.",
+                )
+                st.session_state["manual_json_text"] = raw_editor_text
+                btn_c1, btn_c2 = st.columns(2)
+                with btn_c1:
+                    if st.button("Load Standard Example", icon=":material/refresh:", key="btn_load_ex"):
+                        st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
+                        st.rerun()
+                with btn_c2:
+                    if st.button("Clear Editor", icon=":material/delete:", key="btn_clear_ed"):
+                        st.session_state["manual_json_text"] = "{}"
                         st.rerun()
 
-        # Telemetry preview table if file is active
-        cached_upload = st.session_state.get("uploaded_telemetry_data", {})
-        if cached_upload:
-            st.markdown("##### Uploaded Telemetry Preview")
-            df_tel = pd.DataFrame([
-                {
-                    "Sensor Parameter": k.replace("_", " ").title(),
-                    "Raw Key": k,
-                    "Reading": v,
-                    "Inferred Unit": DiagnosticEnricher._infer_telemetry_unit(k)[0],
-                    "Nominal Range": DiagnosticEnricher._infer_telemetry_unit(k)[1],
-                    "Condition": DiagnosticEnricher._assess_telemetry_reading(k, v),
-                }
-                for k, v in cached_upload.items()
-            ])
-            st.dataframe(df_tel, hide_index=True, use_container_width=True)
-
-    with tab_editor:
-        st.markdown(
-            "Enter sensor measurements directly as a valid JSON object. Numerical values are cross-checked."
-        )
-
-        ed_c1, ed_c2 = st.columns([1.5, 1.5])
-        with ed_c1:
-            raw_editor_text = st.text_area(
-                "Telemetry JSON Structure",
-                value=st.session_state.get("manual_json_text", DEFAULT_JSON_EXAMPLE),
-                height=150,
-                key="manual_json_input_widget",
-                help="Key-value JSON object containing sensor readings and units.",
-            )
-
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if st.button("Load Standard Example", icon=":material/refresh:", key="btn_load_ex"):
-                    st.session_state["manual_json_text"] = DEFAULT_JSON_EXAMPLE
-                    st.rerun()
-            with btn_col2:
-                if st.button("Clear Editor", icon=":material/delete:", key="btn_clear_ed"):
-                    st.session_state["manual_json_text"] = "{}"
-                    st.rerun()
-
-        with ed_c2:
-            # Live validation of manual JSON
-            json_valid = False
-            parsed_manual = {}
-            json_err = None
-            if raw_editor_text.strip():
-                try:
-                    parsed_manual = json.loads(raw_editor_text)
-                    if not isinstance(parsed_manual, dict):
-                        json_err = "JSON root must be an object (dictionary with curly braces {})."
-                    else:
-                        json_valid = True
-                except json.JSONDecodeError as exc:
-                    json_err = f"Syntax Error: {exc.msg} (line {exc.lineno}, col {exc.colno})"
-            else:
-                json_valid = True
+            with ed_c2:
+                json_valid = False
                 parsed_manual = {}
+                json_err = None
+                if raw_editor_text.strip():
+                    try:
+                        parsed_manual = json.loads(raw_editor_text)
+                        if not isinstance(parsed_manual, dict):
+                            json_err = "JSON root must be an object (dictionary with curly braces {})."
+                        else:
+                            json_valid = True
+                    except json.JSONDecodeError as exc:
+                        json_err = f"Syntax Error: {exc.msg} (line {exc.lineno}, col {exc.colno})"
+                else:
+                    json_valid = True
+                    parsed_manual = {}
 
-            if json_valid:
-                if parsed_manual:
+                if json_valid:
+                    if parsed_manual:
+                        st.markdown(
+                            f"""
+                            <div style="background-color: #EFF7F2; border: 1px solid #C6E2D3; border-left: 3px solid #3F7D62;
+                                        border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                                <span style="color: #3F7D62; font-weight: 700; font-size: 0.85rem;">Valid JSON Structure</span>
+                                <div style="font-size: 0.8rem; color: #2D5845; margin-top: 2px;">
+                                    Detected <b>{len(parsed_manual)}</b> sensor parameters ready for diagnostic evaluation.
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        st.json(parsed_manual, expanded=False)
+                    else:
+                        st.info("JSON editor is empty. Diagnosis will proceed using symptom matching only.")
+                else:
                     st.markdown(
                         f"""
-                        <div style="background-color: #EFF7F2; border: 1px solid #C6E2D3; border-left: 3px solid #3F7D62;
+                        <div style="background-color: #FDF2F2; border: 1px solid #ECC4C4; border-left: 3px solid #B84C4C;
                                     border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
-                            <span style="color: #3F7D62; font-weight: 700; font-size: 0.85rem;">Valid JSON Structure</span>
-                            <div style="font-size: 0.8rem; color: #2D5845; margin-top: 2px;">
-                                Detected <b>{len(parsed_manual)}</b> sensor parameters ready for diagnostic evaluation.
-                            </div>
+                            <span style="color: #B84C4C; font-weight: 700; font-size: 0.85rem;">JSON Syntax Invalid</span>
+                            <div style="font-size: 0.78rem; color: #8C2F2F; margin-top: 2px;">{json_err}</div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
-                    st.json(parsed_manual, expanded=False)
-                else:
-                    st.info("JSON editor is empty. Diagnosis will proceed using symptom matching only.")
-            else:
-                st.markdown(
-                    f"""
-                    <div style="background-color: #FDF2F2; border: 1px solid #ECC4C4; border-left: 3px solid #B84C4C;
-                                border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
-                        <span style="color: #B84C4C; font-weight: 700; font-size: 0.85rem;">JSON Syntax Invalid</span>
-                        <div style="font-size: 0.78rem; color: #8C2F2F; margin-top: 2px;">{json_err}</div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
 
-    # Determine consolidated telemetry to feed into diagnostic pipeline
-    if cached_upload:
-        active_telemetry = cached_upload
-        active_source = "Uploaded Log File"
-    elif json_valid and parsed_manual:
-        active_telemetry = parsed_manual
-        active_source = "Manual JSON Editor"
-    else:
-        active_telemetry = {}
-        active_source = "None (Symptom Matching Only)"
+        # ---------------------------------------------------------------------
+        # Group C: Additional observations
+        # ---------------------------------------------------------------------
+        st.markdown(
+            "<div style='font-size: 0.88rem; font-weight: 700; color: #243247; margin-top: 16px; margin-bottom: 8px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;'>"
+            "Additional observations"
+            "</div>",
+            unsafe_allow_html=True,
+        )
 
-    st.caption(f"Active Telemetry Source for Diagnosis: **{active_source}** ({len(active_telemetry)} readings).")
+        st.text_area(
+            "Technician Field Observations & Notes (Optional)",
+            placeholder="e.g. Multimeter spot-checks, visual check on landing sills, recent maintenance findings",
+            height=80,
+            help="Multimeter spot-checks, tactile observations, or recent maintenance history.",
+            key="widget_tech_notes",
+        )
 
-    st.markdown("<hr style='margin: 16px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+        st.text_area(
+            "Detailed Problem Narrative (Optional)",
+            placeholder="e.g. Plain-language incident narrative reported by facility staff (if different from symptoms)",
+            height=72,
+            help="Plain-language description of the incident reported by building staff or observed on arrival.",
+            key="widget_addl_narrative",
+        )
 
     # =========================================================================
-    # Section 4: Run Diagnostic Investigation
+    # Primary Action: Diagnose Fault
     # =========================================================================
-    st.markdown("### 4. Execute Diagnostic Pipeline")
-
-    run_submitted = st.button(
-        "Run Fault Isolation & Self-Verification Analysis",
+    run_diagnose = st.button(
+        "Diagnose Fault",
         icon=":material/bolt:",
         type="primary",
         use_container_width=True,
-        key="btn_run_diagnosis_main",
+        key="btn_diagnose_fault_primary",
+    )
+    st.markdown(
+        "<div style='text-align: center; color: #68778D; font-size: 0.84rem; margin-top: 6px; margin-bottom: 16px;'>"
+        "Review the likely cause and recommended next steps."
+        "</div>",
+        unsafe_allow_html=True,
     )
 
-    if run_submitted:
-        # Normalize elevator ID (default if blank)
-        effective_elv_id = elevator_id.strip() if elevator_id.strip() else "ELV-UNSPECIFIED"
+    if run_diagnose:
+        fault_code_val = st.session_state.get("widget_fault_code", "").strip()
+        symptoms_text = st.session_state.get("widget_symptoms", "").strip()
 
-        symptoms = [s.strip() for s in symptoms_input.replace(";", "\n").splitlines() if s.strip()]
-        if not symptoms:
-            st.error("Validation Error: At least one observed symptom must be provided.")
+        symptoms_list = [s.strip() for s in symptoms_text.replace(";", "\n").splitlines() if s.strip()]
+        if not symptoms_list and not fault_code_val:
+            st.error("Validation Error: Please enter a fault code or describe what is happening before diagnosing.")
             return
 
-        # Build formal diagnosis request with all equipment & operating context
+        if not symptoms_list:
+            symptoms_list = [f"Elevator controller registered fault code {fault_code_val}"]
+
+        # Consolidate equipment parameters from persistent session state
+        raw_elv = st.session_state.get("widget_elv_id", "ELV-CAR-04")
+        effective_elv_id = raw_elv.strip() if raw_elv and raw_elv.strip() else "ELV-UNSPECIFIED"
+
+        raw_bldg = st.session_state.get("widget_bldg", "Commercial Plaza Tower B")
+        effective_bldg = raw_bldg.strip() if raw_bldg and raw_bldg.strip() else None
+
+        effective_mfg = st.session_state.get("widget_mfg", "Otis Elevator Company")
+
+        raw_model = st.session_state.get("widget_model", "Geared Traction VVVF Passenger (Gen2)")
+        effective_model = raw_model.strip() if raw_model and raw_model.strip() else "Generic / Unspecified"
+
+        effective_subsystem = st.session_state.get("widget_subsystem", "door_system")
+        effective_severity = st.session_state.get("widget_sev", "High — Service Interruption / Out of Service")
+
+        raw_op_cond = st.session_state.get("widget_op_cond", "Morning peak dispatch; high ambient machine room humidity (82%), 31°C")
+        effective_op_cond = raw_op_cond.strip() if raw_op_cond and raw_op_cond.strip() else "Normal Operating Conditions"
+
+        # Consolidate technician notes and extra fault codes
+        tech_notes_val = st.session_state.get("widget_tech_notes", "").strip()
+        extra_codes_val = st.session_state.get("widget_extra_codes", "").strip()
+        addl_narrative_val = st.session_state.get("widget_addl_narrative", "").strip()
+
+        notes_parts = []
+        if tech_notes_val:
+            notes_parts.append(tech_notes_val)
+        if extra_codes_val:
+            notes_parts.append(f"Additional Fault Codes: {extra_codes_val}")
+        combined_notes = "\n".join(notes_parts) if notes_parts else None
+
+        prob_desc = addl_narrative_val if addl_narrative_val else (symptoms_list[0] if symptoms_list else "Elevator operational fault")
+
+        # Consolidate active telemetry
+        cached_up = st.session_state.get("uploaded_telemetry_data", {})
+        manual_txt = st.session_state.get("manual_json_text", "").strip()
+        active_telemetry = {}
+        if cached_up:
+            active_telemetry = cached_up
+        elif manual_txt and manual_txt != "{}":
+            try:
+                parsed = json.loads(manual_txt)
+                if isinstance(parsed, dict):
+                    active_telemetry = parsed
+            except Exception:
+                active_telemetry = {}
+
         request = DiagnosisRequest(
             elevator_id=effective_elv_id,
-            building_id=building_id.strip() if building_id else None,
-            subsystem=subsystem,
-            fault_code=fault_code.strip() if fault_code else None,
-            symptoms=symptoms,
+            building_id=effective_bldg,
+            subsystem=effective_subsystem,
+            fault_code=fault_code_val if fault_code_val else None,
+            symptoms=symptoms_list,
             telemetry=active_telemetry,
-            technician_notes=technician_notes.strip() if technician_notes else None,
-            manufacturer=manufacturer,
-            equipment_model=elevator_model.strip() if elevator_model else "Generic / Unspecified",
-            problem_description=problem_description.strip() if problem_description else (symptoms[0] if symptoms else "Elevator operational fault"),
-            operating_conditions=operating_conditions.strip() if operating_conditions else "Normal Operating Conditions",
-            severity=severity,
+            technician_notes=combined_notes,
+            manufacturer=effective_mfg,
+            equipment_model=effective_model,
+            problem_description=prob_desc,
+            operating_conditions=effective_op_cond,
+            severity=effective_severity,
         )
 
         engine = DiagnosisEngine(enable_verification=True)
-        repo = InvestigationRepository()
-        kb_manager = KnowledgeBaseManager()
-
         try:
-            with st.spinner("Retrieving historical evidence, evaluating candidate causes, and executing verification loop..."):
+            with st.spinner("Analyzing fault code, evaluating historical evidence, and isolating root cause..."):
                 result = engine.analyze(request)
 
             # Persist session state
@@ -661,137 +813,9 @@ def render_new_investigation_page() -> None:
             st.session_state["current_result"] = result
             st.session_state["saved_elv_id"] = effective_elv_id
 
-            st.success(
-                f"Diagnostic Session **{result.investigation_id}** completed and saved to persistent audit database!"
-            )
-
-            # Fetch enriched record from database
-            saved_rec = repo.get(result.investigation_id) or result.to_dict()
-            dossier = DiagnosticEnricher.enrich_investigation(saved_rec, kb_manager=kb_manager)
-
-            # Executive Results Banner with Evidence-Based Status
-            verif_badge = dossier.evidence_based_status
-            c_score, c_verif, c_retry, c_cases = st.columns(4)
-            with c_score:
-                st.metric(
-                    "Advisory Confidence",
-                    f"{int(result.confidence_score * 100)}%",
-                    help="Empirical evidence support score based on semantic similarity, DTC alignment, symptom overlap, sensor telemetry, and corroboration (NOT a calibrated statistical probability).",
-                )
-            with c_verif:
-                st.metric("Diagnostic Status", verif_badge)
-            with c_retry:
-                if result.retry_count == 0 and result.is_verified:
-                    retry_label = "0 (Passed 1st Step)"
-                elif result.retry_count > 0:
-                    retry_label = f"{result.retry_count} retries ({result.retry_count + 1} steps)"
-                else:
-                    retry_label = "0 retries (Unverified)"
-                st.metric("Verification Retries", retry_label)
-            with c_cases:
-                st.metric("Matched Evidence Cases", str(len(result.matched_cases)))
-
-            # Evidence Support Score Factor Breakdown Expander
-            bd = result.confidence_breakdown or getattr(dossier, "confidence_breakdown", None) or {}
-            if bd:
-                with st.expander("Evidence Support Score & Factor Breakdown", expanded=False):
-                    f1, f2, f3, f4, f5 = st.columns(5)
-                    with f1:
-                        st.caption("Semantic Match")
-                        st.write(f"**{int(bd.get('semantic_component', 0) * 100 / 0.35)}%** (wt: 35%)")
-                    with f2:
-                        st.caption("DTC Code Match")
-                        dtc_match = "Matched" if bd.get("exact_fault_code_match") else "No Match"
-                        st.write(f"**{dtc_match}** ({int(bd.get('fault_code_component', 0) * 100)}%)")
-                    with f3:
-                        st.caption("Symptom Overlap")
-                        st.write(f"**{int(bd.get('symptom_overlap_ratio', 0) * 100)}%** (wt: 22%)")
-                    with f4:
-                        st.caption("Sensor Telemetry")
-                        telem_stat = "Validated" if bd.get("telemetry_provided") else "Missing"
-                        st.write(f"**{telem_stat}**")
-                    with f5:
-                        st.caption("Corroboration")
-                        st.write(f"**{bd.get('corroboration_count', 0)} case(s)**")
-
-                    if bd.get("penalties_applied"):
-                        st.markdown("**Evidence Gaps & Penalties:**")
-                        for p in bd["penalties_applied"]:
-                            st.markdown(f"- *{p}*")
-                    if bd.get("scoring_notes"):
-                        st.caption(f"**Scoring Logic**: {bd['scoring_notes']}")
-
-            # Primary Root Cause Card
-            st.markdown(
-                f"""
-                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #4169A8;
-                            padding: 16px 20px; border-radius: 10px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-                    <div style="font-size: 0.75rem; font-weight: 700; color: #4169A8; text-transform: uppercase; letter-spacing: 0.6px;">
-                        Synthesized Primary Root Cause Hypothesis
-                    </div>
-                    <div style="font-size: 1.15rem; color: #243247; margin-top: 6px; font-weight: 700; line-height: 1.4;">
-                        {result.root_cause_hypothesis}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            # Prominent PDF Download & JSON Export Block
-            st.markdown("##### Download Official Investigation Artifacts")
-            dl_col1, dl_col2 = st.columns([1.6, 1.2])
-
-            with dl_col1:
-                try:
-                    pdf_bytes = DiagnosticReportGenerator.generate_pdf(saved_rec, kb_manager=kb_manager)
-                    st.download_button(
-                        label="Download Complete Diagnostic Report (PDF)",
-                        icon=":material/description:",
-                        data=pdf_bytes,
-                        file_name=f"FaultSense_Report_{result.investigation_id}.pdf",
-                        mime="application/pdf",
-                        type="primary",
-                        use_container_width=True,
-                        key=f"new_inv_pdf_{result.investigation_id}",
-                    )
-                    st.caption(f"Publication-grade multi-page PDF ready ({len(pdf_bytes) / 1024:.1f} KB). Includes 8 formal engineering sections.")
-                except Exception as p_err:
-                    logger.error("PDF generation on new_investigation failed: %s", p_err)
-                    st.error(f"PDF generation error: {p_err}. You can retry or download from Diagnostic Results tab.")
-
-            with dl_col2:
-                try:
-                    json_str = DiagnosticReportGenerator.generate_json(saved_rec, kb_manager=kb_manager)
-                    st.download_button(
-                        label="Export Structured JSON Data",
-                        icon=":material/download:",
-                        data=json_str,
-                        file_name=f"FaultSense_Data_{result.investigation_id}.json",
-                        mime="application/json",
-                        type="secondary",
-                        use_container_width=True,
-                        key=f"new_inv_json_{result.investigation_id}",
-                    )
-                    st.caption("Complete 18-point machine-readable JSON dossier.")
-                except Exception:
-                    pass
-
-            st.markdown("<hr style='margin: 12px 0; border: 0; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
-
-            # Direct Navigation Actions
-            act_col1, act_col2, act_col3 = st.columns([1.4, 1.2, 1.2])
-            with act_col1:
-                if st.button("Dedicated Report Page", icon=":material/description:", key="btn_goto_rep", type="primary", use_container_width=True):
-                    navigate_to("report", result.investigation_id)
-
-            with act_col2:
-                if st.button("View Full Audit Dossier", icon=":material/analytics:", key="btn_goto_res", type="secondary", use_container_width=True):
-                    navigate_to("results", result.investigation_id)
-
-            with act_col3:
-                if st.button("Consult Assistant", icon=":material/chat:", key="btn_goto_chat", type="secondary", use_container_width=True):
-                    navigate_to("assistant", result.investigation_id)
+            # Automatically route to Diagnostic Results for this investigation
+            navigate_to("results", result.investigation_id)
 
         except Exception as exc:
             logger.error("Diagnostic execution failed: %s", exc, exc_info=True)
-            st.error(f"Diagnostic Pipeline Error: {exc}. Please check system logs.")
+            st.error(f"Diagnostic Pipeline Error: {exc}. Please review inputs or check system logs.")
